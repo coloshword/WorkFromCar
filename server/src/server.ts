@@ -1,13 +1,18 @@
 import koa from "koa";
 import http from 'http';
 import Router from '@koa/router';
-import { auth, getUserInfo } from './google_auth';
+import * as z from "zod";
 import dotenv from "dotenv";
-import { oauth2 } from "googleapis/build/src/apis/oauth2";
+dotenv.config();
 
-dotenv.config()
+import { auth, getUserInfo } from './Auth/utils';
+
 const server = new koa();
 const router = new Router();
+
+const authRedirectSchema = z.object({
+  code: z.string(),
+});
 
 router.get('/test_endpoint', async (ctx) => {
   ctx.status = 200;
@@ -20,11 +25,10 @@ router.get('/google', async(ctx) => {
   ctx.redirect(url);
 });
 
-router.get('/google/auth/redirect', async(ctx) => {
-  console.log(ctx.params.code);
-  if (ctx.params.code) {
-    console.log(getUserInfo(ctx.params.code));
-  }
+router.get('/google/auth/redirect', async (ctx) => {
+  const { code } = authRedirectSchema.parse(ctx.query);
+  console.log(await getUserInfo(code));
+  ctx.body = "Hello world";
 });
 
 server.use(router.routes());
