@@ -4,6 +4,7 @@ import {
     auth,
     getUserInfo
  } from "./utils";
+ import { Client } from "pg";
 
 const authRedirectSchema = z.object({
   code: z.string(),
@@ -24,4 +25,5 @@ export const googleAuthLogin = async (ctx: Context) => {
     const { code } = authRedirectSchema.parse(ctx.query);
     console.log(await getUserInfo(code));
     ctx.body = "Hello world";
+    // create account if id doesn't exist 
 }
