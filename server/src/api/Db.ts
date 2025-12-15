@@ -1,4 +1,4 @@
-import pg from "pg";
+import { Pool as PgPool, QueryResult, type QueryResultRow } from "pg";
 
 export type Constructor<T> = {
   [P in keyof T]: new (...args: any[]) => T[P];
@@ -15,13 +15,41 @@ const pgConfig = {
 
 export class Pool<T> {
   private coreDb: Constructor<T>;
-  private db: pg.Pool;
+  private dbPool: PgPool;
 
   constructor(
     c: Constructor<T>, 
   ) {
     this.coreDb = c;
-    this.db = new pg.Pool(pgConfig);
+    this.dbPool = new PgPool(pgConfig);
   }
 
+  async end() {
+    await this.dbPool.end();
+  }
+
+  async query<R extends QueryResultRow>(
+    text: string,
+    params?: any[]
+  ): Promise<QueryResult<R>> {
+    return this.dbPool.query<R>(text, params);
+  }
+
+  get db(): T {
+    return new Proxy(this.coreDb as any, {
+      get: (obj, key) => {
+        const Model = obj[key];
+        if (!Model) return undefined;
+
+        const instance = new Model(this);
+
+        return new Proxy(instance, {
+          get: (target, fn) => {
+            if (typeof target[fn] !== "function") return undefined;
+            return (...args: any[]) => target[fn](...args);
+          },
+        });
+      },
+    }) as T;
+  }
 }
