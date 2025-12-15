@@ -1,34 +1,31 @@
 include .env
-export $(shell sed 's/=.*//' .env)
+export
 
-PROJECT_NAME ?= $(PROJECT_NAME)
-DB_IMAGE     := $(PROJECT_NAME)-postgres
-DB_CONTAINER := $(PROJECT_NAME)-postgres-1
-DB_DATA_DIR  := db/data
+PG_CONTAINER=pg
+PG_IMAGE=postgres:16
+PG_VOLUME=pgdata
 
-.PHONY: db-build db-run db-stop db-logs db-reset db-psql
+.PHONY: up down psql reset
 
-db-build:
-	docker build -t $(DB_IMAGE) .
+# FULL RESET every time: container + volume (DESTROYS ALL DATA)
+up: down reset
+	docker run -d \
+	  --name $(PG_CONTAINER) \
+	  -p $(POSTGRES_PORT):5432 \
+	  -e POSTGRES_USER=$(POSTGRES_USER) \
+	  -e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
+	  -e POSTGRES_DB=$(POSTGRES_DB) \
+	  -v $(PG_VOLUME):/var/lib/postgresql/data \
+	  -v $(PWD)/initdb:/docker-entrypoint-initdb.d:ro \
+	  $(PG_IMAGE)
+	
+	@echo "DB is now running! 💰"
 
-db-run: db-build
-	mkdir -p $(DB_DATA_DIR)
-	docker run --name $(DB_CONTAINER) \
-		--env-file .env \
-		-p $(DB_PORT):5432 \
-		-v $(PWD)/$(DB_DATA_DIR):/var/lib/postgresql/data \
-		-d $(DB_IMAGE)
+down:
+	-docker rm -f $(PG_CONTAINER)
 
-db-stop:
-	- docker stop $(DB_CONTAINER)
-	- docker rm $(DB_CONTAINER)
+reset:
+	-docker volume rm $(PG_VOLUME)
 
-db-logs:
-	docker logs -f $(DB_CONTAINER)
-
-db-reset: db-stop
-	rm -rf $(DB_DATA_DIR)
-
-db-psql:
-	docker exec -it $(DB_CONTAINER) psql \
-	  -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+psql:
+	docker exec -it $(PG_CONTAINER) psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
