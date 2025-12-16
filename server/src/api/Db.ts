@@ -1,4 +1,5 @@
 import { Pool as PgPool, QueryResult, type QueryResultRow } from "pg";
+import { InfraConfig } from "./infra"; 
 
 export type Constructor<T> = {
   [P in keyof T]: new (...args: any[]) => T[P];
@@ -11,6 +12,20 @@ const pgConfig = {
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DB,
   ssl: false, 
+}
+
+export default abstract class Db<T = InfraConfig> {
+  private connection: any;
+  private registry: any;
+  
+  public constructor(connection: any, registry: any) {
+    this.connection = connection;
+    this.registry = registry;
+  }
+
+  protected get core(): string {
+    return "Hello dihhh";
+  }
 }
 
 export class Pool<T> {

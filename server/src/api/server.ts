@@ -5,6 +5,7 @@ dotenv.config();
 import Router from '@koa/router';
 import routes from "./Routes";
 import * as z from "zod";
+import infra from "./";
 
 const server = new koa();
 const router = new Router();

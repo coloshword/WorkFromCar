@@ -8,7 +8,7 @@ PG_VOLUME=pgdata
 .PHONY: up down psql reset
 
 # FULL RESET every time: container + volume (DESTROYS ALL DATA)
-up: down reset
+run-db: down reset
 	docker run -d \
 	  --name $(PG_CONTAINER) \
 	  -p $(POSTGRES_PORT):5432 \
