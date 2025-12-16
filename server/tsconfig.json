@@ -7,10 +7,11 @@
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "es2015",
+    "module": "commonjs",
     "target": "es2018",
-    "types": [],
+    "types": ["node"], 
     "esModuleInterop": true,
+    "moduleResolution": "node",
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],

@@ -1,14 +1,15 @@
 import koa from "koa";
 import http from 'http';
+import dotenv from "dotenv";
+dotenv.config();
 import Router from '@koa/router';
+import routes from "./Routes";
+import * as z from "zod";
+import infra from "./";
 
 const server = new koa();
 const router = new Router();
-
-router.get('/hello_world', async (ctx) => {
-  ctx.status = 200;
-  ctx.body = "Hello world";
-});
+router.use('/api', routes);
 
 server.use(router.routes());
 
@@ -16,6 +17,6 @@ server.use(router.routes());
   const httpServer = http.createServer(server.callback());
   const port = 3000; //TODO: make env var 
   httpServer.listen(port, () => {
-    console.log(`Server is running ✨`);
-  })
+    console.log(`Server is running ✨ ${port}`);
+  });
 })();

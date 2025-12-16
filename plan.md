@@ -1,1 +1,4 @@
-- set up basic koa server 
+1) set up basic koa server -- done 
+
+2) set up endpoints for basic google auth
+    - set up a quick 
