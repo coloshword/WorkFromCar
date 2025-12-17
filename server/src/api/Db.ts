@@ -7,7 +7,7 @@ export type Constructor<T> = {
 
 const pgConfig = {
   host: process.env.POSTGRES_HOST,
-  port: Number(process.env.DB_PORT),
+  port: Number(process.env.POSTGRES_PORT),
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DB,
@@ -24,7 +24,17 @@ export default abstract class Db<T = InfraConfig> {
   }
 
   protected get core(): string {
-    return "Hello dihhh";
+    return new Proxy(this.registry.coreDb, {
+      get: (obj, key) => {
+        if (key in obj) {
+          return new obj[key](this.connection, this.registry);
+        }
+      }
+    })
+  }
+
+  protected query = async (q: any, params: any = []) => {
+    return await this.connection.query(q, params);
   }
 }
 
