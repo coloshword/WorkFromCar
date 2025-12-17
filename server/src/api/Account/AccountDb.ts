@@ -15,4 +15,8 @@ export default class AccountDb extends Db{
     } = res.rows[0];
     console.log(email);
   }
+
+  async createUserWithGoogle(email: string, googleSub: string) {
+
+  }
 }

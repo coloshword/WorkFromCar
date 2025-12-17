@@ -24,7 +24,8 @@ export const googleAuthRedirect = async (cxt: Context) => {
 
 export const googleAuthLogin = async (ctx: Context) => {
   const { code } = authRedirectSchema.parse(ctx.query);
-  console.log(await getUserInfo(code));
-  ctx.body = "Hello world";
-  // create account if id doesn't exist 
+  const userInfo = await getUserInfo(code);
+  console.log(userInfo);
+  const { email } = userInfo;
+  // create an account if not exists 
 }
