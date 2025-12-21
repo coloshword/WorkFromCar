@@ -21,6 +21,9 @@ run-db: down reset
 	
 	@echo "DB is now running! 💰"
 
+run-server:
+	npm run dev
+
 down:
 	-docker rm -f $(PG_CONTAINER)
 
@@ -29,3 +32,6 @@ reset:
 
 psql:
 	docker exec -it $(PG_CONTAINER) psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+
+run-site:
+	cd ../site && python -m http.server 8000

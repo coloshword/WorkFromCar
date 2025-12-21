@@ -1,22 +1,24 @@
 import Db from "../Db";
+import { AuthAccount } from "../Auth/types"
 
 export default class AccountDb extends Db{
-  async sampleFunction() {
-    const res = await this.query(
+  async upsertUserWithGoogle(
+    email: string,
+    googleSub: string
+  ): Promise<AuthAccount> {
+      if (!email || !googleSub) {
+        throw new Error("Missing params");
+      }
+      const account = await this.queryOne<AuthAccount>(
       `
-      SELECT * from accounts
-      `
+        INSERT INTO accounts (email, google_sub)
+        VALUES ($1, $2)
+        ON CONFLICT (email)
+        DO UPDATE
+          SET email = EXCLUDED.email
+        RETURNING id AS accountId, email;
+      `, [email, googleSub]
     );
-
-    const {
-      id,
-      email,
-      created_at
-    } = res.rows[0];
-    console.log(email);
-  }
-
-  async createUserWithGoogle(email: string, googleSub: string) {
-
+    return account;
   }
 }
