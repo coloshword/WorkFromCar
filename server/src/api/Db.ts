@@ -15,7 +15,7 @@ const pgConfig = {
 }
 
 export default abstract class Db<T = InfraConfig> {
-  private connection: any;
+  private connection: Pool<T>;
   private registry: any;
   
   public constructor(connection: any, registry: any) {
@@ -33,8 +33,19 @@ export default abstract class Db<T = InfraConfig> {
     })
   }
 
-  protected query = async (q: any, params: any = []) => {
-    return await this.connection.query(q, params);
+  protected query = async <R extends QueryResultRow> (
+    q: any, params: any = []
+  ): Promise<QueryResult<R>> => {
+    return await this.connection.query<R>(q, params);
+  }
+
+  protected queryOne = async <R extends QueryResultRow> (
+    q: any, params: any = []
+  ): Promise<R> => {
+    const res = await this.connection.query<R>(q, params);
+    const row = res.rows[0];
+    if (!row ) throw new Error("Expected one row");
+    return row;
   }
 }
 

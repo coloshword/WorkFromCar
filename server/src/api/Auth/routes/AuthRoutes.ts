@@ -3,8 +3,9 @@ import { Context } from 'koa';
 import { 
     auth,
     getUserInfo
- } from "./utils";
+ } from "../utils";
 import infra from "../..";
+import { getJWTToken } from "../utils";
 
 const authRedirectSchema = z.object({
   code: z.string(),
@@ -13,7 +14,6 @@ const authRedirectSchema = z.object({
 export const testRoute = async (ctx: Context) => {
   ctx.status = 200;
   ctx.body = "Hello world"
-  infra.db.account.sampleFunction();
 }
 
 export const googleAuthRedirect = async (cxt: Context) => {
@@ -24,7 +24,15 @@ export const googleAuthRedirect = async (cxt: Context) => {
 
 export const googleAuthLogin = async (ctx: Context) => {
   const { code } = authRedirectSchema.parse(ctx.query);
-  console.log(await getUserInfo(code));
-  ctx.body = "Hello world";
-  // create account if id doesn't exist 
+  const userInfo = await getUserInfo(code);
+  const { id, email } = userInfo;
+  const { accountId } = await infra.db.account.upsertUserWithGoogle(email, id);
+  const jwt =  getJWTToken({
+    accountId: accountId,
+    email: email
+  });
+  ctx.cookies.set("jwt", jwt, {
+    httpOnly: true,
+    secure: true,
+  })
 }
