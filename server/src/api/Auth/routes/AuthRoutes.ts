@@ -6,6 +6,7 @@ import {
  } from "../utils";
 import infra from "../..";
 import { getJWTToken } from "../utils";
+import { jwtResponse } from "../types";
 
 const authRedirectSchema = z.object({
   code: z.string(),
@@ -27,12 +28,12 @@ export const googleAuthLogin = async (ctx: Context) => {
   const userInfo = await getUserInfo(code);
   const { id, email } = userInfo;
   const { accountId } = await infra.db.account.upsertUserWithGoogle(email, id);
-  const jwt =  getJWTToken({
+  const jwt = getJWTToken({
     accountId: accountId,
     email: email
   });
-  ctx.cookies.set("jwt", jwt, {
-    httpOnly: true,
-    secure: true,
-  })
+  const jwtResponse: jwtResponse = {
+    jwt: jwt
+  } 
+  
 }
