@@ -4,11 +4,10 @@ import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import * as SecureStore from "expo-secure-store";
+import { API_BASE } from "../env";
+import { ACCESS_TOKEN_KEY } from "../config";
 
 WebBrowser.maybeCompleteAuthSession();
-
-const ACCESS_TOKEN_KEY = "WFC_ACCESS_TOKEN";
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 export default function Login() {
   const [msg, setMsg] = useState<string>("");
@@ -30,25 +29,21 @@ export default function Login() {
           setMsg("Logged in but no id_token found (check config)");
           return;
         }
-        // const res = await fetch(`${API_BASE}/auth/google`, {
-        //   method: "POST",
-        //   headers: { "Content-Type": "application/json" },
-        //   body: JSON.stringify({ idToken }),
-        // });
+        const endpoint = `${API_BASE}/api/auth/google`;
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({idToken}),
+        });
 
-        // if (!res.ok) {
-        //   const text = await res.text().catch(() => "");
-        //   setMsg(`Backend failed: ${res.status} ${text}`);
-        //   return;
-        // }
-
-        // const { accessToken } = await res.json();
-        // await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
-        // router.replace("/(tabs)");
-
-        // TEMP: fake “app session” until backend is wired
-        await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, "dev-session");
-
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          setMsg(`Backend failed: ${res.status} ${text}`);
+          return;
+        }
+        const body = await res.json();
+        const { token } = body;
+        await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, token);
         router.replace("/(tabs)");
       } else if (response.type === "error") {
         setMsg("Google login error ❌");

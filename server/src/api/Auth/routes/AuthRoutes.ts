@@ -1,39 +1,30 @@
 import * as z from "zod";
 import { Context } from 'koa';
 import { 
-    auth,
-    getUserInfo
+  getUserInfo,
+  getJWTToken
  } from "../utils";
 import infra from "../..";
-import { getJWTToken } from "../utils";
-import { jwtResponse } from "../types";
 
 const authRedirectSchema = z.object({
-  code: z.string(),
+  idToken: z.string(),
 });
 
 export const testRoute = async (ctx: Context) => {
   ctx.status = 200;
-  ctx.body = "Hello world"
+  ctx.body = "test route"
 }
 
-export const googleAuthRedirect = async (cxt: Context) => {
-  cxt.status = 200;
-  const url = auth();
-  cxt.redirect(url);
-}
-
-export const googleAuthLogin = async (ctx: Context) => {
-  const { code } = authRedirectSchema.parse(ctx.query);
-  const userInfo = await getUserInfo(code);
-  const { id, email } = userInfo;
-  const { accountId } = await infra.db.account.upsertUserWithGoogle(email, id);
-  const jwt = getJWTToken({
-    accountId: accountId,
-    email: email
-  });
-  const jwtResponse: jwtResponse = {
-    jwt: jwt
-  } 
-  
+export const googleAuthLogin = async (ctx: Context): Promise<void> => {
+  const { idToken } = authRedirectSchema.parse(ctx.request.body);
+  const userInfo = await getUserInfo(idToken);
+  const account = await infra.db.account.upsertUserWithGoogle(userInfo.email, userInfo.sub);
+  if (!account) ctx.throw(500, "Failed to create account");
+  const jwt = getJWTToken(account);
+  ctx.status = 200;
+  ctx.body = {
+    token: jwt,
+    email: account.email,
+  };
+  console.log("route fully returns");
 }

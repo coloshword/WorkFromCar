@@ -1,14 +1,15 @@
 import Router from '@koa/router';
 import { 
     testRoute,
-    googleAuthRedirect,
     googleAuthLogin
  } from './AuthRoutes';
+import {
+  mobileAuth
+} from '../../middleware';
 
 const router = new Router();
 
-router.get('/hello', testRoute);
-router.get('/google', googleAuthRedirect);
-router.get('/google/redirect', googleAuthLogin)
+router.post('/google', googleAuthLogin)
+router.get('/hello', mobileAuth, testRoute);
 
-export default router.routes();
+export default router;
