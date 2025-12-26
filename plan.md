@@ -4,3 +4,5 @@
 
 3) set up endpoints for basic google auth
     - set up a quick 
+
+4) 

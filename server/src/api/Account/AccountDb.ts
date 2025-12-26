@@ -16,7 +16,7 @@ export default class AccountDb extends Db{
         ON CONFLICT (email)
         DO UPDATE
           SET email = EXCLUDED.email
-        RETURNING id AS accountId, email;
+        RETURNING id AS "accountId", email;
       `, [email, googleSub]
     );
     return account;

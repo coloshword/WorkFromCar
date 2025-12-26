@@ -4,13 +4,13 @@ import dotenv from "dotenv";
 dotenv.config();
 import Router from '@koa/router';
 import routes from "./Routes";
-import * as z from "zod";
-import infra from "./";
+import bodyParser from 'koa-bodyparser';
 
 const server = new koa();
 const router = new Router();
 router.use('/api', routes);
 
+server.use(bodyParser());
 server.use(router.routes());
 
 (async () => {
