@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.workfromcar.app",
+      "bundleIdentifier": "com.workfromcar.fast.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }

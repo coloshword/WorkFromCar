@@ -3,6 +3,5 @@
 2) set up basic infra -- done 
 
 3) set up endpoints for basic google auth
-    - set up a quick 
 
-4) 
+4) use whisper.cpp for on device transcription

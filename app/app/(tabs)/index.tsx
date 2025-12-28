@@ -61,13 +61,12 @@ export default function Index() {
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 10 }}>
       <Text style={{ fontSize: 22, fontWeight: "600" }}>WorkFromCar</Text>
-      <Text>You’re signed in ✅</Text>
+      <Text style={{ textAlign: "center", color: "#fff" }}>You’re signed in ✅</Text>
 
       <Text style={{ marginTop: 10, fontWeight: "600" }}>authOnly response:</Text>
-      <Text selectable style={{ textAlign: "center" }}>
+      <Text selectable style={{ textAlign: "center", color: "#fff" }}>
         {authOnlyText || "(empty)"}
       </Text>
-
       <Button
         title="Logout"
         onPress={async () => {
