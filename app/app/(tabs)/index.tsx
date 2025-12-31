@@ -64,7 +64,7 @@ export default function Index() {
       <Text style={{ textAlign: "center", color: "#fff" }}>You’re signed in ✅</Text>
 
       <Text style={{ marginTop: 10, fontWeight: "600" }}>authOnly response:</Text>
-      <Text selectable style={{ textAlign: "center", color: "#fff" }}>
+      <Text selectable style={{ textAlign: "center", color: "#000" }}>
         {authOnlyText || "(empty)"}
       </Text>
       <Button
