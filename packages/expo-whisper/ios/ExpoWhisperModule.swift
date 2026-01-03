@@ -1,4 +1,5 @@
 import ExpoModulesCore
+import ExpoWhisper
 
 public class ExpoWhisperModule: Module {
   public func definition() -> ModuleDefinition {
@@ -6,6 +7,11 @@ public class ExpoWhisperModule: Module {
 
     Function("ping") { () -> String in
       "pong"
+    }
+
+    Function("pingFromObjc") {
+      let engine = WhisperEngine();
+      return engine.ping();
     }
   }
 }
