@@ -14,8 +14,10 @@ import * as Google from "expo-auth-session/providers/google";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE } from "../env";
 import { ACCESS_TOKEN_KEY } from "../config";
+import { ping } from "expo-whisper";
 
 WebBrowser.maybeCompleteAuthSession();
+console.log(ping());
 
 export default function Login() {
   const [msg, setMsg] = useState<string>("");
