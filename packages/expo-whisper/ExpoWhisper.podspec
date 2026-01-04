@@ -1,6 +1,6 @@
 require 'json'
 
-package = JSON.parse(File.read(File.join(__dir__, '..', 'package.json')))
+package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
 
 Pod::Spec.new do |s|
   s.name           = 'ExpoWhisper'
@@ -23,8 +23,12 @@ Pod::Spec.new do |s|
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
+    'CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES' => 'YES'
   }
 
-  s.source_files = "**/*.{h,m,mm,swift}"
-  s.public_header_files = "ios/**/*.h"
+  s.source_files = "ios/**/*.{h,m,mm,swift}"
+  s.public_header_files = "ios/WhisperEngine.h"
+  s.exclude_files = "ios/Frameworks/**/*.h"
+  s.vendored_frameworks = "ios/Frameworks/whisper.xcframework"
+  s.frameworks = "Accelerate"
 end

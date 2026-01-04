@@ -7,3 +7,7 @@ export function ping(): string {
 export function pingFromObjc(): string {
   return ExpoWhisperModule.pingFromObjc();
 }
+
+export function init(modelPath: string): Promise<void> {
+  return ExpoWhisperModule.init(modelPath);
+}

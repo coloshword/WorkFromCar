@@ -14,10 +14,13 @@ import * as Google from "expo-auth-session/providers/google";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE } from "../env";
 import { ACCESS_TOKEN_KEY } from "../config";
-import { ping, pingFromObjc } from "expo-whisper";
+import { ping, pingFromObjc, init } from "expo-whisper";
+import { ensureModelOnDisk } from "../utils";
 
 WebBrowser.maybeCompleteAuthSession();
-console.log(pingFromObjc());
+// console.log(pingFromObjc());
+// const modelPath = await ensureModelOnDisk();
+// console.log(await init(modelPath));
 
 export default function Login() {
   const [msg, setMsg] = useState<string>("");
@@ -36,6 +39,31 @@ export default function Login() {
       duration: 600,
       useNativeDriver: true,
     }).start();
+  }, []);
+
+  // useEffect(() => {
+  //   console.log("useEffect");
+  //   (async () => {
+  //     const modelPath = await ensureModelOnDisk();
+  //     const model = await init(modelPath);
+  //     console.log(model);
+  //   })();
+  // }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        console.log('useEffect');
+
+        const modelUri = await ensureModelOnDisk();
+        console.log('modelUri', modelUri);
+
+        await init(modelUri);
+        console.log('init ok');
+      } catch (e) {
+        console.error('init failed', e);
+      }
+    })();
   }, []);
 
   useEffect(() => {
