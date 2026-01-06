@@ -26,11 +26,10 @@
   "author": "coloshword <acero.liangli@stonybrook.edu> (https://github.com/coloshword)",
   "license": "MIT",
   "homepage": "https://github.com/coloshword/expo-whisper#readme",
-  "dependencies": {},
   "devDependencies": {
     "@types/react": "~19.1.0",
-    "expo-module-scripts": "^5.0.8",
     "expo": "^54.0.27",
+    "expo-module-scripts": "^5.0.8",
     "react-native": "0.81.5"
   },
   "peerDependencies": {

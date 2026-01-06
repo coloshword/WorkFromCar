@@ -16,11 +16,16 @@ import { API_BASE } from "../env";
 import { ACCESS_TOKEN_KEY } from "../config";
 import { ping, pingFromObjc, init } from "expo-whisper";
 import { ensureModelOnDisk } from "../utils";
+import { 
+  AudioModule,
+  useAudioRecorder,
+  useAudioRecorderState,
+  RecordingPresets,
+  setAudioModeAsync,
+} from "expo-audio";
+import { Alert } from "react-native";
 
 WebBrowser.maybeCompleteAuthSession();
-// console.log(pingFromObjc());
-// const modelPath = await ensureModelOnDisk();
-// console.log(await init(modelPath));
 
 export default function Login() {
   const [msg, setMsg] = useState<string>("");
@@ -28,10 +33,23 @@ export default function Login() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const fadeAnim = useState(new Animated.Value(0))[0];
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(audioRecorder);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
   });
+
+  const record = async () => {
+    await audioRecorder.prepareToRecordAsync();
+    audioRecorder.record();
+  };
+
+  const stopRecording = async () => {
+    await audioRecorder.stop();
+    const uri = recorderState.url;
+    console.log('uri', uri);
+  };
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -41,25 +59,28 @@ export default function Login() {
     }).start();
   }, []);
 
-  // useEffect(() => {
-  //   console.log("useEffect");
-  //   (async () => {
-  //     const modelPath = await ensureModelOnDisk();
-  //     const model = await init(modelPath);
-  //     console.log(model);
-  //   })();
-  // }, []);
-
   useEffect(() => {
     (async () => {
       try {
-        console.log('useEffect');
+        // First request audio permissions
+        const status = await AudioModule.requestRecordingPermissionsAsync();
+        if (!status.granted) {
+          Alert.alert('Permission to access microphone was not accepted!');
+          return;
+        }
+        
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          allowsRecording: true,
+        });
 
+        // Only initialize whisper after permissions are granted
+        console.log('before ensureModelOnDisk');
         const modelUri = await ensureModelOnDisk();
-        console.log('modelUri', modelUri);
-
+        console.log('after ensureModelOnDisk', modelUri);
+        console.log('before init');
         await init(modelUri);
-        console.log('init ok');
+        console.log('after init');
       } catch (e) {
         console.error('init failed', e);
       }
@@ -170,6 +191,13 @@ export default function Login() {
             </View>
           ) : null}
         </View>
+          <TouchableOpacity style={[styles.recordVoiceButton, recorderState.isRecording ? styles.recordVoiceButtonActive : styles.recordVoiceButtonInactive] }
+            onPress={() => {
+              recorderState.isRecording ? stopRecording() : record();
+            }} 
+          >
+            <Text> {recorderState.isRecording ? "Stop recording" : "Record voice" } </Text>
+          </TouchableOpacity>
       </Animated.View>
     </View>
   );
@@ -234,6 +262,24 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
+  recordVoiceButton: {
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  recordVoiceButtonInactive: {
+    backgroundColor: "#fff",
+  },
+  recordVoiceButtonActive: {
+    backgroundColor: "#ff0000",
+    color: "#ffffff",
+  },
   googleButtonDisabled: {
     opacity: 0.6,
   },
@@ -277,4 +323,3 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 });
-

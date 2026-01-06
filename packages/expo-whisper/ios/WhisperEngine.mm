@@ -100,7 +100,15 @@ void whisper_signal_handler(int sig) {
   @try {
     // Use the newer whisper_init_from_file_with_params instead of deprecated function
     struct whisper_context_params cparams = whisper_context_default_params();
-    cparams.use_gpu = true; // Enable GPU if available
+    
+    // Disable GPU for simulator - Metal compute doesn't work well in simulators
+    #if TARGET_OS_SIMULATOR
+    cparams.use_gpu = false;
+    NSLog(@"🔧 WhisperEngine: Running on SIMULATOR - GPU disabled");
+    #else
+    cparams.use_gpu = true;
+    NSLog(@"🔧 WhisperEngine: Running on DEVICE - GPU enabled");
+    #endif
     
     NSLog(@"🔧 WhisperEngine: Context params - use_gpu: %d", cparams.use_gpu);
     NSLog(@"🔧 WhisperEngine: Calling whisper_init_from_file_with_params NOW...");
