@@ -22,6 +22,7 @@ import {
   useAudioRecorderState,
   RecordingPresets,
   setAudioModeAsync,
+  useAudioPlayer,
 } from "expo-audio";
 import { Alert } from "react-native";
 
@@ -35,6 +36,7 @@ export default function Login() {
   const fadeAnim = useState(new Animated.Value(0))[0];
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(audioRecorder);
+  const player = useAudioPlayer();
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
@@ -94,7 +96,6 @@ export default function Login() {
       if (response.type === "success") {
         setIsLoading(true);
         setMsg("Authenticating...");
-        
         const idToken =
           response.authentication?.idToken ||
           response.params?.id_token;
@@ -152,6 +153,13 @@ export default function Login() {
     }
   };
 
+  const playbackVoice = async () => {
+    if (recorderState.url) {
+      player.replace(recorderState.url);
+      player.play();
+    }
+  };
+
   return (
     <View style={[styles.container, isDark && styles.containerDark]}>
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
@@ -197,6 +205,14 @@ export default function Login() {
             }} 
           >
             <Text> {recorderState.isRecording ? "Stop recording" : "Record voice" } </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.recordVoiceButton] }
+            onPress={() => {
+              playbackVoice();
+            }} 
+          >
+            <Text> Playback voice </Text>
           </TouchableOpacity>
       </Animated.View>
     </View>
