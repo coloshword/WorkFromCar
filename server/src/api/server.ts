@@ -16,7 +16,7 @@ server.use(router.routes());
 (async () => {
   const httpServer = http.createServer(server.callback());
   const port = 3000; //TODO: make env var 
-  httpServer.listen(port, () => {
+  httpServer.listen(port, "0.0.0.0", () => {
     console.log(`Server is running ✨ ${port}`);
   });
 })();
