@@ -30,5 +30,5 @@ Pod::Spec.new do |s|
   s.public_header_files = "ios/WhisperEngine.h"
   s.exclude_files = "ios/Frameworks/**/*.h"
   s.vendored_frameworks = "ios/Frameworks/whisper.xcframework"
-  s.frameworks = "Accelerate"
+  s.frameworks = "Accelerate", "AVFoundation"
 end

@@ -4,6 +4,8 @@
 #import <execinfo.h>
 #import <mach/mach.h>
 #import <mach/mach_host.h>
+#import <AVFoundation/AVFoundation.h>
+#include <vector>
 
 // Signal handler for debugging crashes
 void whisper_signal_handler(int sig) {
@@ -17,6 +19,125 @@ void whisper_signal_handler(int sig) {
   free(strs);
   signal(sig, SIG_DFL);
   raise(sig);
+}
+
+// Helper function to convert audio file to 16kHz mono float32 PCM for Whisper
+std::vector<float> convertAudioToWhisperFormat(NSString *filePath, NSError **error) {
+  NSLog(@"🔧 Converting audio file: %@", filePath);
+  
+  std::vector<float> audioData;
+  
+  // Handle file:// URLs
+  NSURL *fileURL;
+  if ([filePath hasPrefix:@"file://"]) {
+    fileURL = [NSURL URLWithString:filePath];
+  } else {
+    fileURL = [NSURL fileURLWithPath:filePath];
+  }
+  
+  // Check if file exists
+  if (![[NSFileManager defaultManager] fileExistsAtPath:[fileURL path]]) {
+    if (error) {
+      *error = [NSError errorWithDomain:@"WhisperEngine" 
+                                   code:404 
+                               userInfo:@{NSLocalizedDescriptionKey: @"Audio file not found"}];
+    }
+    NSLog(@"🔧 ERROR: Audio file not found at: %@", [fileURL path]);
+    return audioData;
+  }
+  
+  // Create asset
+  AVAsset *asset = [AVAsset assetWithURL:fileURL];
+  if (!asset) {
+    if (error) {
+      *error = [NSError errorWithDomain:@"WhisperEngine" 
+                                   code:500 
+                               userInfo:@{NSLocalizedDescriptionKey: @"Failed to create AVAsset"}];
+    }
+    return audioData;
+  }
+  
+  // Get audio track
+  AVAssetTrack *audioTrack = [[asset tracksWithMediaType:AVMediaTypeAudio] firstObject];
+  if (!audioTrack) {
+    if (error) {
+      *error = [NSError errorWithDomain:@"WhisperEngine" 
+                                   code:500 
+                               userInfo:@{NSLocalizedDescriptionKey: @"No audio track found"}];
+    }
+    return audioData;
+  }
+  
+  // Setup asset reader
+  NSError *readerError = nil;
+  AVAssetReader *reader = [[AVAssetReader alloc] initWithAsset:asset error:&readerError];
+  if (readerError) {
+    if (error) *error = readerError;
+    NSLog(@"🔧 ERROR: Failed to create asset reader: %@", readerError.localizedDescription);
+    return audioData;
+  }
+  
+  // Configure output settings for 16kHz mono float32 PCM
+  NSDictionary *outputSettings = @{
+    AVFormatIDKey: @(kAudioFormatLinearPCM),
+    AVSampleRateKey: @(16000),
+    AVNumberOfChannelsKey: @(1),
+    AVLinearPCMBitDepthKey: @(32),
+    AVLinearPCMIsFloatKey: @(YES),
+    AVLinearPCMIsBigEndianKey: @(NO),
+    AVLinearPCMIsNonInterleaved: @(NO)
+  };
+  
+  AVAssetReaderTrackOutput *output = [[AVAssetReaderTrackOutput alloc] 
+                                      initWithTrack:audioTrack 
+                                      outputSettings:outputSettings];
+  
+  [reader addOutput:output];
+  
+  // Start reading
+  if (![reader startReading]) {
+    if (error) {
+      *error = [NSError errorWithDomain:@"WhisperEngine" 
+                                   code:500 
+                               userInfo:@{NSLocalizedDescriptionKey: @"Failed to start reading"}];
+    }
+    NSLog(@"🔧 ERROR: Failed to start reading");
+    return audioData;
+  }
+  
+  NSLog(@"🔧 Started reading audio samples...");
+  
+  // Read all samples
+  while (reader.status == AVAssetReaderStatusReading) {
+    CMSampleBufferRef sampleBuffer = [output copyNextSampleBuffer];
+    if (!sampleBuffer) break;
+    
+    CMBlockBufferRef blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer);
+    if (blockBuffer) {
+      size_t length = CMBlockBufferGetDataLength(blockBuffer);
+      float *samples = (float *)malloc(length);
+      
+      CMBlockBufferCopyDataBytes(blockBuffer, 0, length, samples);
+      
+      size_t sampleCount = length / sizeof(float);
+      audioData.insert(audioData.end(), samples, samples + sampleCount);
+      
+      free(samples);
+    }
+    
+    CFRelease(sampleBuffer);
+  }
+  
+  if (reader.status == AVAssetReaderStatusFailed) {
+    if (error) *error = reader.error;
+    NSLog(@"🔧 ERROR: Reader failed: %@", reader.error.localizedDescription);
+    return std::vector<float>();
+  }
+  
+  NSLog(@"🔧 Audio conversion complete: %zu samples (%.2f seconds)", 
+        audioData.size(), audioData.size() / 16000.0);
+  
+  return audioData;
 }
 
 @interface WhisperEngine () {
@@ -42,6 +163,27 @@ void whisper_signal_handler(int sig) {
 //   }
 //   return self;
 // }
+
+- (NSString *)transcribeFile:(NSString *)filePath {
+  NSLog(@"OBJECTIVE-C: WhisperEngine: transcribeFile called with: %@", filePath);
+  
+  NSError *conversionError = nil;
+  std::vector<float> audioData = convertAudioToWhisperFormat(filePath, &conversionError);
+  
+  if (conversionError) {
+    NSLog(@"🔧 ERROR: Audio conversion failed: %@", conversionError.localizedDescription);
+    return [NSString stringWithFormat:@"Error: %@", conversionError.localizedDescription];
+  }
+  
+  if (audioData.empty()) {
+    NSLog(@"🔧 ERROR: No audio data after conversion");
+    return @"Error: No audio data";
+  }
+  
+  NSLog(@"🔧 Audio converted successfully: %zu samples", audioData.size());
+  NSString *transcription = [NSString stringWithFormat:@"Audio converted: %.2f seconds", audioData.size() / 16000.0];
+  return transcription;
+}
 
 - (instancetype)initWithModelPath:(NSString *)modelPath {
   NSLog(@"🔧 WhisperEngine: initWithModelPath called with: %@", modelPath);

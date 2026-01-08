@@ -27,6 +27,12 @@ public class ExpoWhisperModule: Module {
       return engine.ping();
     }
 
+    AsyncFunction("transcribeFile") { (filePath: String) async throws -> String in
+      NSLog("🎤 SWIFT: Transcribing file: %@", filePath)
+      engine?.transcribeFile(filePath);
+      return "transcribed"
+    }
+
     // AsyncFunction("init") { (modelPath: String) async throws -> Void in
     //   let url = URL(string: modelPath);
     //   let fsPath = (url?.isFileURL == true) ? url!.path : modelPath;

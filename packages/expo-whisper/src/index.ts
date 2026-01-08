@@ -11,3 +11,8 @@ export function pingFromObjc(): string {
 export function init(modelPath: string): Promise<void> {
   return ExpoWhisperModule.init(modelPath);
 }
+
+export async function transcribeFile(filePath: string): Promise<string> {
+  console.log('transcribing file from index.ts');
+  return await ExpoWhisperModule.transcribeFile(filePath);
+}

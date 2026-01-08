@@ -14,7 +14,7 @@ import * as Google from "expo-auth-session/providers/google";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE } from "../env";
 import { ACCESS_TOKEN_KEY } from "../config";
-import { ping, pingFromObjc, init } from "expo-whisper";
+import { ping, pingFromObjc, init, transcribeFile } from "expo-whisper";
 import { ensureModelOnDisk } from "../utils";
 import { 
   AudioModule,
@@ -153,10 +153,10 @@ export default function Login() {
     }
   };
 
-  const playbackVoice = async () => {
+  const transcribeVoice = async () => {
     if (recorderState.url) {
-      player.replace(recorderState.url);
-      player.play();
+      const transcription = await transcribeFile(recorderState.url);
+      console.log('transcribe file called');
     }
   };
 
@@ -209,7 +209,7 @@ export default function Login() {
 
           <TouchableOpacity style={[styles.recordVoiceButton] }
             onPress={() => {
-              playbackVoice();
+              transcribeVoice();
             }} 
           >
             <Text> Playback voice </Text>
