@@ -151,19 +151,6 @@ std::vector<float> convertAudioToWhisperFormat(NSString *filePath, NSError **err
   return @"pong-from-objc";
 }
 
-// - (instancetype)initWithModelPath:(NSString *)modelPath {
-//   self = [super init];
-//   if (!self) return nil;
-
-//   _ctx = whisper_init_from_file([modelPath UTF8String]);
-//   if (_ctx == NULL) {
-//     @throw [NSException exceptionWithName:@"WhisperInitError"
-//                                 reason:@"Failed to load whisper model"
-//                                 userInfo:nil];
-//   }
-//   return self;
-// }
-
 - (NSString *)transcribeFile:(NSString *)filePath {
   NSLog(@"OBJECTIVE-C: WhisperEngine: transcribeFile called with: %@", filePath);
   
@@ -181,7 +168,26 @@ std::vector<float> convertAudioToWhisperFormat(NSString *filePath, NSError **err
   }
   
   NSLog(@"🔧 Audio converted successfully: %zu samples", audioData.size());
-  NSString *transcription = [NSString stringWithFormat:@"Audio converted: %.2f seconds", audioData.size() / 16000.0];
+  struct whisper_full_params params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+  params.print_progress = false;
+  params.print_special = false;
+  params.print_realtime = false;
+  params.print_timestamps = false;
+  params.translate = false;
+  params.language = "en";
+  params.n_threads = 4;
+  if (whisper_full(_ctx, params, audioData.data(), (int)audioData.size()) != 0) {
+      return @"Error: Transcription failed";
+  }
+
+  NSMutableString *result = [NSMutableString string];
+  int n_segments = whisper_full_n_segments(_ctx);
+  for (int i = 0; i < n_segments; ++i) {
+      const char *text = whisper_full_get_segment_text(_ctx, i);
+      [result appendString:[NSString stringWithUTF8String:text]];
+  }
+
+  NSString *transcription = [NSString stringWithFormat:@"%@", result];
   return transcription;
 }
 
@@ -223,7 +229,6 @@ std::vector<float> convertAudioToWhisperFormat(NSString *filePath, NSError **err
     return nil;
   }
   
-  // Check available memory
   mach_port_t host_port = mach_host_self();
   vm_size_t page_size;
   vm_statistics64_data_t vm_stat;
@@ -240,10 +245,8 @@ std::vector<float> convertAudioToWhisperFormat(NSString *filePath, NSError **err
   NSLog(@"🔧 WhisperEngine: C string path: %s", cPath);
   
   @try {
-    // Use the newer whisper_init_from_file_with_params instead of deprecated function
     struct whisper_context_params cparams = whisper_context_default_params();
     
-    // Disable GPU for simulator - Metal compute doesn't work well in simulators
     #if TARGET_OS_SIMULATOR
     cparams.use_gpu = false;
     NSLog(@"🔧 WhisperEngine: Running on SIMULATOR - GPU disabled");

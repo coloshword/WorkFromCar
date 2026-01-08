@@ -13,6 +13,5 @@ export function init(modelPath: string): Promise<void> {
 }
 
 export async function transcribeFile(filePath: string): Promise<string> {
-  console.log('transcribing file from index.ts');
   return await ExpoWhisperModule.transcribeFile(filePath);
 }

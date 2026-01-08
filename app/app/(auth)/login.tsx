@@ -37,6 +37,7 @@ export default function Login() {
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(audioRecorder);
   const player = useAudioPlayer();
+  const [transcription, setTranscription] = useState<string>("");
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
@@ -50,7 +51,6 @@ export default function Login() {
   const stopRecording = async () => {
     await audioRecorder.stop();
     const uri = recorderState.url;
-    console.log('uri', uri);
   };
 
   useEffect(() => {
@@ -77,12 +77,8 @@ export default function Login() {
         });
 
         // Only initialize whisper after permissions are granted
-        console.log('before ensureModelOnDisk');
         const modelUri = await ensureModelOnDisk();
-        console.log('after ensureModelOnDisk', modelUri);
-        console.log('before init');
         await init(modelUri);
-        console.log('after init');
       } catch (e) {
         console.error('init failed', e);
       }
@@ -135,7 +131,6 @@ export default function Login() {
         }
       } else if (response.type === "error") {
         setMsg("Google login error");
-        console.log("Google auth error:", response.error);
       } else if (response.type === "dismiss") {
         setMsg("Login cancelled");
       }
@@ -156,7 +151,8 @@ export default function Login() {
   const transcribeVoice = async () => {
     if (recorderState.url) {
       const transcription = await transcribeFile(recorderState.url);
-      console.log('transcribe file called');
+      console.log('transcribe file called', transcription);
+      setTranscription(transcription);
     }
   };
 
@@ -214,6 +210,7 @@ export default function Login() {
           >
             <Text> Playback voice </Text>
           </TouchableOpacity>
+          <Text style={styles.transcriptionText}> {transcription} </Text>
       </Animated.View>
     </View>
   );
@@ -336,6 +333,11 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   messageTextDark: {
+    color: "#fff",
+  },
+  transcriptionText: {
+    fontSize: 14,
+    textAlign: "center",
     color: "#fff",
   },
 });
