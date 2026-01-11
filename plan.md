@@ -53,3 +53,7 @@ The app is now clean, fast, and ready for production! 🚗✨
   - Send & Read emails from gmail
   - Transcribe text into a google doc
   - Basic web search (just going to enable web search on llm api)
+
+### Current feature:
+- live transcription while holding down button! 
+- 

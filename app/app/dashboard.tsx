@@ -105,20 +105,6 @@ export default function Dashboard() {
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.card, isDark && styles.cardDark]}>
-        <Text style={[styles.welcomeText, isDark && styles.textDark]}>
-          ✅ You're signed in
-        </Text>
-      </View>
-
-      <View style={[styles.card, isDark && styles.cardDark]}>
-        <Text style={[styles.cardTitle, isDark && styles.textDark]}>
-          API Response
-        </Text>
-        <Text style={[styles.responseText, isDark && styles.textSecondaryDark]} selectable>
-          {authOnlyText || "(empty)"}
-        </Text>
-      </View>
 
       <View style={[styles.card, isDark && styles.cardDark]}>
         <VoiceRecorder />
