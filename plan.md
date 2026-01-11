@@ -31,3 +31,25 @@ The app is now clean, fast, and ready for production! 🚗✨
   - call the wrapper function 
 
 2) Pull the transcription from the model 
+
+### What is the MVP going to be?
+1) User launches app, sees a clean first app screen with 'Login with Google'
+2) User logs in with google 
+
+3) Display: UI with instructions --> voiced out of course  & displayed as text
+  (Simple: "Hello! I'm your voice assistant, how can I help you today?")
+
+4) Active on device transcription for instructions
+  - show transcribed text on screen (allowing for cutoff) 
+  - also like a nice little audio visualization (show that it can hear you)
+
+5) Once you stop talking, recognize & send full transcribed text to server 
+
+6) AGENT LOOP: The loop will be when the agent decides to give control back to the user:
+- AGENT CHOOSES TOOL --> prompt user 
+- AGENT executes a command with a tool (i.e. transcribes user text and writes it into email) --> prompt user
+
+7) 2 "Killer features"
+  - Send & Read emails from gmail
+  - Transcribe text into a google doc
+  - Basic web search (just going to enable web search on llm api)
