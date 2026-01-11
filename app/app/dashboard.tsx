@@ -14,6 +14,9 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { authFetch } from "./backend/utils";
 import { ACCESS_TOKEN_KEY } from "./config";
+import VoiceRecorder from "./components/VoiceRecorder";
+import { init } from "expo-whisper";
+import { ensureModelOnDisk } from "./utils";
 
 export default function Dashboard() {
   const [isBooting, setIsBooting] = useState(true);
@@ -44,8 +47,18 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetchAuthData();
-    setIsBooting(false);
+    (async () => {
+      try {
+        // Initialize Whisper model for voice recording
+        const modelUri = await ensureModelOnDisk();
+        await init(modelUri);
+      } catch (e) {
+        console.error('Whisper init failed', e);
+      }
+      
+      await fetchAuthData();
+      setIsBooting(false);
+    })();
   }, []);
 
   const handleLogout = () => {
@@ -92,19 +105,9 @@ export default function Dashboard() {
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.card, isDark && styles.cardDark]}>
-        <Text style={[styles.welcomeText, isDark && styles.textDark]}>
-          ✅ You're signed in
-        </Text>
-      </View>
 
       <View style={[styles.card, isDark && styles.cardDark]}>
-        <Text style={[styles.cardTitle, isDark && styles.textDark]}>
-          API Response
-        </Text>
-        <Text style={[styles.responseText, isDark && styles.textSecondaryDark]} selectable>
-          {authOnlyText || "(empty)"}
-        </Text>
+        <VoiceRecorder />
       </View>
     </ScrollView>
   );
