@@ -7,7 +7,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest --config src/jest.config.js",
     "dev": "tsc --watch & nodemon build/api/server.js"
   },
   "devDependencies": {
