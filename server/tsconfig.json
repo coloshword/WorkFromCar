@@ -25,6 +25,12 @@
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
+    "typeRoots": ["./node_modules/@types", "../types"],
+    "paths": {
+      "Types/*": [
+        "../types/*"
+      ]
+    },
 
     // Style Options
     // "noImplicitReturns": true,
