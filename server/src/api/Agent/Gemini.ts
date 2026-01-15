@@ -7,7 +7,7 @@ const gemini = new GoogleGenAI({
   apiKey: GEMINI_API_KEY,
 });
 
-export async function generateAssistantMessage(
+export async function generateLLMMessage(
   messages: Message[], 
   systemInstruction?: string
 ): Promise<string> {

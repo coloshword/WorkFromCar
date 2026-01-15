@@ -7,11 +7,7 @@ export type AgentState = {
   messages: Message[];
 };
 
-export type ProposedAction = {
-  tool: string;
-};
-
 export type AgentResponse = {
-  assistantMessage: string;
-  proposedAction: ProposedAction;
+  message: Message;
+  tool: string;
 };
