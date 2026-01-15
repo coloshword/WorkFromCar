@@ -56,4 +56,23 @@ The app is now clean, fast, and ready for production! 🚗✨
 
 ### Current feature:
 - live transcription while holding down button! 
-- 
+
+### Current issue:
+- we created the message 
+- we are passing the message history
+- what we need is the LM to output something like:
+
+{
+  "assistant_message": "I can draft an email to Alex saying you’ll be late.",
+  "proposed_action": {
+    "tool": "gmail.createDraft",
+    "args": {
+    "to": "alex@example.com",
+    "body": "Hey Alex, I’ll be running late today."
+  }
+}
+
+Let's just get the assistant message, and the proposed_action: tool
+
+- Write a sample endpoint to google gemini, we'll be able to write something like sending an LM response 
+- Sample endpoint is done, now let's have it include a tool use 
