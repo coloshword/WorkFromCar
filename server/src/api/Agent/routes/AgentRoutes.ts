@@ -1,12 +1,25 @@
 import { Context } from 'koa';
 import * as z from "zod";
-import { LMState } from "Types/Agent";
+import { AgentState } from "Types/Agent";
+import { generateAssistantMessage } from '../Gemini';
+import { PLAN_INSTRUCTION } from '../AgentInstructions';
 
 const planRouteSchema = z.object({
-  payload: z.any(),
-});
+  messages: z.array(
+    z.object({
+      role: z.string(),
+      content: z.string(),
+    })
+  )
+}) satisfies z.ZodType<AgentState>;
 
 export const planRoute = async (ctx: Context) => {
-  const { payload } = planRouteSchema.parse(ctx.request.body);
+  const { messages } = planRouteSchema.parse(ctx.request.body);
+  const systemInstruction = PLAN_INSTRUCTION;
+  console.log(systemInstruction);
+  const assistantMessage = await generateAssistantMessage(messages, systemInstruction);
+  ctx.body = {
+    assistantMessage,
+  };
   ctx.status = 200;
 };
