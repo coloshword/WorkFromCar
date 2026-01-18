@@ -9,6 +9,7 @@ import {
 } from "expo-audio";
 import { transcribeFile } from "expo-whisper";
 import { styles } from "./styles";
+import { ttsSpeak } from "expo-whisper";
 
 export default function VoiceRecorder() {
   const colorScheme = useColorScheme();
@@ -91,7 +92,7 @@ export default function VoiceRecorder() {
     // Stop recording and transcribe
     try {
       await audioRecorder.stop();
-      
+      ttsSpeak("I can help you send an email to John Doe");
       // Wait a moment for the file to be ready
       setTimeout(async () => {
         if (recorderState.url) {

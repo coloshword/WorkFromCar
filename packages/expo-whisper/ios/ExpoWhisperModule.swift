@@ -1,5 +1,6 @@
 import ExpoModulesCore
 import Foundation
+import AVFoundation
 
 enum WhisperError: Error { 
   case initFailed(String)
@@ -14,6 +15,8 @@ enum WhisperError: Error {
 
 public class ExpoWhisperModule: Module {
   private var engine: WhisperEngine?;
+  private let ttsSynth = AVSpeechSynthesizer();
+  private let ttsSession = AVAudioSession.sharedInstance();
 
   public func definition() -> ModuleDefinition {
     Name("ExpoWhisper")
@@ -64,5 +67,59 @@ public class ExpoWhisperModule: Module {
       }
       self.engine = e
     }
-  }
+
+    Function("ttsConfigure") { (duckOthers: Bool) in
+      // Optional: call once on app start
+      do {
+        if duckOthers {
+          try self.ttsSession.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+        } else {
+          try self.ttsSession.setCategory(.playback, mode: .spokenAudio)
+        }
+        try self.ttsSession.setActive(true)
+      } catch {
+        NSLog("🗣️ TTS: audio session error: %@", error.localizedDescription)
+      }
+    }
+
+    Function("ttsSpeak") { (text: String, language: String?, rate: Double?, pitch: Double?, volume: Double?) in
+      DispatchQueue.main.async {
+        if self.ttsSynth.isSpeaking {
+          self.ttsSynth.stopSpeaking(at: .immediate)
+        }
+
+        let u = AVSpeechUtterance(string: text)
+
+        if let language = language, !language.isEmpty {
+          let voices = AVSpeechSynthesisVoice.speechVoices()
+          if let enhanced = voices.first(where: {
+            $0.language == language && $0.quality == .enhanced
+          }) {
+            u.voice = enhanced
+          } else {
+            u.voice = AVSpeechSynthesisVoice(language: language)
+          }
+        }
+
+        // if let rate = rate { u.rate = Float(rate) }
+        // if let pitch = pitch { u.pitchMultiplier = Float(pitch) }
+        // if let volume = volume { u.volume = Float(volume) }
+        u.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9
+        u.pitchMultiplier = 1.0
+        u.volume = 1.0
+
+        self.ttsSynth.speak(u)
+      }
+    }
+
+    Function("ttsStop") {
+      DispatchQueue.main.async {
+        self.ttsSynth.stopSpeaking(at: .immediate)
+      }
+    }
+
+    Function("ttsIsSpeaking") { () -> Bool in
+      return self.ttsSynth.isSpeaking
+    }
+    }
 }
