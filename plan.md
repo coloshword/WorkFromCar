@@ -76,5 +76,3 @@ Let's just get the assistant message, and the proposed_action: tool
 
 - Write a sample endpoint to google gemini, we'll be able to write something like sending an LM response 
 - Sample endpoint is done, now let's have it include a tool use 
-
-- Use AVSpeechSynthesizer for TTS
