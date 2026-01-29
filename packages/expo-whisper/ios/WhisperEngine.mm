@@ -251,7 +251,7 @@ std::vector<float> convertAudioToWhisperFormat(NSString *filePath, NSError **err
     cparams.use_gpu = false;
     NSLog(@"🔧 WhisperEngine: Running on SIMULATOR - GPU disabled");
     #else
-    cparams.use_gpu = true;
+    cparams.use_gpu = false; // set to use true when we fix the issue of the gpu
     NSLog(@"🔧 WhisperEngine: Running on DEVICE - GPU enabled");
     #endif
     

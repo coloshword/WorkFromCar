@@ -24,6 +24,12 @@ function parseModelJson(raw: string) {
 }
 
 export const planRoute = async (ctx: Context) => {
+  console.log(ctx.request.body);
+  if (!ctx.request.body) {
+    ctx.status = 400;
+    ctx.body = { error: "Request body is missing" };
+    return;
+  }
   const { messages } = planRouteSchema.parse(ctx.request.body);
   let lastError: unknown;
   for (let i = 0; i < PLAN_RETRY_COUNT; i++) {

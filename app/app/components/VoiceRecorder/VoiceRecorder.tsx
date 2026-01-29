@@ -9,9 +9,12 @@ import {
 } from "expo-audio";
 import { transcribeFile } from "expo-whisper";
 import { styles } from "./styles";
-import { ttsSpeak } from "expo-whisper";
 
-export default function VoiceRecorder() {
+interface VoiceRecorderProps {
+  onTranscriptionComplete?: (transcription: string) => void;
+}
+
+export default function VoiceRecorder({ onTranscriptionComplete }: VoiceRecorderProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
@@ -42,7 +45,6 @@ export default function VoiceRecorder() {
     })();
   }, []);
 
-  // Pulse animation when recording
   useEffect(() => {
     if (recorderState.isRecording) {
       Animated.loop(
@@ -92,16 +94,15 @@ export default function VoiceRecorder() {
     // Stop recording and transcribe
     try {
       await audioRecorder.stop();
-      ttsSpeak("I can help you send an email to John Doe");
       // Wait a moment for the file to be ready
       setTimeout(async () => {
         if (recorderState.url) {
           setIsTranscribing(true);
           try {
-            const result = await transcribeFile(recorderState.url);
+            let result = await transcribeFile(recorderState.url);
             setTranscription(result);
+            onTranscriptionComplete?.(result);
           } catch (error) {
-            console.error('Transcription failed', error);
             Alert.alert('Error', 'Failed to transcribe audio.');
           } finally {
             setIsTranscribing(false);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { 
   View, 
   Text, 
@@ -17,6 +17,7 @@ import { ACCESS_TOKEN_KEY } from "./config";
 import VoiceRecorder from "./components/VoiceRecorder";
 import { init } from "expo-whisper";
 import { ensureModelOnDisk } from "./utils";
+import Agent from "./Agent";
 
 export default function Dashboard() {
   const [isBooting, setIsBooting] = useState(true);
@@ -24,6 +25,9 @@ export default function Dashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  
+  // Instantiate Agent once per Dashboard lifecycle
+  const agent = useMemo(() => new Agent(), []);
 
   const fetchAuthData = async () => {
     try {
@@ -60,6 +64,13 @@ export default function Dashboard() {
       setIsBooting(false);
     })();
   }, []);
+
+  const handleTranscriptionComplete = useCallback((transcription: string) => {
+    agent.addMessage({
+      role: "user",
+      content: transcription,
+    });
+  }, [agent]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -107,7 +118,7 @@ export default function Dashboard() {
 
 
       <View style={[styles.card, isDark && styles.cardDark]}>
-        <VoiceRecorder />
+        <VoiceRecorder onTranscriptionComplete={handleTranscriptionComplete} />
       </View>
     </ScrollView>
   );
