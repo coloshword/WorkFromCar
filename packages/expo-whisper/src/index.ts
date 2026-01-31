@@ -1,5 +1,8 @@
 import ExpoWhisperModule from './ExpoWhisperModule';
 
+// Define the event subscription type locally
+type EventSubscription = { remove(): void };
+
 export function ping(): string {
   return ExpoWhisperModule.ping();
 }
@@ -22,7 +25,7 @@ export function ttsConfigure(duckOthers = true): void {
 
 export type TTSSpeakOptions = {
   language?: string; // e.g. "en-US"
-  rate?: number;     // iOS-ish float; keep near default unless you know what you’re doing
+  rate?: number;     // iOS-ish float; keep near default unless you know what you're doing
   pitch?: number;    // 0.5–2.0
   volume?: number;   // 0.0–1.0
 };
@@ -43,4 +46,46 @@ export function ttsStop(): void {
 
 export function ttsIsSpeaking(): boolean {
   return ExpoWhisperModule.ttsIsSpeaking();
+}
+
+// MARK: - VAD and Continuous Recording Functions
+
+export function startContinuousRecording(): boolean {
+  return ExpoWhisperModule.startContinuousRecording();
+}
+
+export function stopContinuousRecording(): void {
+  ExpoWhisperModule.stopContinuousRecording();
+}
+
+export function pauseListening(): void {
+  ExpoWhisperModule.pauseListening();
+}
+
+export function resumeListening(): void {
+  ExpoWhisperModule.resumeListening();
+}
+
+export function isListening(): boolean {
+  return ExpoWhisperModule.isListening();
+}
+
+export function isVoiceDetected(): boolean {
+  return ExpoWhisperModule.isVoiceDetected();
+}
+
+// MARK: - Event Listeners
+
+export function addVoiceStartListener(listener: () => void): EventSubscription {
+  return ExpoWhisperModule.addListener('onVoiceStart', listener);
+}
+
+export function addVoiceStopListener(listener: () => void): EventSubscription {
+  return ExpoWhisperModule.addListener('onVoiceStop', listener);
+}
+
+export function addTranscriptionCompleteListener(
+  listener: (event: { transcription: string; filePath: string }) => void
+): EventSubscription {
+  return ExpoWhisperModule.addListener('onTranscriptionComplete', listener);
 }

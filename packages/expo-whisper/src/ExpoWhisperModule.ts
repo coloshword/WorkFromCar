@@ -1,6 +1,8 @@
 import { NativeModule, requireNativeModule } from 'expo';
 import { ExpoWhisperModuleEvents } from './ExpoWhisper.types';
 
+type EventSubscription = { remove(): void };
+
 declare class ExpoWhisperModule extends NativeModule<ExpoWhisperModuleEvents> {
   ping: () => string;
   pingFromObjc: () => string;
@@ -16,6 +18,20 @@ declare class ExpoWhisperModule extends NativeModule<ExpoWhisperModuleEvents> {
   ) => void;
   ttsStop: () => void;
   ttsIsSpeaking: () => boolean;
+  
+  // VAD and continuous recording functions
+  startContinuousRecording: () => boolean;
+  stopContinuousRecording: () => void;
+  pauseListening: () => void;
+  resumeListening: () => void;
+  isListening: () => boolean;
+  isVoiceDetected: () => boolean;
+  
+  // Event emitters
+  addListener: <EventName extends keyof ExpoWhisperModuleEvents>(
+    eventName: EventName,
+    listener: ExpoWhisperModuleEvents[EventName]
+  ) => EventSubscription;
 }
 
 export default requireNativeModule<ExpoWhisperModule>('ExpoWhisper');
