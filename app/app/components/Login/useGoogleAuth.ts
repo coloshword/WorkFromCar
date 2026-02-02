@@ -47,6 +47,13 @@ export function useGoogleAuth() {
 
           const body = await res.json();
           const { token } = body;
+          
+          // Log token for Postman testing
+          console.log("=================================");
+          console.log("AUTH TOKEN FOR POSTMAN:");
+          console.log(token);
+          console.log("=================================");
+          
           await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, token);
           
           setMsg("Success! Redirecting...");

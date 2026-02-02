@@ -9,18 +9,19 @@ Do NOT include JSON inside any string field.
 
 export const PLAN_JSON_SCHEMA =`Schema (exact):
 {
-  "assistantMessage": string,
+  "assistant": string,
   "tool": string,
+  "toolParameters": object | null,
 }
 For example:
 {
-  "assistantMessage": "I'll help you draft an email to John",
+  "assistant": "I'll help you draft an email to John",
   "tool": "gmail.createDraft"
 }
 `
 
 export const PLAN_JSON_SCHEMA_SCHEMA = z.object({
-  assistantMessage: z.string(),
+  assistant: z.string(),
   tool: z.string(),
 });
 
