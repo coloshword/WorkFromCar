@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import { GEMINI_API_KEY } from '../Utils';
+import { GEMINI_API_KEY } from '../../Utils';
 import { Message } from 'Types/Agent';
 
 if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not defined");
@@ -18,7 +18,7 @@ export async function generateLLMMessage(
   }));
 
   const response = await gemini.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-3-flash-preview",
     contents,
     config: {
       systemInstruction: systemInstruction || "You are a helpful assistant.",

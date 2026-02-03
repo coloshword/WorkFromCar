@@ -14,7 +14,7 @@ export type AgentPlanResponse = {
 
 export type AgentTool = {
   tool: string;
-  toolParameters: Record<string, any>;
+  toolParameters: Record<string, string> | null;
 }
 
 export type LLMPlanResponse = {

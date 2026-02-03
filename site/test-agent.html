@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Agent Test Client</title>
+  <style>
+    body { 
+      font-family: monospace; 
+      margin: 20px;
+      max-width: 1200px;
+    }
+    #messages { 
+      border: 1px solid black; 
+      padding: 10px; 
+      height: 300px; 
+      overflow-y: scroll;
+      margin-bottom: 20px;
+      background: #f5f5f5;
+    }
+    .message {
+      margin: 10px 0;
+      padding: 5px;
+      background: white;
+      border-left: 3px solid #333;
+    }
+    .user { border-left-color: blue; }
+    .assistant { border-left-color: green; }
+    #jsonResponse {
+      border: 1px solid black;
+      padding: 10px;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      height: 200px;
+      overflow-y: scroll;
+      white-space: pre;
+      margin-bottom: 20px;
+    }
+    input {
+      width: 80%;
+      padding: 10px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    .error {
+      color: red;
+      margin: 10px 0;
+    }
+    #status {
+      margin: 10px 0;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>Agent Plan Endpoint Test</h1>
+  
+  <h2>Authorization</h2>
+  <input type="text" id="authToken" placeholder="Paste Bearer token here..." style="width: 90%; margin-bottom: 20px;" />
+  
+  <h2>Conversation History</h2>
+  <div id="messages"></div>
+  
+  <h2>Latest JSON Response</h2>
+  <div id="jsonResponse">No response yet</div>
+  
+  <h2>Send Message</h2>
+  <input type="text" id="userInput" placeholder="Type your message..." />
+  <button onclick="sendMessage()">Send</button>
+  <div id="status"></div>
+  <div id="error" class="error"></div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api/agent/plan';
+    let messages = [];
+
+    function displayMessages() {
+      const container = document.getElementById('messages');
+      container.innerHTML = messages.map(msg => 
+        `<div class="message ${msg.role}">[${msg.role}]: ${msg.content}</div>`
+      ).join('');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function displayJSON(data) {
+      document.getElementById('jsonResponse').textContent = JSON.stringify(data, null, 2);
+    }
+
+    function setStatus(text) {
+      document.getElementById('status').textContent = text;
+    }
+
+    function setError(text) {
+      document.getElementById('error').textContent = text;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('userInput');
+      const userMessage = input.value.trim();
+      
+      if (!userMessage) return;
+      
+      setError('');
+      setStatus('Sending...');
+      
+      // Add user message to history
+      messages.push({
+        role: 'user',
+        content: userMessage
+      });
+      
+      displayMessages();
+      input.value = '';
+      
+      try {
+        const authToken = document.getElementById('authToken').value.trim();
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        
+        if (authToken) {
+          headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        
+        console.log('Sending request with headers:', headers);
+        console.log('Auth token length:', authToken.length);
+        
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({ messages })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Display full JSON response
+        displayJSON(data);
+        
+        // Add assistant message to history
+        messages.push(data.message);
+        
+        displayMessages();
+        setStatus(`✓ Response received (tool: ${data.tool}, params: ${data.toolParameters ? 'ready' : 'null'})`);
+        
+      } catch (error) {
+        setError('Error: ' + error.message);
+        setStatus('');
+        // Remove the user message since request failed
+        messages.pop();
+        displayMessages();
+      }
+    }
+
+    // Allow Enter key to send
+    document.getElementById('userInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+    
+    // Initialize
+    displayMessages();
+  </script>
+</body>
+</html>
