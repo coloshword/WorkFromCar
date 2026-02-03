@@ -69,7 +69,7 @@ public class ExpoWhisperModule: Module {
           if let fileSize = attributes[.size] as? NSNumber {
           }
         } catch {
-          print("🎤 ExpoWhisper: Error getting file attributes: \(error.localizedDescription)")
+          print("🎤 ExpoWhisper: Error getting file attributes: (error.localizedDescription)")
         }
       }
       
@@ -90,7 +90,7 @@ public class ExpoWhisperModule: Module {
         }
         try self.ttsSession.setActive(true)
       } catch {
-        print("🗣️ TTS: audio session error: \(error.localizedDescription)")
+        print("🗣️ TTS: audio session error: (error.localizedDescription)")
       }
     }
 
@@ -215,7 +215,7 @@ public class ExpoWhisperModule: Module {
       return true
       
     } catch {
-      print("🎤 VAD: Error starting recording: \(error.localizedDescription)")
+      print("🎤 VAD: Error starting recording: (error.localizedDescription)")
       return false
     }
   }
@@ -362,7 +362,7 @@ public class ExpoWhisperModule: Module {
       
       let transcription = engine.transcribeFile(recordingURL.path)
       
-      print("🎤 VAD: Transcription completed: \(transcription)")
+      NSLog("🎤 VAD: Transcription completed: %@", transcription)
       
       // Emit transcription result
       DispatchQueue.main.async {
@@ -397,7 +397,7 @@ public class ExpoWhisperModule: Module {
           
           NSLog("🎤 VAD: Ready for next recording segment")
         } catch {
-          print("🎤 VAD: Error restarting recorder: \(error.localizedDescription)")
+          print("🎤 VAD: Error restarting recorder: (error.localizedDescription)")
         }
       }
     }

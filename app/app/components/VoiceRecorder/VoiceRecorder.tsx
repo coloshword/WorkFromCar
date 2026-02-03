@@ -1,24 +1,33 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, Alert, useColorScheme, Animated } from "react-native";
-import { 
+import React, { useEffect, useState, useRef } from "react";
+import { View, Text, Animated, useColorScheme, Alert } from "react-native";
+import {
   AudioModule,
-  useAudioRecorder,
-  useAudioRecorderState,
-  RecordingPresets,
   setAudioModeAsync,
 } from "expo-audio";
-import { transcribeFile } from "expo-whisper";
+import {
+  startContinuousRecording,
+  stopContinuousRecording,
+  addVoiceStartListener,
+  addVoiceStopListener,
+  addTranscriptionCompleteListener,
+} from "expo-whisper";
 import { styles } from "./styles";
 
-export default function VoiceRecorder() {
+interface VoiceRecorderProps {
+  onTranscriptionComplete?: (transcription: string) => void;
+}
+
+export default function VoiceRecorder({ onTranscriptionComplete }: VoiceRecorderProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const recorderState = useAudioRecorderState(audioRecorder);
+  
+  const [isListening, setIsListening] = useState(false);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [transcription, setTranscription] = useState<string>("");
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const scaleAnim = useState(new Animated.Value(1))[0];
-  const pulseAnim = useState(new Animated.Value(1))[0];
+  
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const eventListenersRef = useRef<any[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -26,7 +35,7 @@ export default function VoiceRecorder() {
         // Request audio permissions
         const status = await AudioModule.requestRecordingPermissionsAsync();
         if (!status.granted) {
-          Alert.alert('Permission Required', 'Microphone permission is required to record audio.');
+          Alert.alert('Permission Required', 'Microphone permission is required for voice detection.');
           return;
         }
         
@@ -34,146 +43,165 @@ export default function VoiceRecorder() {
           playsInSilentMode: true,
           allowsRecording: true,
         });
+        
+        // Start continuous recording with VAD
+        const started = startContinuousRecording();
+        if (started) {
+          setIsListening(true);
+          console.log('🎤 VoiceRecorder: Continuous recording started');
+        } else {
+          console.error('🎤 VoiceRecorder: Failed to start continuous recording');
+        }
       } catch (e) {
-        console.error('Audio initialization failed', e);
-        Alert.alert('Error', 'Failed to initialize audio recording.');
+        console.error('🎤 VoiceRecorder: Audio initialization failed', e);
+        Alert.alert('Error', 'Failed to initialize voice recording.');
       }
     })();
+
+    return () => {
+      // Cleanup: remove event listeners and stop recording
+      eventListenersRef.current.forEach(listener => listener.remove());
+      eventListenersRef.current = [];
+      stopContinuousRecording();
+      console.log('🎤 VoiceRecorder: Cleaned up continuous recording');
+    };
   }, []);
 
-  // Pulse animation when recording
   useEffect(() => {
-    if (recorderState.isRecording) {
-      Animated.loop(
+    // Set up event listeners
+    const voiceStartListener = addVoiceStartListener(() => {
+      console.log('🎤 VoiceRecorder: Voice START detected');
+      setIsRecordingVoice(true);
+      setTranscription(""); // Clear previous transcription when new speech starts
+    });
+
+    const voiceStopListener = addVoiceStopListener(() => {
+      console.log('🎤 VoiceRecorder: Voice STOP detected');
+      setIsRecordingVoice(false);
+      setIsTranscribing(true);
+    });
+
+    const transcriptionListener = addTranscriptionCompleteListener((event) => {
+      console.log('🎤 VoiceRecorder: Transcription complete:', event.transcription);
+      setTranscription(event.transcription);
+      setIsTranscribing(false);
+      
+      // Call the callback with the transcription
+      if (event.transcription && event.transcription.trim().length > 0) {
+        onTranscriptionComplete?.(event.transcription);
+      }
+    });
+
+    // Store listeners for cleanup
+    eventListenersRef.current = [
+      voiceStartListener,
+      voiceStopListener,
+      transcriptionListener,
+    ];
+
+    return () => {
+      // This cleanup happens when the listeners need to be refreshed
+      eventListenersRef.current.forEach(listener => listener.remove());
+      eventListenersRef.current = [];
+    };
+  }, [onTranscriptionComplete]);
+
+  // Pulsing animation for the voice indicator
+  useEffect(() => {
+    let animation: Animated.CompositeAnimation;
+    
+    if (isRecordingVoice) {
+      // Fast, active pulse when recording voice
+      animation = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
-            toValue: 1.1,
-            duration: 800,
+            toValue: 1.2,
+            duration: 600,
             useNativeDriver: true,
           }),
           Animated.timing(pulseAnim, {
             toValue: 1,
-            duration: 800,
+            duration: 600,
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+    } else if (isListening) {
+      // Gentle, slow pulse when listening but no voice detected
+      animation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.05,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+        ])
+      );
     } else {
+      // Not listening - static
       pulseAnim.setValue(1);
+      return;
     }
-  }, [recorderState.isRecording]);
 
-  const handlePressIn = async () => {
-    // Animate button press
-    Animated.spring(scaleAnim, {
-      toValue: 0.95,
-      useNativeDriver: true,
-    }).start();
+    animation.start();
 
-    // Start recording
-    try {
-      setTranscription(""); // Clear previous transcription
-      await audioRecorder.prepareToRecordAsync();
-      audioRecorder.record();
-    } catch (error) {
-      console.error('Failed to start recording', error);
-      Alert.alert('Error', 'Failed to start recording.');
-    }
-  };
-
-  const handlePressOut = async () => {
-    // Animate button release
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-    }).start();
-
-    // Stop recording and transcribe
-    try {
-      await audioRecorder.stop();
-      
-      // Wait a moment for the file to be ready
-      setTimeout(async () => {
-        if (recorderState.url) {
-          setIsTranscribing(true);
-          try {
-            const result = await transcribeFile(recorderState.url);
-            setTranscription(result);
-          } catch (error) {
-            console.error('Transcription failed', error);
-            Alert.alert('Error', 'Failed to transcribe audio.');
-          } finally {
-            setIsTranscribing(false);
-          }
-        }
-      }, 100);
-    } catch (error) {
-      console.error('Failed to stop recording', error);
-      Alert.alert('Error', 'Failed to stop recording.');
-    }
-  };
+    return () => {
+      animation?.stop();
+    };
+  }, [isRecordingVoice, isListening, pulseAnim]);
 
   return (
     <View style={styles.container}>
-      
-      <View style={styles.buttonWrapper}>
+      {/* Transcription Card */}
+      <View style={styles.transcriptionCardContainer}>
+        {isTranscribing ? (
+          <View style={[styles.transcriptionCard, isDark && styles.transcriptionCardDark]}>
+            <Text style={[styles.transcribingText, isDark && styles.transcribingTextDark]}>
+              Transcribing...
+            </Text>
+          </View>
+        ) : transcription ? (
+          <View style={[styles.transcriptionCard, isDark && styles.transcriptionCardDark]}>
+            <Text style={[styles.transcriptionLabel, isDark && styles.transcriptionLabelDark]}>
+              Transcription
+            </Text>
+            <Text style={[styles.transcriptionContent, isDark && styles.transcriptionContentDark]}>
+              {transcription}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
+      {/* Voice Indicator - Centered */}
+      <View style={styles.voiceIndicatorContainer}>
         <Animated.View
           style={[
-            styles.buttonPulse,
-            recorderState.isRecording && styles.buttonPulseActive,
+            styles.voiceIndicatorOuter,
+            isRecordingVoice && styles.voiceIndicatorOuterActive,
             {
               transform: [{ scale: pulseAnim }],
             },
           ]}
-        />
-        
-        <TouchableOpacity
-          style={[
-            styles.recordButton,
-            recorderState.isRecording && styles.recordButtonActive,
-          ]}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          activeOpacity={1}
         >
-          <Animated.View
-            style={[
-              styles.buttonInner,
-              {
-                transform: [{ scale: scaleAnim }],
-              },
-            ]}
-          >
-            <Text style={styles.micIcon}>
-            </Text>
-          </Animated.View>
-        </TouchableOpacity>
+          <View style={[
+            styles.voiceIndicatorInner,
+            isRecordingVoice && styles.voiceIndicatorInnerActive,
+          ]} />
+        </Animated.View>
+        
+        <Text style={[styles.statusText, isDark && styles.statusTextDark]}>
+          {isRecordingVoice 
+            ? "Recording..." 
+            : isListening 
+              ? "Listening..." 
+              : "Initializing..."}
+        </Text>
       </View>
-
-      <Text style={[styles.instructionText, isDark && styles.instructionTextDark]}>
-        {recorderState.isRecording
-          ? "Recording... Release to transcribe"
-          : "Hold to record"}
-      </Text>
-
-      {isTranscribing && (
-        <View style={[styles.transcriptionContainer, isDark && styles.transcriptionContainerDark]}>
-          <Text style={[styles.transcriptionText, isDark && styles.transcriptionTextDark]}>
-            ✨ Transcribing...
-          </Text>
-        </View>
-      )}
-
-      {transcription && !isTranscribing ? (
-        <View style={[styles.transcriptionContainer, isDark && styles.transcriptionContainerDark]}>
-          <Text style={[styles.transcriptionTitle, isDark && styles.titleDark]}>
-            Transcription:
-          </Text>
-          <Text style={[styles.transcriptionText, isDark && styles.transcriptionTextDark]}>
-            {transcription}
-          </Text>
-        </View>
-      ) : null}
     </View>
   );
 }

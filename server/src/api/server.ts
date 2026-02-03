@@ -5,11 +5,13 @@ dotenv.config();
 import Router from '@koa/router';
 import routes from "./Routes";
 import bodyParser from 'koa-bodyparser';
+import cors from '@koa/cors';
 
 const server = new koa();
 const router = new Router();
 router.use('/api', routes);
 
+server.use(cors());
 server.use(bodyParser());
 server.use(router.routes());
 

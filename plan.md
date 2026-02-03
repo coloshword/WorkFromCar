@@ -1,78 +1,29 @@
-1) set up basic koa server -- done 
+## Focus purely on the api 
 
-2) set up basic infra -- done 
+The flow:
+User message → /plan endpoint
+Response has toolParameters === null?
+Yes → Show assistantMessage, stay in plan mode, get next user input, repeat
+No → Show assistantMessage, then call /execute with tool + toolParameters
+/execute runs the actual action (creates draft, etc.) and returns result
+Benefits:
+/plan is pure reasoning - no side effects, safe to retry
+/execute is where actual actions happen - creates drafts, sends emails, etc.
+Clear separation makes it easy to add confirmations ("Execute this action? Y/N")
+Client can log/audit all planned actions before execution
+Type structure:
+```
+// /plan response{  assistantMessage: string,  tool: string,  toolParameters: Record<string, any> | null}// /execute request{  tool: string,  toolParameters: Record<string, any>}// /execute response{  success: boolean,  result: any  // tool-specific result}
+```
+### Plan API
+First thing: plan API. The api we hit for purely planning. 
+- `api/agent/plan`:
+  input:
+    {
+      messages: Message[]
+    }
 
-3) set up endpoints for basic google auth
+  output:
+    {
 
-4) use whisper.cpp for on device transcription
-
-
-Next Steps:
-Run npm install or npx expo install to update dependencies
-Test the app with npx expo start
-Build standalone app with eas build or expo build
-The app is now clean, fast, and ready for production! 🚗✨
-
-
-### creating the whisper transcription functions 
-
-0) ensure the audio is actually being recorded 
-  -- done 
-
-1) Pass an audio file to the whisper model
-  cot: first we create a bridge, ensure that the mm function is being called 
-  ok the index.ts file is called, next we call the swift file 
-  - make sure besides the index.ts, we also call the ExpoWhisperModule function
-  - swift transcribe file is called
-  - last bridge is the mm file -- CALLED
-  - engine.<fn>() to call the mm file  -- CALLED
-  - before we call the wrapper function, we must define an objective c function to convert the file to a specific format 
-  
-  - call the wrapper function 
-
-2) Pull the transcription from the model 
-
-### What is the MVP going to be?
-1) User launches app, sees a clean first app screen with 'Login with Google'
-2) User logs in with google 
-
-3) Display: UI with instructions --> voiced out of course  & displayed as text
-  (Simple: "Hello! I'm your voice assistant, how can I help you today?")
-
-4) Active on device transcription for instructions
-  - show transcribed text on screen (allowing for cutoff) 
-  - also like a nice little audio visualization (show that it can hear you)
-
-5) Once you stop talking, recognize & send full transcribed text to server 
-
-6) AGENT LOOP: The loop will be when the agent decides to give control back to the user:
-- AGENT CHOOSES TOOL --> prompt user 
-- AGENT executes a command with a tool (i.e. transcribes user text and writes it into email) --> prompt user
-
-7) 2 "Killer features"
-  - Send & Read emails from gmail
-  - Transcribe text into a google doc
-  - Basic web search (just going to enable web search on llm api)
-
-### Current feature:
-- live transcription while holding down button! 
-
-### Current issue:
-- we created the message 
-- we are passing the message history
-- what we need is the LM to output something like:
-
-{
-  "assistant_message": "I can draft an email to Alex saying you’ll be late.",
-  "proposed_action": {
-    "tool": "gmail.createDraft",
-    "args": {
-    "to": "alex@example.com",
-    "body": "Hey Alex, I’ll be running late today."
-  }
-}
-
-Let's just get the assistant message, and the proposed_action: tool
-
-- Write a sample endpoint to google gemini, we'll be able to write something like sending an LM response 
-- Sample endpoint is done, now let's have it include a tool use 
+    }
