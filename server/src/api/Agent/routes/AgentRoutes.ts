@@ -1,8 +1,9 @@
 import { Context } from 'koa';
 import * as z from "zod";
 import { AgentPlanResponse, AgentState, Message } from "Types/Agent";
-import { generateLLMMessage } from '../utils/Gemini';
+import { generateLLMMessage, generateOpenAIMessage } from '../utils/Gemini';
 import { PLAN_INSTRUCTION, PLAN_JSON_SCHEMA_SCHEMA, PLAN_RETRY_COUNT } from '../utils/AgentInstructions';
+import { verifyLLMPlan } from '../actions/PlanActions';
 
 const planRouteSchema = z.object({
   messages: z.array(
@@ -15,19 +16,20 @@ const planRouteSchema = z.object({
 
 export const planRoute = async (ctx: Context) => {
   const { messages } = planRouteSchema.parse(ctx.request.body);
-  const lmResponse = await generateLLMMessage(messages, PLAN_INSTRUCTION);
-  const lmResponseJson = JSON.parse(lmResponse);
-  console.log(lmResponseJson);
-  // create the message
+  //const lmResponse = await generateLLMMessage(messages, PLAN_INSTRUCTION);
+  const lmResponse = await generateOpenAIMessage(messages, 'gpt-4o-mini', PLAN_INSTRUCTION);
+  const plan = verifyLLMPlan(lmResponse);
+
   const message: Message = {
     role: "assistant",
-    content: lmResponseJson.assistant,
+    content: plan.assistant,
   }
-  console.log(message);
-  delete lmResponseJson.assistant;
   const response: AgentPlanResponse = {
-    ...lmResponseJson,
-    message
+    message,
+    tool: {
+      tool: plan.tool,
+      toolParameters: plan.toolParameters,
+    }
   }
   ctx.body = response;
   ctx.status = 200;

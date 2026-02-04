@@ -1,10 +1,16 @@
 import { GoogleGenAI } from '@google/genai';
-import { GEMINI_API_KEY } from '../../Utils';
+import OpenAI from 'openai';
+import { GEMINI_API_KEY, OPENAI_API_KEY } from '../../Utils';
 import { Message } from 'Types/Agent';
 
 if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not defined");
 const gemini = new GoogleGenAI({
   apiKey: GEMINI_API_KEY,
+});
+
+if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not defined");
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY,
 });
 
 export async function generateLLMMessage(
@@ -25,4 +31,33 @@ export async function generateLLMMessage(
     }
   });
   return response?.text ?? "";
+}
+
+export async function generateOpenAIMessage(
+  messages: Message[],
+  model: string,
+  systemInstruction?: string
+): Promise<string> {
+  // Prepare messages array with optional system instruction
+  const openaiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
+  
+  if (systemInstruction) {
+    openaiMessages.push({
+      role: "system",
+      content: systemInstruction
+    });
+  }
+  
+  // Add user/assistant messages
+  openaiMessages.push(...messages.map(msg => ({
+    role: msg.role as "user" | "assistant" | "system",
+    content: msg.content
+  })));
+
+  const completion = await openai.chat.completions.create({
+    model,
+    messages: openaiMessages,
+  });
+
+  return completion.choices[0]?.message?.content ?? "";
 }
