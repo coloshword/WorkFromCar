@@ -29,7 +29,7 @@ For example:
 export const PLAN_JSON_SCHEMA_SCHEMA = z.object({
   assistant: z.string(),
   tool: z.string(),
-  toolParameters: z.record(z.string(), z.any())
+  toolParameters: z.record(z.string(), z.any()).nullable()
 }) satisfies z.ZodType<LLMPlanResponse>;
 
 export const TOOL_INSTRUCTION = `
