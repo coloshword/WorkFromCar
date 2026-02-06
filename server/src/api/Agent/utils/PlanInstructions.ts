@@ -43,4 +43,4 @@ Rules:
 
 export const PLAN_INSTRUCTION = `${SYSTEM_INSTRUCTION} ${PLAN_JSON_SCHEMA} ${TOOL_INSTRUCTION}`;
 
-export const PLAN_RETRY_COUNT = 3;
+export const RETRY_COUNT = 3;

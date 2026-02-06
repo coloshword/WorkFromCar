@@ -27,3 +27,6 @@ First thing: plan API. The api we hit for purely planning.
     {
 
     }
+
+-  Now we need to verify: does JSON.parse: parse null string as null?
+22:25
