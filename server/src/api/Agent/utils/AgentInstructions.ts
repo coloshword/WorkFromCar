@@ -1,5 +1,5 @@
 import { LLMPlanResponse } from "Types/Agent";
-import { TOOLS } from "./AgentToolSpec";
+import { ALL_TOOLS_DESCRIPTION } from "./AgentToolSpec";
 import * as z from "zod";
 
 export const SYSTEM_INSTRUCTION = `
@@ -34,7 +34,7 @@ export const PLAN_JSON_SCHEMA_SCHEMA = z.object({
 
 export const TOOL_INSTRUCTION = `
 For tool use, follow the tool instructions. For tool parameters, if you don't know the parameter, set it to null and nothing else. Do not fill in with example values that weren't explicitly provided. Instead, ask the user for the parameter. If a parameter is null, ask the user for it. Keep asking until none of the parameters are null. 
-${TOOLS}
+${ALL_TOOLS_DESCRIPTION}
 Rules:
 - Only set a parameter if the user explicitly provided it.
 - If any required parameter is missing, ask the user for it (ask for one missing parameter at a time), then set it.
