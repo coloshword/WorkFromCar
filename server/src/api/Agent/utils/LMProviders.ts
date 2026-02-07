@@ -96,36 +96,3 @@ export async function generateOpenRouterMessage(
 
   return completion.choices[0]?.message?.content ?? "";
 }
-
-export async function JSONRetryPolicyGenerate(
-  messages: Message[],
-  model: string,
-  systemInstruction: string,
-  fn: (messages: Message[], model: string, systemInstruction: string) => Promise<string>,
-  retryCount: number = 3,
-): Promise<object> {
-  let curRetries = 0;
-  while (curRetries < retryCount) {
-    const lmResponse = await fn(messages, model, systemInstruction);
-    try {
-      const lmResponseJson = JSON.parse(lmResponse);
-      return lmResponseJson;
-    }
-    catch {
-      curRetries += 1;
-      // append new message
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: lmResponse,
-      }
-      const retryMessage: Message = {
-        role: "system",
-        content: "Your last response was not valid JSON. Please try again."
-      }
-      messages.push(assistantMessage);
-      messages.push(retryMessage);
-      continue;
-    }
-  }
-  throw new Error(`Failed to generate JSON after ${retryCount} attempts`);
-}

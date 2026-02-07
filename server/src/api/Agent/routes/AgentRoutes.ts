@@ -1,9 +1,8 @@
 import { Context } from 'koa';
 import * as z from "zod";
 import { AgentPlanResponse, AgentState, Message } from "Types/Agent";
-import { generateLLMMessage, generateOpenAIMessage, generateOpenRouterMessage, JSONRetryPolicyGenerate } from '../utils/Gemini';
 import { PLAN_INSTRUCTION, PLAN_JSON_SCHEMA_SCHEMA } from '../utils/PlanInstructions';
-import { verifyLLMPlan } from '../actions/PlanActions';
+import { generateLLMPlan } from '../actions/PlanActions';
 import { RETRY_COUNT } from '../utils/PlanInstructions';
 
 const planRouteSchema = z.object({
@@ -17,9 +16,10 @@ const planRouteSchema = z.object({
 
 export const planRoute = async (ctx: Context) => {
   const { messages } = planRouteSchema.parse(ctx.request.body);
-  const lmResponseJson = await JSONRetryPolicyGenerate(messages, 'openai/gpt-oss-120b', PLAN_INSTRUCTION, generateOpenRouterMessage, RETRY_COUNT);
-  const plan = verifyLLMPlan(lmResponseJson);
-
+  const plan = await generateLLMPlan(messages);
+  if (!plan.toolParameters) {
+    throw new Error("Tool parameters are null");
+  }
   const message: Message = {
     role: "assistant",
     content: plan.assistant,

@@ -30,3 +30,9 @@ First thing: plan API. The api we hit for purely planning.
 
 -  Now we need to verify: does JSON.parse: parse null string as null?
 22:25
+
+### Execute API
+- so the plan API is actually done!
+- the next thing is to do the execute API which should actually execute the values, if all values are not null
+- but before we make everything not null, we need to actually turn the values into null
+
