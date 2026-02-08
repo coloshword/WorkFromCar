@@ -27,3 +27,7 @@ export type ExecuteState = {
   messages: Message[];
   tool: AgentTool;
 }
+
+export type ExecuteResult = {
+  message: Message;
+}

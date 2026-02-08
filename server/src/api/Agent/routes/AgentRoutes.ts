@@ -2,6 +2,7 @@ import { Context } from 'koa';
 import * as z from "zod";
 import { AgentPlanResponse, PlanState, Message, ExecuteState } from "Types/Agent";
 import { generateLLMPlan } from '../actions/PlanActions';
+import { executeTool } from '../actions/ExecuteActions';
 
 const planRouteSchema = z.object({
   messages: z.array(
@@ -43,7 +44,9 @@ const executeToolRouteSchema = z.object({
   })
 }) satisfies z.ZodType<ExecuteState>;
 
-export const executeToolRoute = async (ctx: Context) => {
+export const executeRoute = async (ctx: Context) => {
   const { messages, tool } = executeToolRouteSchema.parse(ctx.request.body);
-  console.log("EXECUTE TOOL ROUTE CALLED WITH MESSAGES AND TOOL", messages, tool);
+  const result = await executeTool(tool);
+  ctx.body = result;
+  ctx.status = 200;
 }
