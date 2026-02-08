@@ -1,2 +1,0 @@
-// App utility functions
-export {};
