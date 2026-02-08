@@ -1,6 +1,6 @@
 import { Context } from 'koa';
 import * as z from "zod";
-import { AgentPlanResponse, AgentState, Message } from "Types/Agent";
+import { AgentPlanResponse, PlanState, Message, ExecuteState } from "Types/Agent";
 import { generateLLMPlan } from '../actions/PlanActions';
 
 const planRouteSchema = z.object({
@@ -10,14 +10,11 @@ const planRouteSchema = z.object({
       content: z.string(),
     })
   )
-}) satisfies z.ZodType<AgentState>;
+}) satisfies z.ZodType<PlanState>;
 
 export const planRoute = async (ctx: Context) => {
   const { messages } = planRouteSchema.parse(ctx.request.body);
   const plan = await generateLLMPlan(messages);
-  if (!plan.toolParameters) {
-    throw new Error("Tool parameters are null");
-  }
   const message: Message = {
     role: "assistant",
     content: plan.assistant,
@@ -33,6 +30,20 @@ export const planRoute = async (ctx: Context) => {
   ctx.status = 200;
 };
 
+const executeToolRouteSchema = z.object({
+  messages: z.array(
+    z.object({
+      role: z.string(),
+      content: z.string(),
+    })
+  ),
+  tool: z.object({
+    tool: z.string(),
+    toolParameters: z.record(z.string(), z.any()).nullable()
+  })
+}) satisfies z.ZodType<ExecuteState>;
+
 export const executeToolRoute = async (ctx: Context) => {
-  
+  const { messages, tool } = executeToolRouteSchema.parse(ctx.request.body);
+  console.log("EXECUTE TOOL ROUTE CALLED WITH MESSAGES AND TOOL", messages, tool);
 }

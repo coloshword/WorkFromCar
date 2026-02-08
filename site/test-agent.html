@@ -72,8 +72,11 @@
   <div id="error" class="error"></div>
 
   <script>
-    const API_URL = 'http://localhost:3000/api/agent/plan';
+    const PLAN_API_URL = 'http://localhost:3000/api/agent/plan';
+    const EXECUTE_API_URL = 'http://localhost:3000/api/agent/execute';
     let messages = [];
+    let planOrExecute = 'plan';
+    let executeObj = null;
 
     function displayMessages() {
       const container = document.getElementById('messages');
@@ -123,30 +126,67 @@
           headers['Authorization'] = `Bearer ${authToken}`;
         }
         
+        console.log('Mode:', planOrExecute);
         console.log('Sending request with headers:', headers);
-        console.log('Auth token length:', authToken.length);
         
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify({ messages })
-        });
+        let response, data;
         
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        if (planOrExecute === 'execute') {
+          // Execute the tool
+          console.log('Executing tool:', executeObj);
+          response = await fetch(EXECUTE_API_URL, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(executeObj)
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+          }
+          
+          data = await response.json();
+          displayJSON(data);
+          
+          // Reset to plan mode after execution
+          planOrExecute = 'plan';
+          executeObj = null;
+          setStatus(`✓ Tool executed successfully`);
+          
+        } else {
+          // Plan mode - call the plan endpoint
+          response = await fetch(PLAN_API_URL, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({ messages })
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+          }
+          
+          data = await response.json();
+          
+          // Display full JSON response
+          displayJSON(data);
+          
+          // Add assistant message to history
+          messages.push(data.message);
+          
+          displayMessages();
+          setStatus(`✓ Response received (tool: ${data.tool.tool})`);
+          
+          // Check if the tool call has all parameters and switch to execute mode
+          if (data.tool.toolParameters && Object.values(data.tool.toolParameters).every(param => param !== null)) {
+            planOrExecute = 'execute';
+            executeObj = {
+              messages: messages,
+              tool: data.tool,
+            };
+            setStatus(`✓ Plan ready. Next message will execute: ${data.tool.tool}`);
+          }
         }
-        
-        const data = await response.json();
-        
-        // Display full JSON response
-        displayJSON(data);
-        
-        // Add assistant message to history
-        messages.push(data.message);
-        
-        displayMessages();
-        setStatus(`✓ Response received (tool: ${data.tool}, params: ${data.toolParameters ? 'ready' : 'null'})`);
         
       } catch (error) {
         setError('Error: ' + error.message);
