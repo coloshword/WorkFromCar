@@ -39,6 +39,7 @@ Rules:
 - Only set a parameter if the user explicitly provided it.
 - If any required parameter is missing, ask the user for it (ask for one missing parameter at a time), then set it.
 - Never invent recipients, subjects, or email body content. If not provided, leave null until the user supplies it.
+- Once you have all the parameters, in the assistant message, you must ask them for confirmation to execute the tool.
 `;
 
 export const PLAN_INSTRUCTION = `${SYSTEM_INSTRUCTION} ${PLAN_JSON_SCHEMA} ${TOOL_INSTRUCTION}`;
