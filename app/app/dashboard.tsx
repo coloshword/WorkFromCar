@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { 
   View, 
   Text, 
@@ -14,10 +14,6 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { authFetch } from "./backend/utils";
 import { ACCESS_TOKEN_KEY } from "./config";
-import VoiceRecorder from "./components/VoiceRecorder";
-import { init } from "expo-whisper";
-import { ensureModelOnDisk } from "./utils";
-import Agent from "./Agent";
 
 export default function Dashboard() {
   const [isBooting, setIsBooting] = useState(true);
@@ -26,9 +22,6 @@ export default function Dashboard() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   
-  // Instantiate Agent once per Dashboard lifecycle
-  const agent = useMemo(() => new Agent(), []);
-
   const fetchAuthData = async () => {
     try {
       const res = await authFetch("/api/auth/authOnly");
@@ -52,25 +45,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     (async () => {
-      try {
-        // Initialize Whisper model for voice recording
-        const modelUri = await ensureModelOnDisk();
-        await init(modelUri);
-      } catch (e) {
-        console.error('Whisper init failed', e);
-      }
-      
       await fetchAuthData();
       setIsBooting(false);
     })();
   }, []);
-
-  const handleTranscriptionComplete = useCallback((transcription: string) => {
-    agent.addMessage({
-      role: "user",
-      content: transcription,
-    });
-  }, [agent]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -118,7 +96,12 @@ export default function Dashboard() {
 
 
       <View style={[styles.card, isDark && styles.cardDark]}>
-        <VoiceRecorder onTranscriptionComplete={handleTranscriptionComplete} />
+        <Text style={[styles.welcomeText, isDark && styles.textDark]}>
+          Welcome! You are logged in with Google.
+        </Text>
+        <Text style={[styles.statusText, isDark && styles.textSecondaryDark]}>
+          {authOnlyText}
+        </Text>
       </View>
     </ScrollView>
   );
@@ -189,17 +172,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
     color: "#000",
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "600",
     marginBottom: 12,
-    color: "#000",
   },
-  responseText: {
+  statusText: {
     fontSize: 14,
     color: "#666",
-    lineHeight: 20,
+    textAlign: "center",
   },
   loadingText: {
     marginTop: 12,

@@ -35,4 +35,9 @@ First thing: plan API. The api we hit for purely planning.
 - so the plan API is actually done!
 - the next thing is to do the execute API which should actually execute the values, if all values are not null
 - but before we make everything not null, we need to actually turn the values into null
+- and print the access token
 
+- working on adding the execute access:
+- redo-access.
+
+- we will make createDraft actually send the email, we will then refactor

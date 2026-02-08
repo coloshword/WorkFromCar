@@ -1,6 +1,6 @@
 import { PLAN_JSON_SCHEMA_SCHEMA } from "../utils/PlanInstructions";
 import { LLMPlanResponse } from "Types/Agent";
-import { emailCreateDraftParametersSchema } from "../tools/EmailCreateDraft";
+import { emailCreateDraftParametersSchema } from "../tools/gmail/EmailCreateDraft";
 import { PLAN_INSTRUCTION, RETRY_COUNT } from "../utils/PlanInstructions";
 import { Message } from "Types/Agent";
 import { generateOpenRouterMessage } from "../utils/LMProviders";

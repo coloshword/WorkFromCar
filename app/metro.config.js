@@ -16,10 +16,6 @@ config.resolver.nodeModulesPaths = [
 
 // 3. Force Metro to resolve the local package correctly
 config.resolver.extraNodeModules = {
-  'expo-whisper': path.resolve(workspaceRoot, 'packages/expo-whisper'),
 };
-
-// 4. Add .bin as an asset extension so Metro can bundle model files
-config.resolver.assetExts.push('bin');
 
 module.exports = config;

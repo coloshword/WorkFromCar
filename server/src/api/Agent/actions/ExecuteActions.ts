@@ -1,6 +1,6 @@
 import { AgentTool } from "Types/Agent";
-import { emailCreateDraftParametersSchema } from "../tools/EmailCreateDraft";
-import { executeEmailCreateDraft } from "../tools/EmailCreateDraft";
+import { emailCreateDraftParametersSchema } from "../tools/gmail/EmailCreateDraft";
+import { executeEmailCreateDraft } from "../tools/gmail/EmailCreateDraft";
 import { ExecuteResult } from "Types/Agent";
 
 export async function executeTool(tool: AgentTool): Promise<ExecuteResult>{
