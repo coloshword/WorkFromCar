@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { ExecuteResult } from "Types/Agent";
 
 export type emailCreateDraftParameters = {
   to: string | null,
@@ -22,3 +23,13 @@ export const EMAIL_CREATE_DRAFT_INSTRUCTIONS = `
     - subject: string | null
     - body: string | null
 ` 
+
+export async function executeEmailCreateDraft(params: emailCreateDraftParameters): Promise<ExecuteResult> {
+  console.log("EXECUTING EMAIL CREATE DRAFT WITH PARAMS", params);
+  return {
+    message: {
+      role: "assistant",
+      content: "Email draft created successfully",
+    }
+  }
+}

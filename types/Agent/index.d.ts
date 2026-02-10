@@ -3,7 +3,7 @@ export type Message = {
   content: string;
 };
 
-export type AgentState = {
+export type PlanState = {
   messages: Message[];
 };
 
@@ -21,4 +21,13 @@ export type LLMPlanResponse = {
   assistant: string;
   tool: string;
   toolParameters: Record<string, any> | null;
+}
+
+export type ExecuteState = {
+  messages: Message[];
+  tool: AgentTool;
+}
+
+export type ExecuteResult = {
+  message: Message;
 }

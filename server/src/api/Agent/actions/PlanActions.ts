@@ -1,10 +1,11 @@
 import { PLAN_JSON_SCHEMA_SCHEMA } from "../utils/PlanInstructions";
 import { LLMPlanResponse } from "Types/Agent";
-import { emailCreateDraftParametersSchema } from "../tools/EmailCreateDraft";
+import { emailCreateDraftParametersSchema } from "../tools/gmail/EmailCreateDraft";
 import { PLAN_INSTRUCTION, RETRY_COUNT } from "../utils/PlanInstructions";
 import { Message } from "Types/Agent";
 import { generateOpenRouterMessage } from "../utils/LMProviders";
 import { normalizeNullStrings } from "../utils/AgentUtils";
+import { jsonrepair } from "jsonrepair";
 
 function formatZodError(err: any): string {
   if (err?.issues && Array.isArray(err.issues)) {
@@ -49,7 +50,8 @@ export async function generateJsonWithRetry<T>(
     messages.push({ role: "assistant", content: lmResponse });
 
     try {
-      const parsed: unknown = JSON.parse(lmResponse);
+      const repaired = jsonrepair(lmResponse);
+      const parsed: unknown = JSON.parse(repaired);
       return validate(parsed);
     } catch (err) {
       lastErr = err;

@@ -1,9 +1,8 @@
 import { Context } from 'koa';
 import * as z from "zod";
-import { AgentPlanResponse, AgentState, Message } from "Types/Agent";
-import { PLAN_INSTRUCTION, PLAN_JSON_SCHEMA_SCHEMA } from '../utils/PlanInstructions';
+import { AgentPlanResponse, PlanState, Message, ExecuteState } from "Types/Agent";
 import { generateLLMPlan } from '../actions/PlanActions';
-import { RETRY_COUNT } from '../utils/PlanInstructions';
+import { executeTool } from '../actions/ExecuteActions';
 
 const planRouteSchema = z.object({
   messages: z.array(
@@ -12,14 +11,11 @@ const planRouteSchema = z.object({
       content: z.string(),
     })
   )
-}) satisfies z.ZodType<AgentState>;
+}) satisfies z.ZodType<PlanState>;
 
 export const planRoute = async (ctx: Context) => {
   const { messages } = planRouteSchema.parse(ctx.request.body);
   const plan = await generateLLMPlan(messages);
-  if (!plan.toolParameters) {
-    throw new Error("Tool parameters are null");
-  }
   const message: Message = {
     role: "assistant",
     content: plan.assistant,
@@ -34,3 +30,23 @@ export const planRoute = async (ctx: Context) => {
   ctx.body = response;
   ctx.status = 200;
 };
+
+const executeToolRouteSchema = z.object({
+  messages: z.array(
+    z.object({
+      role: z.string(),
+      content: z.string(),
+    })
+  ),
+  tool: z.object({
+    tool: z.string(),
+    toolParameters: z.record(z.string(), z.any()).nullable()
+  })
+}) satisfies z.ZodType<ExecuteState>;
+
+export const executeRoute = async (ctx: Context) => {
+  const { messages, tool } = executeToolRouteSchema.parse(ctx.request.body);
+  const result = await executeTool(tool);
+  ctx.body = result;
+  ctx.status = 200;
+}
