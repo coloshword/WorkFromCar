@@ -1,5 +1,5 @@
-import RootNavigator from "./src/navigation/RootNavigator";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import LoginScreen from './src/screens/Login';
+import RootNavigator from './src/navigation/RootNavigator';
 
 const App = () => (
   <RootNavigator />

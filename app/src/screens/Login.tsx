@@ -8,7 +8,7 @@ const LoginScreen = ({}) => {
       <Pressable style={styles.button} onPress={() => {
         Alert.alert("Login with Google");
       }}>
-        <Text>Login with Google</Text>
+        <Text>L</Text>
       </Pressable>
     </SafeAreaView>
   );
