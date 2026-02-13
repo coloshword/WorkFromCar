@@ -10,10 +10,6 @@ const authRedirectSchema = z.object({
   idToken: z.string(),
 });
 
-const googleAuthGmailSchema = z.object({
-  code: z.string(),
-})
-
 export const testRoute = async (ctx: Context) => {
   ctx.status = 200;
   ctx.body = "test route"
@@ -36,9 +32,4 @@ export const googleAuthLogin = async (ctx: Context): Promise<void> => {
     token: jwt,
     email: account.email,
   };
-}
-
-export const googleLoginAndGmail = async (ctx: Context): Promise<void> => {
-  const { code } = googleAuthGmailSchema.parse(ctx.request.body);
-
 }
