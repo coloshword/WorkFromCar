@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { AuthAccount, GoogleAuthPayload } from './types';
 import { OAuth2Client } from "google-auth-library";
 
-const googleAuthClientId = process.env.GOOGLE_AUTH_CLIENT_ID_APP;
+const googleAuthClientId = process.env.GOOGLE_AUTH_CLIENT_ID;
 const client = new OAuth2Client(process.env.GOOGLE_AUTH_CLIENT_ID_APP);
 
 const googleAuthPayloadSchema = z.object({
