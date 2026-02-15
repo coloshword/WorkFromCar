@@ -4,38 +4,44 @@ import { signIn } from "../api/auth";
 import {
   GoogleSignin,
 } from '@react-native-google-signin/google-signin';
-import { API_BASE_URL } from "../utils";
+import { onLogin } from "../api/auth";
+import { useAccessToken } from "../context/AccessTokenContext";
+import { sendEmail } from "../api/sendEmail";
 
 const LoginScreen = ({}) => {
-  const onLogin = async () => {
-    const res = await signIn();
-    if (!res.data) {
-      Alert.alert("error logging in")
-      return;
-    }
-    const idToken = res.data.idToken;
-    if (!idToken) throw new Error("No idToken");
-    const { accessToken } = await GoogleSignin.getTokens();
-    console.log(`API base url: ${API_BASE_URL}`);
-    console.log(idToken);
-    const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ idToken }),
-    });
-    if (!response.ok) {
-      Alert.alert("error logging in")
-      return;
-    }
-    const data = await response.json();
+  const { authToken, setAuthToken } = useAccessToken();
+
+  const handleLogin = async () => {
+    const token = await onLogin();
+    if (token) setAuthToken(token);
   };
+
+  const logValue = () => {
+    Alert.alert(authToken || "No value");
+  };
+
+  const testSendEmail = async () => {
+    if (!authToken) {
+      Alert.alert("No auth token");
+      return;
+    }
+    const res = await sendEmail({
+      to: "aceliang2001@gmail.com",
+      subject: "Test email",
+      body: "This is a test email from react native",
+      accessToken: authToken
+    });
+    Alert.alert(`send email status: ${res.statusText}`);
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <Pressable style={styles.button} onPress={onLogin}>
+      <Pressable style={styles.button} onPress={handleLogin}>
         <Text>Login with Google</Text>
+      </Pressable>
+
+      <Pressable style={styles.button} onPress={testSendEmail}>
+        <Text>Log value</Text>
       </Pressable>
     </SafeAreaView>
   );
