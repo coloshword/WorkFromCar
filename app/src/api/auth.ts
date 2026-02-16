@@ -11,6 +11,19 @@ export async function signIn() {
   return await GoogleSignin.signIn();
 }
 
+export const silentLogin = async () => {
+  try {
+    const res = await GoogleSignin.signInSilently();
+    if (res.data) {
+      const { accessToken } = await GoogleSignin.getTokens();
+      return accessToken;
+    }
+  } catch (error) {
+    console.error("Silent login failed", error);
+  }
+  return null;
+};
+
 export const onLogin = async () => {
   const res = await signIn();
   if (!res.data) {
