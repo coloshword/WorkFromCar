@@ -42,3 +42,35 @@ First thing: plan API. The api we hit for purely planning.
 
 - we will make createDraft actually send the email, we will then refactor
 
+
+
+### Execute API rewrite:
+<cot>
+- rewrite the execute api to be a execute with permissions api
+- we can name it, executePermission,
+    - goal is to 
+        1) validate the API params 
+        2) ensure that the user has given permissions 
+
+- now to check user intent. We probably need a new set of permissions from the original
+- we have messages which is good
+- let's see the state of messages...
+
+- our LM now has the ability to have all the messages, we just need one thing, permission, and also the chat. Just a single message that we can append to messages, and whether or not we have permission (true or false). If it is true, then we send the message, false we won't send the email
+
+
+
+{
+  "assistant": "Great, I’m sending the email to john17@gmail.com now.",
+  "executePermissionGranted": true,
+  "tool": {
+    "tool": "gmail.createDraft",
+    "toolParameters": {
+      "to": "john17@gmail.com",
+      "subject": "Start the email earlier",
+      "body": "Hey John, please start the email at 3:45 instead of 4"
+    }
+  }
+}
+
+- ok now that the shape is correct, let's get the update to demo.tsx to do the same thing 

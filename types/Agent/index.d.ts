@@ -28,6 +28,14 @@ export type ExecuteState = {
   tool: AgentTool;
 }
 
-export type ExecuteResult = {
-  message: Message;
+/** Whether or not to execute the tool, and provide the updated message to the user  */
+export type ExecutePermissionResponse = {
+  assistant: string;
+  executePermissionGranted: boolean;
+}
+
+export type ExecutePermissionRouteResponseBody = {
+  assistant: string;
+  executePermissionGranted: boolean;
+  tool: AgentTool;
 }

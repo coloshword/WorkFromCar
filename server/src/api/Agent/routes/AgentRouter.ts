@@ -1,13 +1,13 @@
 import Router from '@koa/router';
 import { 
   planRoute,
-  executeRoute
+  executePermissionRoute
 } from './AgentRoutes';
 import { mobileAuth } from '../../middleware';
 
 const router = new Router();
 
 router.post('/plan', mobileAuth, planRoute);
-router.post('/execute', mobileAuth, executeRoute);
+router.post('/executePermission', mobileAuth, executePermissionRoute);
 
 export default router;
