@@ -16,6 +16,7 @@ function buildRawEmail({
   from?: string;
 }) {
   // Basic headers + body. Use \r\n per RFC.
+  // Basic headers + body. Use \r\n per RFC.
   const lines = [
     from ? `From: ${from}` : null,
     `To: ${to}`,
@@ -25,7 +26,7 @@ function buildRawEmail({
     "Content-Transfer-Encoding: 7bit",
     "",
     body,
-  ].filter(Boolean);
+  ].filter((line) => line !== null);
 
   return lines.join("\r\n");
 }

@@ -2,7 +2,7 @@ import {
   GoogleSignin,
 } from '@react-native-google-signin/google-signin';
 import { Alert } from 'react-native';
-import { API_BASE_URL } from "../utils";
+import { API_BASE_URL } from "../utils/utils";
 import {
   AccessTokenProvider
 } from "../context/AccessTokenContext";
@@ -15,7 +15,7 @@ export const onLogin = async () => {
   const res = await signIn();
   if (!res.data) {
     Alert.alert("error logging in")
-    return;
+    throw new Error("Error logging in");
   }
   const idToken = res.data.idToken;
   if (!idToken) throw new Error("No idToken");
@@ -29,8 +29,11 @@ export const onLogin = async () => {
   });
   if (!response.ok) {
     Alert.alert("error logging in")
-    return;
+    throw new Error("Error logging in");
   }
-  await response.json();
-  return accessToken;
+  const { token } = await response.json();
+  return {
+    accessToken,
+    token
+  };
 };
