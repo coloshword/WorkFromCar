@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { authFetch } from "../utils/fetchUtils";
+import { sendEmail } from "../api/sendEmail";
+import * as Keychain from "react-native-keychain";
+import { useAccessToken } from "../context/AccessTokenContext";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -15,30 +18,29 @@ const DemoScreen = () => {
   const [planOrExecute, setPlanOrExecute] = useState<'plan' | 'execute'>('plan');
   const [executeObj, setExecuteObj] = useState<any>(null);
   const [statusText, setStatusText] = useState("");
+  const { authToken } = useAccessToken();
 
   const sendMessage = async () => {
-    // In execute mode, we don't necessarily need input text if the plan is already set
-    if (planOrExecute === 'plan' && !inputText.trim()) return;
+    if (!inputText.trim()) return;
 
     setLoading(true);
     setStatusText("Sending...");
 
     try {
-      let updatedMessages = [...messages];
-      
-      if (planOrExecute === 'plan') {
-        const userMessage: Message = { role: 'user', content: inputText.trim() };
-        updatedMessages = [...messages, userMessage];
-        setMessages(updatedMessages);
-        setInputText("");
-      }
+      const userMessage: Message = { role: 'user', content: inputText.trim() };
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
+      setInputText("");
 
       let response;
       if (planOrExecute === 'execute') {
-        response = await authFetch("/api/agent/execute", {
+        response = await authFetch("/api/agent/executePermission", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(executeObj),
+          body: JSON.stringify({
+            ...executeObj,
+            messages: updatedMessages,
+          }),
         });
       } else {
         response = await authFetch("/api/agent/plan", {
@@ -58,9 +60,31 @@ const DemoScreen = () => {
       if (planOrExecute === 'execute') {
         setPlanOrExecute('plan');
         setExecuteObj(null);
-        setStatusText("✓ Tool executed successfully");
-        if (data.message) {
-            setMessages(prev => [...prev, data.message]);
+        
+        if (data.executePermissionGranted) {
+          try {
+            if (authToken && executeObj.tool.tool === 'gmail.createDraft') {
+              const { to, subject, body } = executeObj.tool.toolParameters;
+              await sendEmail({ 
+                to, 
+                subject, 
+                body, 
+                accessToken: authToken
+              });
+              setStatusText("✓ Email sent successfully");
+            } else {
+              setStatusText("✓ Tool execution permitted");
+            }
+          } catch (emailError: any) {
+            console.error(emailError);
+            setStatusText(`Error sending email: ${emailError.message}`);
+          }
+        } else {
+          setStatusText("✗ Tool execution denied");
+        }
+
+        if (data.assistant) {
+          setMessages(prev => [...prev, { role: 'assistant', content: data.assistant }]);
         }
       } else {
         const assistantMessage = data.message;
@@ -101,13 +125,13 @@ const DemoScreen = () => {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder={planOrExecute === 'execute' ? "Tap send to execute plan..." : "Send a chat..."}
+          placeholder="Send a chat..."
           value={inputText}
           onChangeText={setInputText}
-          editable={!loading && planOrExecute === 'plan'}
+          editable={!loading}
         />
         <Pressable style={[styles.sendButton, loading && styles.disabledButton]} onPress={sendMessage} disabled={loading}>
-          <Text style={styles.sendButtonText}>{planOrExecute === 'execute' ? "Execute" : "Send"}</Text>
+          <Text style={styles.sendButtonText}>Send</Text>
         </Pressable>
       </View>
     </SafeAreaView>

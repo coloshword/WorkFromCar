@@ -73,7 +73,7 @@
 
   <script>
     const PLAN_API_URL = 'http://localhost:3000/api/agent/plan';
-    const EXECUTE_API_URL = 'http://localhost:3000/api/agent/execute';
+    const EXECUTE_PERMISSION_API_URL = 'http://localhost:3000/api/agent/executePermission';
     let messages = [];
     let planOrExecute = 'plan';
     let executeObj = null;
@@ -134,7 +134,7 @@
         if (planOrExecute === 'execute') {
           // Execute the tool
           console.log('Executing tool:', executeObj);
-          response = await fetch(EXECUTE_API_URL, {
+          response = await fetch(EXECUTE_PERMISSION_API_URL, {
             method: 'POST',
             headers: headers,
             body: JSON.stringify(executeObj)
@@ -148,10 +148,22 @@
           data = await response.json();
           displayJSON(data);
           
+          // Add assistant message to history
+          messages.push({
+            role: 'assistant',
+            content: data.assistant
+          });
+          displayMessages();
+          
           // Reset to plan mode after execution
           planOrExecute = 'plan';
           executeObj = null;
-          setStatus(`✓ Tool executed successfully`);
+          
+          if (data.executePermissionGranted) {
+            setStatus(`✓ Permission granted and tool executed: ${data.tool.tool}`);
+          } else {
+            setStatus(`✗ Permission denied for tool: ${data.tool.tool}`);
+          }
           
         } else {
           // Plan mode - call the plan endpoint
