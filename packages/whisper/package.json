@@ -1,0 +1,22 @@
+{
+  "name": "whisper",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "react-native": "^0.84.0"
+  },
+  "codegenConfig": {
+    "name": "WFCWhisperSpec",
+    "type": "modules", 
+    "jsSrcsDir": "src",
+    "android": {},
+    "ios": {}
+  }
+}

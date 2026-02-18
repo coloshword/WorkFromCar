@@ -74,3 +74,12 @@ First thing: plan API. The api we hit for purely planning.
 }
 
 - ok now that the shape is correct, let's get the update to demo.tsx to do the same thing 
+
+### React native TurboModules
+- new architecture, you don't write bridges anymore
+
+- you define a TurboModule spec in TS (which is basically like a specification of the bridge), and react native codegen generates it for you (you don't write your own bridges)
+- codegen should run per library/module and RN's codegen/autolinking expects each native library to declare its own codegen config
+
+
+
