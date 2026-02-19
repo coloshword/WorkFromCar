@@ -1,17 +1,16 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Text } from 'react-native';
 import { useEffect, useState } from 'react';
 import * as Keychain from "react-native-keychain";
 
 import LoginScreen from '../screens/Login';
-import DemoScreen from '../screens/Demo';
+import VoiceDashboardScreen from '../screens/VoiceDashboard';
 import { useAccessToken } from '../context/AccessTokenContext';
 import { silentLogin } from '../api/auth';
 
 type RootStackParamList = {
   Login: undefined;
-  Demo: undefined;
+  VoiceDashboard: undefined;
 }
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -43,8 +42,8 @@ export const RootNavigator = () => {
       <Stack.Navigator>
         {isAuthed ? (
           <Stack.Screen 
-            name="Demo"
-            component={DemoScreen}
+            name="VoiceDashboard"
+            component={VoiceDashboardScreen}
           />
         ) : (
           <Stack.Screen 

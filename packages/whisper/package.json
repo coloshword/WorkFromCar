@@ -12,9 +12,10 @@
   "dependencies": {
     "react-native": "^0.84.0"
   },
+  "react-native": "src/NativeWhisper",
   "codegenConfig": {
     "name": "WFCWhisperSpec",
-    "type": "modules", 
+    "type": "modules",
     "jsSrcsDir": "src",
     "android": {},
     "ios": {}

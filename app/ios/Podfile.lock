@@ -79,6 +79,7 @@ PODS:
     - React-RCTText (= 0.83.1)
     - React-RCTVibration (= 0.83.1)
   - React-callinvoker (0.83.1)
+  - React-Codegen (0.1.0)
   - React-Core (0.83.1):
     - boost
     - DoubleConversion
@@ -2595,6 +2596,8 @@ PODS:
     - React-perflogger (= 0.83.1)
     - React-utils (= 0.83.1)
     - SocketRocket
+  - RNFS (2.20.0):
+    - React-Core
   - RNGoogleSignin (16.1.1):
     - boost
     - DoubleConversion
@@ -2712,6 +2715,11 @@ PODS:
     - SocketRocket
     - Yoga
   - SocketRocket (0.7.1)
+  - WFCWhisper (0.0.1):
+    - React-Codegen
+    - React-Fabric
+    - React-NativeModulesApple
+    - ReactCommon/turbomodule/core
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -2794,10 +2802,12 @@ DEPENDENCIES:
   - ReactAppDependencyProvider (from `build/generated/ios/ReactAppDependencyProvider`)
   - ReactCodegen (from `build/generated/ios/ReactCodegen`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - RNFS (from `../node_modules/react-native-fs`)
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNKeychain (from `../node_modules/react-native-keychain`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - SocketRocket (~> 0.7.1)
+  - WFCWhisper (from `../../packages/whisper/ios`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -2809,6 +2819,7 @@ SPEC REPOS:
     - GTMAppAuth
     - GTMSessionFetcher
     - PromisesObjC
+    - React-Codegen
     - SocketRocket
 
 EXTERNAL SOURCES:
@@ -2969,12 +2980,16 @@ EXTERNAL SOURCES:
     :path: build/generated/ios/ReactCodegen
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  RNFS:
+    :path: "../node_modules/react-native-fs"
   RNGoogleSignin:
     :path: "../node_modules/@react-native-google-signin/google-signin"
   RNKeychain:
     :path: "../node_modules/react-native-keychain"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  WFCWhisper:
+    :path: "../../packages/whisper/ios"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -3001,6 +3016,7 @@ SPEC CHECKSUMS:
   RCTTypeSafety: 27927d0ca04e419ed9467578b3e6297e37210b5c
   React: 4bc1f928568ad4bcfd147260f907b4ea5873a03b
   React-callinvoker: 87f8728235a0dc62e9dc19b3851c829d9347d015
+  React-Codegen: 4b8b4817cea7a54b83851d4c1f91f79aa73de30a
   React-Core: 76bed73b02821e5630e7f2cb2e82432ee964695d
   React-CoreModules: 752dbfdaeb096658aa0adc4a03ba6214815a08df
   React-cxxreact: b6798528aa601c6db66e6adc7e2da2b059c8be74
@@ -3064,10 +3080,12 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: 0eb286cc274abb059ee601b862ebddac2e681d01
   ReactCodegen: 3d48510bcef445f6403c0004047d4d9cbb915435
   ReactCommon: ac934cb340aee91282ecd6f273a26d24d4c55cae
+  RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNGoogleSignin: 4122717989e2544988cb4cec3e917da3ebc969a5
   RNKeychain: a2c134ab796272c3d605e035ab727591000b30f3
   RNScreens: afaf526a9c804c3b4503f950cf3e67ed81e29ada
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
+  WFCWhisper: 41436fd47eb1d536fdfcf9ab6d90fdc50dcf1a79
   Yoga: 5456bb010373068fc92221140921b09d126b116e
 
 PODFILE CHECKSUM: b3bcda467c30bc02b542af909dadff424dfc7879
