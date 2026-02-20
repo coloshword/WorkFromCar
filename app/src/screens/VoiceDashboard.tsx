@@ -4,7 +4,8 @@ import { View, Text, Button, StyleSheet } from 'react-native';
 import RNFS from 'react-native-fs';
 import NativeWhisper from 'whisper/src/NativeWhisper';
 
-const MODEL_PATH = `${RNFS.MainBundlePath}/ggml-tiny.bin`;
+const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
+const MODEL_PATH = `${RNFS.MainBundlePath}/${MODEL_FILENAME}`;
 
 export default function VoiceDashboard() {
   const [status, setStatus] = useState<string>('idle');
@@ -12,6 +13,12 @@ export default function VoiceDashboard() {
   const handleLoadModel = async () => {
     setStatus('loading...');
     try {
+      const modelExists = await RNFS.exists(MODEL_PATH);
+      if (!modelExists) {
+        setStatus(`Model not found at ${MODEL_PATH}`);
+        return;
+      }
+
       const ok = await NativeWhisper.loadModel(MODEL_PATH);
       setStatus(ok ? 'Model loaded!' : 'Returned false');
     } catch (e: any) {

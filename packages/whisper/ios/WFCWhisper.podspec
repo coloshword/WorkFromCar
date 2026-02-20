@@ -45,6 +45,10 @@ Pod::Spec.new do |s|
     mkdir -p "${BUILD_DIR}"
 
     cmake -S "${WHISPER_DIR}" -B "${BUILD_DIR}" \
+      -DCMAKE_SYSTEM_NAME=iOS \
+      -DCMAKE_OSX_SYSROOT=iphoneos \
+      -DCMAKE_OSX_ARCHITECTURES=arm64 \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET=15.1 \
       -DGGML_METAL=ON \
       -DBUILD_SHARED_LIBS=OFF \
       -DWHISPER_BUILD_EXAMPLES=OFF \
@@ -58,6 +62,7 @@ Pod::Spec.new do |s|
     "build/ggml/src/libggml.a",
     "build/ggml/src/libggml-base.a",
     "build/ggml/src/libggml-cpu.a",
+    "build/ggml/src/ggml-blas/libggml-blas.a",
     "build/ggml/src/ggml-metal/libggml-metal.a"
   ]
 end

@@ -30,5 +30,23 @@ target 'WorkFromCar' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Some generated per-file flags can incorrectly force dispatch objects
+    # to be non-ObjC in this pod, which breaks React-Core headers.
+    installer.pods_project.targets.each do |target|
+      next unless target.name == "WFCWhisper"
+
+      target.source_build_phase.files.each do |file|
+        flags = file.settings&.[]("COMPILER_FLAGS")
+        next unless flags
+
+        cleaned = flags
+          .split(" ")
+          .reject { |flag| flag == "-DOS_OBJECT_USE_OBJC=0" }
+          .join(" ")
+
+        file.settings["COMPILER_FLAGS"] = cleaned
+      end
+    end
   end
 end

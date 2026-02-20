@@ -7,6 +7,7 @@ import LoginScreen from '../screens/Login';
 import VoiceDashboardScreen from '../screens/VoiceDashboard';
 import { useAccessToken } from '../context/AccessTokenContext';
 import { silentLogin } from '../api/auth';
+import DemoScreen from '../screens/Demo';
 
 type RootStackParamList = {
   Login: undefined;
