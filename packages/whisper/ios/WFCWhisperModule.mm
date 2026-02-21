@@ -30,6 +30,17 @@ RCT_EXPORT_MODULE(WFCWhisper)
   });
 }
 
+- (void)pcmBufferToText:(NSArray<NSNumber *> *)pcmBuffer
+              resolve:(RCTPromiseResolveBlock)resolve
+                reject:(RCTPromiseRejectBlock)reject {
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    struct whisper_full_params wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+  });
+
+  NSString *result = @"YAYYYYY";
+  resolve(result);
+}
+
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
     (const facebook::react::ObjCTurboModule::InitParams &)params {
   return std::make_shared<facebook::react::NativeWhisperSpecJSI>(params);

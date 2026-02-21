@@ -124,8 +124,6 @@ struct whisper_context *ctx = whisper_init_from_file_with_params(modelPath.UTF8S
 - `ctx` is NULL if loading failed 
 - context (black box that holds the initialized model), and it can process audio files
 
-
-
 ### Success path:
 
 ```
@@ -134,51 +132,34 @@ if (ctx != null) {
   self->_ctx = ctx;
 }
 ```
+
 if ctx is not null 
+
 - check the instance variable _ctx, if it is already initialized, you free it by calling whisper_free so you avoid leaking memory 
 - then store the new ctx
 
 ```
 resolve(@YES)
 ```
-- resolves the JS Promise with a boolean true 
+
+- resolves the JS Promise with a boolean true
 
 ### Failure path:
-- else you fail 
+
+- else you fail
+
 ```
 else {
   reject(@"load_failed", @"whisper_init_from_file returned null", nil)
 }
 ```
 
-### adding whisper voice 
+### adding whisper voice
+
+- remove react-native-sound from dependencies
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- The next thing to do:
+- literally implement the pcmBuffer to text function
 

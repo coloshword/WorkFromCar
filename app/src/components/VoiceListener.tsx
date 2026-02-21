@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Pressable, Text, StyleSheet, View } from "react-native";
 import { startStreaming, stopStreaming } from "../services/audio/voiceProcessor";
+import NativeWhisper from 'whisper/src/NativeWhisper';
 
 export default function VoiceListener() {
   const [isRecording, setIsRecording] = useState(false);
@@ -9,7 +10,8 @@ export default function VoiceListener() {
     if (isRecording) {
       try {
         const pcm = await stopStreaming();
-        console.log(pcm);
+        const text = await NativeWhisper.pcmBufferToText(pcm);
+        console.log(text);
       } catch (e) {
         console.error('stopStreaming failed:', e);
       } finally {
