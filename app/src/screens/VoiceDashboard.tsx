@@ -1,14 +1,29 @@
 // this is the voice dashboard screen, the most important screen for the voice agent. 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import RNFS from 'react-native-fs';
 import NativeWhisper from 'whisper/src/NativeWhisper';
+import VoiceListener from '../components/VoiceListener';
+import { VoiceProcessor } from '@picovoice/react-native-voice-processor';
+import { FRAME_LENGTH, FREQUENCY_HZ } from '../services/audio/voiceProcessor';
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
 const MODEL_PATH = `${RNFS.MainBundlePath}/${MODEL_FILENAME}`;
 
 export default function VoiceDashboard() {
   const [status, setStatus] = useState<string>('idle');
+
+  // request mic permission on mount of voice dashboard. 
+  useEffect(() => {
+    const requestMicPermission = async () => {
+      try {
+        await VoiceProcessor.instance.start(FRAME_LENGTH, FREQUENCY_HZ);
+        await VoiceProcessor.instance.stop();
+      } catch (e) {
+      }
+    };
+    requestMicPermission();
+  }, []);
 
   const handleLoadModel = async () => {
     setStatus('loading...');
@@ -30,6 +45,7 @@ export default function VoiceDashboard() {
     <View style={styles.container}>
       <Text style={styles.status}>{status}</Text>
       <Button title="Load Whisper Model" onPress={handleLoadModel} />
+      <VoiceListener />
     </View>
   );
 }
