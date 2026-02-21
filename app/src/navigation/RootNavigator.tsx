@@ -12,6 +12,7 @@ import DemoScreen from '../screens/Demo';
 type RootStackParamList = {
   Login: undefined;
   VoiceDashboard: undefined;
+  Demo: undefined;
 }
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
