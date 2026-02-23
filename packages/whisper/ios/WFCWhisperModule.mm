@@ -35,10 +35,55 @@ RCT_EXPORT_MODULE(WFCWhisper)
                 reject:(RCTPromiseRejectBlock)reject {
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
     struct whisper_full_params wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+    wparams.print_progress = false;
+    wparams.print_timestamps = false;
+    wparams.print_special = false;
+    wparams.print_realtime = false;
+    wparams.language = "en";
+    wparams.no_timestamps = true;
+    wparams.n_threads = 8;
+    if (self->_ctx == NULL) {
+      // need to load model first
+      reject(
+        @"NO_MODEL",
+        @"You need to load the model first",
+        nil
+      );
+      return;
+    }
+    // convert pcmBuffer to float array
+    float *buffer = (float *)malloc(sizeof(float) * pcmBuffer.count);
+    for (NSInteger i = 0; i < pcmBuffer.count; i++) {
+      // f is just telling us that this is a float, not a double 
+      buffer[i] = [pcmBuffer[i] floatValue] / 32768.0f;
+    }
+    // call whisper full
+    int transcriptionResult = whisper_full(
+      self->_ctx,
+      wparams,
+      buffer,
+      (int)pcmBuffer.count
+    );
+    if (transcriptionResult != 0) {
+      free(buffer);
+      reject(
+        @"WHISPER_ERROR",
+        @"whisper_full returned an error",
+        nil
+     );
+      return;
+    }
+    // get the transcription result 
+    int nSegments = whisper_full_n_segments(self->_ctx);
+    NSMutableString *transcription = [NSMutableString string];
+    for (int i = 0; i < nSegments; i++) {
+      const char *segmentText = whisper_full_get_segment_text(self->_ctx, i);
+      NSString *s = [NSString stringWithUTF8String: segmentText];
+      [transcription appendString: s];
+    }
+    free(buffer);
+    resolve(transcription);
   });
-
-  NSString *result = @"YAYYYYY";
-  resolve(result);
 }
 
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
