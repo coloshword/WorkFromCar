@@ -53,6 +53,10 @@ RCT_EXPORT_MODULE(WFCWhisper)
     }
     // convert pcmBuffer to float array
     float *buffer = (float *)malloc(sizeof(float) * pcmBuffer.count);
+    if (buffer == NULL) {
+      reject(@"MALLOC_ERROR", @"Failed to allocate PCM buffer", nil);
+      return;
+    }
     for (NSInteger i = 0; i < pcmBuffer.count; i++) {
       // f is just telling us that this is a float, not a double 
       buffer[i] = [pcmBuffer[i] floatValue] / 32768.0f;
@@ -78,7 +82,9 @@ RCT_EXPORT_MODULE(WFCWhisper)
     NSMutableString *transcription = [NSMutableString string];
     for (int i = 0; i < nSegments; i++) {
       const char *segmentText = whisper_full_get_segment_text(self->_ctx, i);
+      if (segmentText == NULL) continue;
       NSString *s = [NSString stringWithUTF8String: segmentText];
+      if (s == nil) continue;
       [transcription appendString: s];
     }
     free(buffer);
