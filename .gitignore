@@ -7,3 +7,5 @@ queries
 .vscode
 ggml-base.en.bin
 whisper.xcframework
+
+models/

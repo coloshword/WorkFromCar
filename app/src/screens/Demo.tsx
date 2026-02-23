@@ -18,7 +18,12 @@ const DemoScreen = () => {
   const [planOrExecute, setPlanOrExecute] = useState<'plan' | 'execute'>('plan');
   const [executeObj, setExecuteObj] = useState<any>(null);
   const [statusText, setStatusText] = useState("");
-  const { authToken } = useAccessToken();
+  const { authToken, setAuthToken } = useAccessToken();
+
+  const handleLogout = async () => {
+    await Keychain.resetGenericPassword();
+    setAuthToken(null);
+  };
 
   const sendMessage = async () => {
     if (!inputText.trim()) return;
@@ -110,6 +115,12 @@ const DemoScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Demo</Text>
+        <Pressable style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </Pressable>
+      </View>
       <ScrollView style={styles.messagesContainer} contentContainerStyle={{ paddingBottom: 20 }}>
         {messages.map((msg, index) => (
           <View key={index} style={[styles.messageBubble, msg.role === 'user' ? styles.userBubble : styles.assistantBubble]}>
@@ -142,6 +153,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  logoutButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  logoutButtonText: {
+    fontSize: 14,
+    color: '#333',
   },
   messagesContainer: {
     flex: 1,
