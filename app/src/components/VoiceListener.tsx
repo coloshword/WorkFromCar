@@ -3,7 +3,12 @@ import { Pressable, Text, StyleSheet, View } from "react-native";
 import { startStreaming, stopStreaming } from "../services/audio/voiceProcessor";
 import NativeWhisper from 'whisper/src/NativeWhisper';
 
-export default function VoiceListener() {
+interface Props {
+  onTranscript?: (text: string) => void;
+  disabled?: boolean;
+}
+
+export default function VoiceListener({ onTranscript, disabled }: Props) {
   const [isRecording, setIsRecording] = useState(false);
 
   const handlePress = async () => {
@@ -12,6 +17,7 @@ export default function VoiceListener() {
         const pcm = await stopStreaming();
         const text = await NativeWhisper.pcmBufferToText(pcm);
         console.log(text);
+        if (text) onTranscript?.(text);
       } catch (e) {
         console.error('stopStreaming failed:', e);
       } finally {
@@ -30,7 +36,8 @@ export default function VoiceListener() {
   return (
     <Pressable 
       onPress={handlePress}
-      style={[styles.button, isRecording ? styles.recording : styles.idle]}
+      disabled={disabled}
+      style={[styles.button, isRecording ? styles.recording : styles.idle, disabled && styles.disabledButton]}
     >
       <View style={styles.content}>
         <View style={[styles.indicator, isRecording && styles.indicatorActive]} />
@@ -75,6 +82,9 @@ const styles = StyleSheet.create({
   },
   indicatorActive: {
     backgroundColor: '#FFF',
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
   },
   text: {
     color: '#FFF',
