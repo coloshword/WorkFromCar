@@ -1,0 +1,23 @@
+{
+  "name": "kokoro",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "react-native": "src/NativeKokoro",
+  "dependencies": {
+    "react-native": "^0.84.0"
+  },
+  "codegenConfig": {
+    "name": "WFCKokoroSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {},
+    "ios": {}
+  }
+}
