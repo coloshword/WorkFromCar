@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View, ScrollView, ActivityIndicator, Butto
 import { SafeAreaView } from 'react-native-safe-area-context';
 import RNFS from 'react-native-fs';
 import NativeWhisper from 'whisper/src/NativeWhisper';
+import NativeKokoro from "kokoro/src/NativeKokoro"; 
 import VoiceListener from '../components/VoiceListener';
 import { VoiceProcessor } from '@picovoice/react-native-voice-processor';
 import { FRAME_LENGTH, FREQUENCY_HZ } from '../services/audio/voiceProcessor';
@@ -45,7 +46,10 @@ export default function VoiceDashboard() {
         setStatusText(`Model not found at ${MODEL_PATH}`);
         return;
       }
+      const MODEL_DIR_TEST = `/TESTPATHtest_model`;
       const ok = await NativeWhisper.loadModel(MODEL_PATH);
+      const ok2 = await NativeKokoro.loadModel(MODEL_DIR_TEST);
+      console.log('ok2', ok2);
       setStatusText(ok ? '✓ Model loaded' : '✗ Returned false');
     } catch (e: any) {
       setStatusText(`Error: ${e.message}`);
