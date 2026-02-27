@@ -14,6 +14,7 @@ import { useAccessToken } from '../context/AccessTokenContext';
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
 const MODEL_PATH = `${RNFS.MainBundlePath}/${MODEL_FILENAME}`;
+const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 
 interface Message {
   role: 'user' | 'assistant';
@@ -23,6 +24,7 @@ interface Message {
 export default function VoiceDashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
   const [planOrExecute, setPlanOrExecute] = useState<'plan' | 'execute'>('plan');
   const [executeObj, setExecuteObj] = useState<any>(null);
   const [statusText, setStatusText] = useState('');
@@ -46,13 +48,34 @@ export default function VoiceDashboard() {
         setStatusText(`Model not found at ${MODEL_PATH}`);
         return;
       }
-      const MODEL_DIR_TEST = `/TESTPATHtest_model`;
+
+      console.log('[Kokoro] modelDir:', KOKORO_MODEL_DIR);
+      const kokoroFiles = ['model.onnx', 'voices.bin', 'tokens.txt', 'espeak-ng-data'];
+      for (const f of kokoroFiles) {
+        const p = `${KOKORO_MODEL_DIR}/${f}`;
+        const exists = await RNFS.exists(p);
+        console.log(`[Kokoro] ${f}: ${exists ? 'EXISTS' : 'MISSING'} @ ${p}`);
+      }
+
       const ok = await NativeWhisper.loadModel(MODEL_PATH);
-      const ok2 = await NativeKokoro.loadModel(MODEL_DIR_TEST);
-      console.log('ok2', ok2);
+      const ok2 = await NativeKokoro.loadModel(KOKORO_MODEL_DIR);
+      console.log('[Kokoro] loadModel result:', ok2);
       setStatusText(ok ? '✓ Model loaded' : '✗ Returned false');
     } catch (e: any) {
+      console.log('[Kokoro] loadModel error:', e.message);
       setStatusText(`Error: ${e.message}`);
+    }
+  };
+
+  const speak = async (text: string) => {
+    try {
+      await NativeKokoro.stop();
+      setSpeaking(true);
+      await NativeKokoro.speak(text, 1.0);
+    } catch (e: any) {
+      console.log('[Kokoro] speak error:', e.message);
+    } finally {
+      setSpeaking(false);
     }
   };
 
@@ -116,10 +139,12 @@ export default function VoiceDashboard() {
 
         if (data.assistant) {
           setMessages(prev => [...prev, { role: 'assistant', content: data.assistant }]);
+          speak(data.assistant);
         }
       } else {
         const assistantMessage = data.message;
         setMessages(prev => [...prev, assistantMessage]);
+        speak(assistantMessage.content);
         setStatusText(`✓ Response received (tool: ${data.tool.tool})`);
 
         if (data.tool.toolParameters && Object.values(data.tool.toolParameters).every(param => param !== null)) {
@@ -158,7 +183,7 @@ export default function VoiceDashboard() {
 
       <View style={styles.inputContainer}>
         <Button title="Load Model" onPress={handleLoadModel} />
-        <VoiceListener onTranscript={sendMessage} disabled={loading} />
+        <VoiceListener onTranscript={sendMessage} disabled={loading || speaking} />
       </View>
     </SafeAreaView>
   );
