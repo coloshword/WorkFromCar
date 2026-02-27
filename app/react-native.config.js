@@ -9,5 +9,14 @@ module.exports = {
         android: null,
       },
     },
+    kokoro: {
+      root: require('path').resolve(__dirname, '../packages/kokoro'),
+      platforms: {
+        ios: {
+          podspecPath: require('path').resolve(__dirname, '../packages/kokoro/ios/WFCKokoro.podspec'),
+        },
+        android: null,
+      },
+    },
   },
 };

@@ -37,6 +37,7 @@ PODS:
     - hermes-engine/Pre-built (= 0.14.0)
   - hermes-engine/Pre-built (0.14.0)
   - ios-voice-processor (1.2.0)
+  - onnxruntime-c (1.19.2)
   - PromisesObjC (2.4.0)
   - RCT-Folly (2024.11.18.00):
     - boost
@@ -2724,6 +2725,12 @@ PODS:
     - SocketRocket
     - Yoga
   - SocketRocket (0.7.1)
+  - WFCKokoro (1.0.0):
+    - onnxruntime-c (~> 1.19.0)
+    - React-Codegen
+    - React-Fabric
+    - React-NativeModulesApple
+    - ReactCommon/turbomodule/core
   - WFCWhisper (0.0.1):
     - React-Codegen
     - React-Fabric
@@ -2817,6 +2824,7 @@ DEPENDENCIES:
   - RNKeychain (from `../node_modules/react-native-keychain`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - SocketRocket (~> 0.7.1)
+  - WFCKokoro (from `../../packages/kokoro/ios`)
   - WFCWhisper (from `../../packages/whisper/ios`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -2829,6 +2837,7 @@ SPEC REPOS:
     - GTMAppAuth
     - GTMSessionFetcher
     - ios-voice-processor
+    - onnxruntime-c
     - PromisesObjC
     - React-Codegen
     - SocketRocket
@@ -3001,6 +3010,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-keychain"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  WFCKokoro:
+    :path: "../../packages/kokoro/ios"
   WFCWhisper:
     :path: "../../packages/whisper/ios"
   Yoga:
@@ -3021,6 +3032,7 @@ SPEC CHECKSUMS:
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
   hermes-engine: dee707bc533d73f38f6ec064e33728808f725f1d
   ios-voice-processor: 6b5ca08962f39e434fe39dca0f483d923a3b1b97
+  onnxruntime-c: 2903d6221d5613ceaa417ee91140a248648bbb6c
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: a41bbdd9af30bf2e5715796b313e44ec43eefff1
@@ -3100,6 +3112,7 @@ SPEC CHECKSUMS:
   RNKeychain: a2c134ab796272c3d605e035ab727591000b30f3
   RNScreens: afaf526a9c804c3b4503f950cf3e67ed81e29ada
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
+  WFCKokoro: 53b77dc1e1ec81b0c4bf3f8992eb7a5dfdcdc101
   WFCWhisper: f88be27476d591c66b8bb7f752500118cdf61b00
   Yoga: 5456bb010373068fc92221140921b09d126b116e
 
