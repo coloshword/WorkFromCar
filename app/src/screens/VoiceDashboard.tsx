@@ -15,6 +15,11 @@ import { useAccessToken } from '../context/AccessTokenContext';
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
 const MODEL_PATH = `${RNFS.MainBundlePath}/${MODEL_FILENAME}`;
 const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
+const TTS_BENCHMARK_TEXT =
+  'This is a stable text to benchmark text to speech inference performance across runs. ' +
+  'The goal is to measure generation speed, real time factor, and playback startup latency. ' +
+  'Please keep this benchmark sentence unchanged so each test produces comparable timing data. ' +
+  'A consistent input length helps us track regressions and improvements in model and runtime behavior.';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -77,6 +82,12 @@ export default function VoiceDashboard() {
     } finally {
       setSpeaking(false);
     }
+  };
+
+  const runTtsBenchmark = async () => {
+    setStatusText('Running TTS benchmark...');
+    await speak(TTS_BENCHMARK_TEXT);
+    setStatusText('✓ TTS benchmark complete. Check native logs for [Kokoro][Benchmark]');
   };
 
   const handleLogout = async () => {
@@ -183,6 +194,7 @@ export default function VoiceDashboard() {
 
       <View style={styles.inputContainer}>
         <Button title="Load Model" onPress={handleLoadModel} />
+        <Button title="Run TTS Benchmark" onPress={runTtsBenchmark} />
         <VoiceListener onTranscript={sendMessage} disabled={loading || speaking} />
       </View>
     </SafeAreaView>

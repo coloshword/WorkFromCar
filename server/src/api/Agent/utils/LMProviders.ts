@@ -20,17 +20,17 @@ const openrouter = new OpenAI({
 });
 
 export async function generateLLMMessage(
-  messages: Message[], 
+  messages: Message[],
+  model: string,
   systemInstruction: string
 ): Promise<string> {
-  // Transform messages to Google GenAI format
   const contents = messages.map(msg => ({
     role: msg.role,
     parts: [{ text: msg.content }]
   }));
 
   const response = await gemini.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model,
     contents,
     config: {
       systemInstruction: systemInstruction || "You are a helpful assistant.",

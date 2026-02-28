@@ -3,7 +3,7 @@ import { LLMPlanResponse } from "Types/Agent";
 import { emailCreateDraftParametersSchema } from "../tools/gmail/EmailCreateDraft";
 import { PLAN_INSTRUCTION, RETRY_COUNT } from "../utils/PlanInstructions";
 import { Message } from "Types/Agent";
-import { generateOpenRouterMessage } from "../utils/LMProviders";
+import { generateLLMMessage } from "../utils/LMProviders";
 import { normalizeNullStrings } from "../utils/AgentUtils";
 import { jsonrepair } from "jsonrepair";
 
@@ -87,9 +87,9 @@ export const verifyLLMToolCall = (plan: LLMPlanResponse) => {
 export const generateLLMPlan = async (messages: Message[]): Promise<LLMPlanResponse> => {
   const plan = await generateJsonWithRetry(
     messages,
-    "openai/gpt-oss-120b",
+    "gemini-3-flash-preview",
     PLAN_INSTRUCTION,
-    generateOpenRouterMessage,
+    generateLLMMessage,
     (json) => {
       const plan = PLAN_JSON_SCHEMA_SCHEMA.parse(json);
       verifyLLMToolCall(plan);
