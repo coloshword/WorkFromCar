@@ -13,7 +13,9 @@ import * as Keychain from 'react-native-keychain';
 import { useAccessToken } from '../context/AccessTokenContext';
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
+const VAD_FILENAME = 'ggml-silero-v6.2.0.bin';
 const MODEL_PATH = `${RNFS.MainBundlePath}/${MODEL_FILENAME}`;
+const VAD_PATH = `${RNFS.MainBundlePath}/${VAD_FILENAME}`;
 const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 const TTS_BENCHMARK_TEXT =
   'This is a stable text to benchmark text to speech inference performance across runs. ' +
@@ -62,9 +64,9 @@ export default function VoiceDashboard() {
         console.log(`[Kokoro] ${f}: ${exists ? 'EXISTS' : 'MISSING'} @ ${p}`);
       }
 
-      const ok = await NativeWhisper.loadModel(MODEL_PATH);
+      const ok = await NativeWhisper.loadModel(MODEL_PATH, VAD_PATH);
       const ok2 = await NativeKokoro.loadModel(KOKORO_MODEL_DIR);
-      console.log('[Kokoro] loadModel result:', ok2);
+      // verify if vad exists
       setStatusText(ok ? '✓ Model loaded' : '✗ Returned false');
     } catch (e: any) {
       console.log('[Kokoro] loadModel error:', e.message);

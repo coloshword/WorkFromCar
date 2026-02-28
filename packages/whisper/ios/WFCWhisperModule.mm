@@ -12,11 +12,14 @@
 RCT_EXPORT_MODULE(WFCWhisper)
 
 - (void)loadModel:(NSString *)modelPath
+          vadPath:(NSString *)vadPath
           resolve:(RCTPromiseResolveBlock)resolve
            reject:(RCTPromiseRejectBlock)reject {
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
     struct whisper_context_params params = whisper_context_default_params();
     params.use_gpu = YES;
+    params.vad = YES;
+    params.vad_model_path = vadPath.UTF8String;
     struct whisper_context *ctx = whisper_init_from_file_with_params(
       modelPath.UTF8String, params
     );

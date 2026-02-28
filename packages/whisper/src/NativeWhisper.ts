@@ -2,7 +2,7 @@ import type { TurboModule } from 'react-native';
 import { TurboModuleRegistry } from 'react-native';
 
 export interface Spec extends TurboModule {
-  loadModel: (modelPath: string) => Promise<boolean>;
+  loadModel: (modelPath: string, vadPath: string) => Promise<boolean>;
 
   transcribeWavFile(wavPath: string): Promise<string>;
 
