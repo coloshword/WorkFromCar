@@ -13,6 +13,24 @@
 
 RCT_EXPORT_MODULE(WFCKokoro)
 
+static double KokoroNowMs(void) {
+  return CFAbsoluteTimeGetCurrent() * 1000.0;
+}
+
+static NSInteger KokoroEstimateSentenceCount(NSString *text) {
+  if (text.length == 0) {
+    return 0;
+  }
+  NSInteger count = 0;
+  for (NSUInteger i = 0; i < text.length; ++i) {
+    unichar c = [text characterAtIndex:i];
+    if (c == '.' || c == '!' || c == '?' || c == '\n') {
+      count++;
+    }
+  }
+  return MAX((NSInteger)1, count);
+}
+
 - (void)loadModel:(NSString *)modelDir
           resolve:(RCTPromiseResolveBlock)resolve
            reject:(RCTPromiseRejectBlock)reject {
@@ -68,26 +86,47 @@ RCT_EXPORT_MODULE(WFCKokoro)
       resolve:(RCTPromiseResolveBlock)resolve
        reject:(RCTPromiseRejectBlock)reject {
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    double speakStartMs = KokoroNowMs();
     if (!self->_tts) {
       reject(@"NO_MODEL", @"Call loadModel first", nil);
       return;
     }
+    NSInteger textLength = text.length;
+    NSInteger sentenceCount = KokoroEstimateSentenceCount(text);
+    NSLog(@"[Kokoro][Benchmark] speak request text_len=%ld sentences=%ld speed=%.2f",
+          (long)textLength, (long)sentenceCount, speed);
+
     // sherpa-onnx handles G2P + chunking + inference in one call
+    double generateStartMs = KokoroNowMs();
     const SherpaOnnxGeneratedAudio *audio =
       SherpaOnnxOfflineTtsGenerate(self->_tts, text.UTF8String, 0, (float)speed);
+    double generateMs = KokoroNowMs() - generateStartMs;
 
     if (!audio || audio->n == 0) {
       SherpaOnnxDestroyOfflineTtsGeneratedAudio(audio);
+      NSLog(@"[Kokoro][Benchmark] speak failed generate_ms=%.2f total_ms=%.2f",
+            generateMs, KokoroNowMs() - speakStartMs);
       reject(@"TTS_ERROR", @"Audio generation failed or returned empty", nil);
       return;
     }
 
+    double audioMs = (audio->sample_rate > 0)
+      ? (1000.0 * (double)audio->n / (double)audio->sample_rate)
+      : 0.0;
+    double rtf = (audioMs > 0.0) ? (generateMs / audioMs) : -1.0;
+    NSLog(@"[Kokoro][Benchmark] infer generate_ms=%.2f samples=%d sample_rate=%d audio_ms=%.2f rtf=%.3f",
+          generateMs, audio->n, audio->sample_rate, audioMs, rtf);
+
     NSURL *tmpURL = [NSURL fileURLWithPath:
       [NSTemporaryDirectory() stringByAppendingPathComponent:@"kokoro_out.wav"]];
+    double wavStartMs = KokoroNowMs();
     [self writeWAV:audio->samples count:audio->n sampleRate:audio->sample_rate toURL:tmpURL];
+    double wavMs = KokoroNowMs() - wavStartMs;
+    NSLog(@"[Kokoro][Benchmark] wav write_ms=%.2f path=%@", wavMs, tmpURL.path);
     SherpaOnnxDestroyOfflineTtsGeneratedAudio(audio);
 
     dispatch_async(dispatch_get_main_queue(), ^{
+      double mainQueueStartMs = KokoroNowMs();
       NSError *sessionErr = nil;
       AVAudioSession *session = [AVAudioSession sharedInstance];
       [session setCategory:AVAudioSessionCategoryPlayback
@@ -96,9 +135,28 @@ RCT_EXPORT_MODULE(WFCKokoro)
       [session setActive:YES error:nil];
 
       NSError *err = nil;
+      double playerInitStartMs = KokoroNowMs();
       self->_player = [[AVAudioPlayer alloc] initWithContentsOfURL:tmpURL error:&err];
+      double playerInitMs = KokoroNowMs() - playerInitStartMs;
       self->_player.volume = 1.0;
-      err ? reject(@"PLAY_ERROR", err.localizedDescription, err) : ([self->_player play], resolve(nil));
+      if (err) {
+        NSLog(@"[Kokoro][Benchmark] playback init_error player_init_ms=%.2f total_ms=%.2f error=%@",
+              playerInitMs, KokoroNowMs() - speakStartMs, err.localizedDescription);
+        reject(@"PLAY_ERROR", err.localizedDescription, err);
+        return;
+      }
+
+      double playStartMs = KokoroNowMs();
+      BOOL didPlay = [self->_player play];
+      double playCallMs = KokoroNowMs() - playStartMs;
+      double mainQueueMs = KokoroNowMs() - mainQueueStartMs;
+      double totalMs = KokoroNowMs() - speakStartMs;
+      double ttfaProxyMs = generateMs + wavMs + playerInitMs + playCallMs;
+      NSLog(@"[Kokoro][Benchmark] playback player_init_ms=%.2f play_call_ms=%.2f main_queue_ms=%.2f did_play=%s",
+            playerInitMs, playCallMs, mainQueueMs, didPlay ? "true" : "false");
+      NSLog(@"[Kokoro][Benchmark] speak done total_ms=%.2f ttfa_proxy_ms=%.2f",
+            totalMs, ttfaProxyMs);
+      resolve(nil);
     });
   });
 }
