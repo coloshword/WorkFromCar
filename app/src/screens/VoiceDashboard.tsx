@@ -64,8 +64,9 @@ export default function VoiceDashboard() {
         console.log(`[Kokoro] ${f}: ${exists ? 'EXISTS' : 'MISSING'} @ ${p}`);
       }
 
-      const ok = await NativeWhisper.loadModel(MODEL_PATH, VAD_PATH);
+      const ok = await NativeWhisper.loadModel(MODEL_PATH);
       const ok2 = await NativeKokoro.loadModel(KOKORO_MODEL_DIR);
+      const ok3 = await NativeWhisper.initVad(VAD_PATH);
       // verify if vad exists
       setStatusText(ok ? '✓ Model loaded' : '✗ Returned false');
     } catch (e: any) {

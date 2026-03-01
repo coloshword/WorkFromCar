@@ -7,19 +7,17 @@
 
 @implementation WFCWhisperModule {
   struct whisper_context *_ctx;
+  struct whisper_vad_context *_vctx;
 }
 
 RCT_EXPORT_MODULE(WFCWhisper)
 
 - (void)loadModel:(NSString *)modelPath
-          vadPath:(NSString *)vadPath
           resolve:(RCTPromiseResolveBlock)resolve
            reject:(RCTPromiseRejectBlock)reject {
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
     struct whisper_context_params params = whisper_context_default_params();
     params.use_gpu = YES;
-    params.vad = YES;
-    params.vad_model_path = vadPath.UTF8String;
     struct whisper_context *ctx = whisper_init_from_file_with_params(
       modelPath.UTF8String, params
     );
@@ -92,6 +90,24 @@ RCT_EXPORT_MODULE(WFCWhisper)
     }
     free(buffer);
     resolve(transcription);
+  });
+}
+
+- (void)initVad:(NSString *)vadPath
+          resolve:(RCTPromiseResolveBlock)resolve
+            reject:(RCTPromiseRejectBlock)reject {
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    struct whisper_vad_context_params vparams = whisper_vad_default_context_params();
+    vparams.n_threads = 4;
+    struct whisper_vad_context *vctx = whisper_vad_init_from_file_with_params(vadPath.UTF8String, vparams);
+    if (vctx != NULL) {
+      if (self->_vctx) whisper_vad_free(self->_vctx);
+      self->_vctx = vctx;
+    } else {
+      reject(@"VAD_INIT_ERROR", @"whisper_vad_init_from_file_with_params returned NULL", nil);
+    }
+    NSLog(@"VAD singleton initialized successfully");
+    resolve(@YES);
   });
 }
 

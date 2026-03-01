@@ -9,43 +9,13 @@ interface Props {
 }
 
 export default function VoiceListener({ onTranscript, disabled }: Props) {
-  const [isRecording, setIsRecording] = useState(false);
-
-  const handlePress = async () => {
-    if (isRecording) {
-      try {
-        const pcm = await stopStreaming();
-        const text = await NativeWhisper.pcmBufferToText(pcm);
-        console.log(text);
-        if (text) onTranscript?.(text);
-      } catch (e) {
-        console.error('stopStreaming failed:', e);
-      } finally {
-        setIsRecording(false);
-      }
-    } else {
-      try {
-        await startStreaming();
-        setIsRecording(true);
-      } catch (e) {
-        console.error('startStreaming failed:', e);
-      }
-    }
-  };
 
   return (
-    <Pressable 
-      onPress={handlePress}
-      disabled={disabled}
-      style={[styles.button, isRecording ? styles.recording : styles.idle, disabled && styles.disabledButton]}
-    >
-      <View style={styles.content}>
-        <View style={[styles.indicator, isRecording && styles.indicatorActive]} />
-        <Text style={styles.text}>
-          {isRecording ? "Stop Listening" : "Start Listening"}
-        </Text>
-      </View>
-    </Pressable>
+    <View style={styles.content}>
+      <Text style={styles.text}>
+        Voice Listener component
+      </Text>
+    </View>
   );
 }
 
@@ -87,7 +57,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
   },
   text: {
-    color: '#FFF',
+    color: '#000',
     fontSize: 16,
     fontWeight: '600',
   },
