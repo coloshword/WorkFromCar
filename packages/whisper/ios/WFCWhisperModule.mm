@@ -111,6 +111,38 @@ RCT_EXPORT_MODULE(WFCWhisper)
   });
 }
 
+- (void)vadProcessBuffer:(NSArray<NSNumber *> *)pcmBuffer
+              resolve:(RCTPromiseResolveBlock)resolve
+                reject:(RCTPromiseRejectBlock)reject {
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    if (self->_vctx == NULL) {
+      reject(@"VAD_NOT_INITIALIZED", @"VAD not initialized", nil);
+    }
+    // convert pcmBuffer to float array
+    float *buffer = (float *)malloc(sizeof(float) * pcmBuffer.count);
+    if (buffer == NULL) {
+      reject(@"MALLOC_ERROR", @"Failed to allocate PCM buffer", nil);
+      return;
+    }
+    for (NSInteger i = 0; i < pcmBuffer.count; i++) {
+      // f is just telling us that this is a float, not a double 
+      buffer[i] = [pcmBuffer[i] floatValue] / 32768.0f;
+    }
+    bool isSpeech = whisper_vad_detect_speech(self->_vctx, buffer, (int)pcmBuffer.count);
+    float prob = 0.0f;
+    const int nProbs = whisper_vad_n_probs(self->_vctx);
+    const float *probs = whisper_vad_probs(self->_vctx);
+    if (nProbs > 0 && probs) prob = probs[nProbs - 1];
+
+    free(buffer);
+
+    resolve(@{
+      @"isSpeech": @(isSpeech),
+      @"prob": @(prob),
+    });
+  })
+};
+
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
     (const facebook::react::ObjCTurboModule::InitParams &)params {
   return std::make_shared<facebook::react::NativeWhisperSpecJSI>(params);
