@@ -11,6 +11,7 @@ import { VoiceProcessor, VoiceProcessorFrameListener } from '@picovoice/react-na
 
 
 let frameListener: VoiceProcessorFrameListener | null = null;
+let vadFrameListener: VoiceProcessorFrameListener | null = null;
 let pcmBuffer: number[] = [];
 
 export const FREQUENCY_HZ = 16000;
@@ -28,6 +29,23 @@ export async function startStreaming() {
   VoiceProcessor.instance.addFrameListener(frameListener);
   // start the voice processor 
   await VoiceProcessor.instance.start(FRAME_LENGTH, FREQUENCY_HZ);
+}
+
+export async function startVadStreaming(onFrame: (frame: number[]) => void) {
+  console.log('[VAD] starting vad streaming');
+  vadFrameListener = (frame: number[]) => {
+    onFrame(frame);
+  };
+  VoiceProcessor.instance.addFrameListener(vadFrameListener);
+  await VoiceProcessor.instance.start(FRAME_LENGTH, FREQUENCY_HZ);
+}
+
+export async function stopVadStreaming() {
+  if (vadFrameListener) {
+    VoiceProcessor.instance.removeFrameListener(vadFrameListener);
+    vadFrameListener = null;
+  }
+  await VoiceProcessor.instance.stop()
 }
 
 /**

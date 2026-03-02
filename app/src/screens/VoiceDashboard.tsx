@@ -11,6 +11,7 @@ import { authFetch } from '../utils/fetchUtils';
 import { sendEmail } from '../api/sendEmail';
 import * as Keychain from 'react-native-keychain';
 import { useAccessToken } from '../context/AccessTokenContext';
+import { VoiceListenerState } from '../components/VoiceListener';
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
 const VAD_FILENAME = 'ggml-silero-v6.2.0.bin';
@@ -36,6 +37,7 @@ export default function VoiceDashboard() {
   const [executeObj, setExecuteObj] = useState<any>(null);
   const [statusText, setStatusText] = useState('');
   const { authToken, setAuthToken } = useAccessToken();
+  const [voiceListenerState, setVoiceListenerState] = useState<VoiceListenerState>('disabled');
 
   useEffect(() => {
     const requestMicPermission = async () => {
@@ -69,6 +71,7 @@ export default function VoiceDashboard() {
       const ok3 = await NativeWhisper.initVad(VAD_PATH);
       // verify if vad exists
       setStatusText(ok ? '✓ Model loaded' : '✗ Returned false');
+      setVoiceListenerState('listening');
     } catch (e: any) {
       console.log('[Kokoro] loadModel error:', e.message);
       setStatusText(`Error: ${e.message}`);
@@ -197,8 +200,7 @@ export default function VoiceDashboard() {
 
       <View style={styles.inputContainer}>
         <Button title="Load Model" onPress={handleLoadModel} />
-        <Button title="Run TTS Benchmark" onPress={runTtsBenchmark} />
-        <VoiceListener onTranscript={sendMessage} disabled={loading || speaking} />
+        <VoiceListener state={voiceListenerState} onTranscript={sendMessage} onStateChange={setVoiceListenerState} />
       </View>
     </SafeAreaView>
   );

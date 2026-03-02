@@ -10,9 +10,7 @@ export interface Spec extends TurboModule {
 
   initVad: (vadPath: string) => Promise<boolean>;
 
-  releaseVad: () => Promise<void>;
-
-  processVadFrame(pcm16k: number[]): Promise<string>;
+  vadProcessBuffer(pcmBuffer: number[]): Promise<{ isSpeech: boolean, prob: number }>;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>('WFCWhisper');

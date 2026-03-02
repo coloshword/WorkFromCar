@@ -117,6 +117,7 @@ RCT_EXPORT_MODULE(WFCWhisper)
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
     if (self->_vctx == NULL) {
       reject(@"VAD_NOT_INITIALIZED", @"VAD not initialized", nil);
+      return;
     }
     // convert pcmBuffer to float array
     float *buffer = (float *)malloc(sizeof(float) * pcmBuffer.count);
@@ -140,7 +141,7 @@ RCT_EXPORT_MODULE(WFCWhisper)
       @"isSpeech": @(isSpeech),
       @"prob": @(prob),
     });
-  })
+  });
 };
 
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
