@@ -250,6 +250,39 @@ static int32_t KokoroStreamCallbackWithArg(const float *samples, int32_t n, void
           generateMs, audio->n, audio->sample_rate, audioMs, rtf, ctx.chunkCount, ctx.chunkSamples);
     SherpaOnnxDestroyOfflineTtsGeneratedAudio(audio);
 
+    // Wait for queued playback to finish before resolving the JS promise.
+    // This keeps the app-level VAD/mic lock active for the full speech duration.
+    dispatch_semaphore_t playbackDone = dispatch_semaphore_create(0);
+    dispatch_sync(dispatch_get_main_queue(), ^{
+      if (self->_stopRequested.load() || !self->_playerNode || !self->_streamFormat) {
+        dispatch_semaphore_signal(playbackDone);
+        return;
+      }
+
+      AVAudioPCMBuffer *sentinel = [[AVAudioPCMBuffer alloc] initWithPCMFormat:self->_streamFormat
+                                                                   frameCapacity:1];
+      if (!sentinel) {
+        dispatch_semaphore_signal(playbackDone);
+        return;
+      }
+      sentinel.frameLength = 1;
+      sentinel.floatChannelData[0][0] = 0.0f;
+
+      [self->_playerNode scheduleBuffer:sentinel completionHandler:^{
+        dispatch_semaphore_signal(playbackDone);
+      }];
+    });
+
+    // Audio duration + buffer for engine scheduling/jitter.
+    int64_t waitMs = (int64_t)MAX(1000.0, audioMs + 2000.0);
+    long waitResult = dispatch_semaphore_wait(
+      playbackDone,
+      dispatch_time(DISPATCH_TIME_NOW, waitMs * NSEC_PER_MSEC)
+    );
+    if (waitResult != 0) {
+      NSLog(@"[Kokoro][Benchmark] playback wait timeout wait_ms=%lld", waitMs);
+    }
+
     double totalMs = KokoroNowMs() - speakStartMs;
     NSLog(@"[Kokoro][Benchmark] speak done total_ms=%.2f", totalMs);
     resolve(nil);
@@ -258,12 +291,12 @@ static int32_t KokoroStreamCallbackWithArg(const float *samples, int32_t n, void
 
 - (void)stop:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
   self->_stopRequested.store(true);
-  dispatch_async(dispatch_get_main_queue(), ^{
+  dispatch_sync(dispatch_get_main_queue(), ^{
     [self->_player stop];
     [self->_playerNode stop];
     [self->_engine stop];
-    resolve(nil);
   });
+  resolve(nil);
 }
 
 // float32 → int16 WAV (24000 Hz mono, which is Kokoro's output sample rate)

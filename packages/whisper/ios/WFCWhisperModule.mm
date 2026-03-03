@@ -7,6 +7,7 @@
 
 @implementation WFCWhisperModule {
   struct whisper_context *_ctx;
+  struct whisper_vad_context *_vctx;
 }
 
 RCT_EXPORT_MODULE(WFCWhisper)
@@ -91,6 +92,57 @@ RCT_EXPORT_MODULE(WFCWhisper)
     resolve(transcription);
   });
 }
+
+- (void)initVad:(NSString *)vadPath
+          resolve:(RCTPromiseResolveBlock)resolve
+            reject:(RCTPromiseRejectBlock)reject {
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    struct whisper_vad_context_params vparams = whisper_vad_default_context_params();
+    vparams.n_threads = 4;
+    struct whisper_vad_context *vctx = whisper_vad_init_from_file_with_params(vadPath.UTF8String, vparams);
+    if (vctx != NULL) {
+      if (self->_vctx) whisper_vad_free(self->_vctx);
+      self->_vctx = vctx;
+    } else {
+      reject(@"VAD_INIT_ERROR", @"whisper_vad_init_from_file_with_params returned NULL", nil);
+    }
+    NSLog(@"VAD singleton initialized successfully");
+    resolve(@YES);
+  });
+}
+
+- (void)vadProcessBuffer:(NSArray<NSNumber *> *)pcmBuffer
+              resolve:(RCTPromiseResolveBlock)resolve
+                reject:(RCTPromiseRejectBlock)reject {
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    if (self->_vctx == NULL) {
+      reject(@"VAD_NOT_INITIALIZED", @"VAD not initialized", nil);
+      return;
+    }
+    // convert pcmBuffer to float array
+    float *buffer = (float *)malloc(sizeof(float) * pcmBuffer.count);
+    if (buffer == NULL) {
+      reject(@"MALLOC_ERROR", @"Failed to allocate PCM buffer", nil);
+      return;
+    }
+    for (NSInteger i = 0; i < pcmBuffer.count; i++) {
+      // f is just telling us that this is a float, not a double 
+      buffer[i] = [pcmBuffer[i] floatValue] / 32768.0f;
+    }
+    bool isSpeech = whisper_vad_detect_speech(self->_vctx, buffer, (int)pcmBuffer.count);
+    float prob = 0.0f;
+    const int nProbs = whisper_vad_n_probs(self->_vctx);
+    const float *probs = whisper_vad_probs(self->_vctx);
+    if (nProbs > 0 && probs) prob = probs[nProbs - 1];
+
+    free(buffer);
+
+    resolve(@{
+      @"isSpeech": @(isSpeech),
+      @"prob": @(prob),
+    });
+  });
+};
 
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
     (const facebook::react::ObjCTurboModule::InitParams &)params {

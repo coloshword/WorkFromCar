@@ -1,51 +1,134 @@
-import React, { useState } from "react";
-import { Pressable, Text, StyleSheet, View } from "react-native";
-import { startStreaming, stopStreaming } from "../services/audio/voiceProcessor";
+import React, { useState, useEffect, useRef } from "react";
+import { Text, StyleSheet, View } from "react-native";
+import { startVadStreaming, stopVadStreaming } from "../services/audio/voiceProcessor";
 import NativeWhisper from 'whisper/src/NativeWhisper';
 
+export type VoiceListenerState = 'listening' | 'speaking' | 'transcribing' | 'disabled';
+
+const SILENCE_THRESHOLD = 100;
+const MAX_SPEECH_SAMPLES = 480_000;
+const RING_BUFFER_SIZE = 10;
+
 interface Props {
+  state: VoiceListenerState;
+  onStateChange: (state: VoiceListenerState) => void;
   onTranscript?: (text: string) => void;
-  disabled?: boolean;
 }
 
-export default function VoiceListener({ onTranscript, disabled }: Props) {
-  const [isRecording, setIsRecording] = useState(false);
+export default function VoiceListener({ state, onStateChange, onTranscript }: Props) {
+  const stateRef = useRef<VoiceListenerState>(state);
+  const onStateChangeRef = useRef(onStateChange);
+  const onTranscriptRef = useRef(onTranscript);
+  const [prob, setProb] = useState<string>('');
 
-  const handlePress = async () => {
-    if (isRecording) {
-      try {
-        const pcm = await stopStreaming();
-        const text = await NativeWhisper.pcmBufferToText(pcm);
-        console.log(text);
-        if (text) onTranscript?.(text);
-      } catch (e) {
-        console.error('stopStreaming failed:', e);
-      } finally {
-        setIsRecording(false);
-      }
-    } else {
-      try {
-        await startStreaming();
-        setIsRecording(true);
-      } catch (e) {
-        console.error('startStreaming failed:', e);
-      }
-    }
-  };
+  const isActive = state !== 'disabled';
 
+  useEffect(() => { stateRef.current = state; }, [state]);
+  useEffect(() => { onStateChangeRef.current = onStateChange; }, [onStateChange]);
+  useEffect(() => { onTranscriptRef.current = onTranscript; }, [onTranscript]);
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    let isMounted = true;
+    let vadBusy = false;
+    let lastVadIsSpeech = false;
+    let silenceFrameCount = 0;
+    const speechBuffer: number[] = [];
+    const ringBuffer: number[][] = [];
+    let ringBufferIndex = 0;
+
+    const getRingBufferContents = (): number[] => {
+      const result: number[] = [];
+      const count = Math.min(ringBufferIndex, RING_BUFFER_SIZE);
+      const start = ringBufferIndex - count;
+      for (let i = start; i < ringBufferIndex; i++) {
+        result.push(...ringBuffer[i % RING_BUFFER_SIZE]);
+      }
+      return result;
+    };
+
+    const triggerTranscription = () => {
+      if (speechBuffer.length === 0) {
+        silenceFrameCount = 0;
+        stateRef.current = 'listening';
+        onStateChangeRef.current('listening');
+        return;
+      }
+
+      stateRef.current = 'transcribing';
+      onStateChangeRef.current('transcribing');
+      const buffer = [...speechBuffer];
+      speechBuffer.length = 0;
+      silenceFrameCount = 0;
+      lastVadIsSpeech = false;
+
+      NativeWhisper.pcmBufferToText(buffer)
+        .then((text) => {
+          if (!isMounted) return;
+          onTranscriptRef.current?.(text);
+          stateRef.current = 'listening';
+          onStateChangeRef.current('listening');
+        })
+        .catch((err) => {
+          console.log('[VAD] transcription error:', err);
+          if (!isMounted) return;
+          stateRef.current = 'listening';
+          onStateChangeRef.current('listening');
+        });
+    };
+
+    const onFrame = (frame: number[]) => {
+      ringBuffer[ringBufferIndex % RING_BUFFER_SIZE] = frame;
+      ringBufferIndex++;
+
+      const currentState = stateRef.current;
+      if (currentState === 'disabled' || currentState === 'transcribing') return;
+
+      if (currentState === 'speaking') {
+        speechBuffer.push(...frame);
+      }
+
+      if (lastVadIsSpeech) {
+        silenceFrameCount = 0;
+        if (currentState === 'listening') {
+          speechBuffer.push(...getRingBufferContents(), ...frame);
+          stateRef.current = 'speaking';
+          onStateChangeRef.current('speaking');
+        }
+      } else if (currentState === 'speaking') {
+        silenceFrameCount++;
+        if (silenceFrameCount >= SILENCE_THRESHOLD || speechBuffer.length >= MAX_SPEECH_SAMPLES) {
+          triggerTranscription();
+          return;
+        }
+      }
+
+      if (!vadBusy) {
+        vadBusy = true;
+        NativeWhisper.vadProcessBuffer(frame)
+          .then(({ prob: p }) => {
+            lastVadIsSpeech = p > 0.4;
+            if (isMounted) setProb(` ${p.toFixed(2)}`);
+            vadBusy = false;
+          })
+          .catch(() => { vadBusy = false; });
+      }
+    };
+
+    startVadStreaming(onFrame);
+
+    return () => {
+      isMounted = false;
+      stopVadStreaming();
+    };
+  }, [isActive]);
   return (
-    <Pressable 
-      onPress={handlePress}
-      disabled={disabled}
-      style={[styles.button, isRecording ? styles.recording : styles.idle, disabled && styles.disabledButton]}
-    >
-      <View style={styles.content}>
-        <View style={[styles.indicator, isRecording && styles.indicatorActive]} />
-        <Text style={styles.text}>
-          {isRecording ? "Stop Listening" : "Start Listening"}
-        </Text>
-      </View>
-    </Pressable>
+    <View style={styles.content}>
+      <Text style={styles.text}>
+        {state}{prob}
+      </Text>
+    </View>
   );
 }
 
@@ -87,7 +170,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
   },
   text: {
-    color: '#FFF',
+    color: '#000',
     fontSize: 16,
     fontWeight: '600',
   },

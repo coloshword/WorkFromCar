@@ -7,6 +7,10 @@ export interface Spec extends TurboModule {
   transcribeWavFile(wavPath: string): Promise<string>;
 
   pcmBufferToText(pcmBuffer: number[]): Promise<string>;
+
+  initVad: (vadPath: string) => Promise<boolean>;
+
+  vadProcessBuffer(pcmBuffer: number[]): Promise<{ isSpeech: boolean, prob: number }>;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>('WFCWhisper');

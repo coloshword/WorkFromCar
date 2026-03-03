@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -14,6 +14,7 @@
 		93AF54290AD78900524DB4CD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		E154281C2F46C40B007F33E2 /* ggml-tiny.en-q5_1.bin in Resources */ = {isa = PBXBuildFile; fileRef = E154281B2F46C40B007F33E2 /* ggml-tiny.en-q5_1.bin */; };
 		E1ACCA5B2F51477700F47B6F /* sherpa-onnx-kokoro-en-v0_19 in Resources */ = {isa = PBXBuildFile; fileRef = E1ACCA5A2F51477700F47B6F /* sherpa-onnx-kokoro-en-v0_19 */; };
+		E1B96B5F2F52B73100D0A6D0 /* ggml-silero-v6.2.0.bin in Resources */ = {isa = PBXBuildFile; fileRef = E1B96B5E2F52B73100D0A6D0 /* ggml-silero-v6.2.0.bin */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = WorkFromCar/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		E154281B2F46C40B007F33E2 /* ggml-tiny.en-q5_1.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = "ggml-tiny.en-q5_1.bin"; sourceTree = "<group>"; };
 		E1ACCA5A2F51477700F47B6F /* sherpa-onnx-kokoro-en-v0_19 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "sherpa-onnx-kokoro-en-v0_19"; sourceTree = "<group>"; };
+		E1B96B5E2F52B73100D0A6D0 /* ggml-silero-v6.2.0.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = "ggml-silero-v6.2.0.bin"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -108,6 +110,7 @@
 			children = (
 				E1ACCA5A2F51477700F47B6F /* sherpa-onnx-kokoro-en-v0_19 */,
 				E154281B2F46C40B007F33E2 /* ggml-tiny.en-q5_1.bin */,
+				E1B96B5E2F52B73100D0A6D0 /* ggml-silero-v6.2.0.bin */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -174,6 +177,7 @@
 			files = (
 				E154281C2F46C40B007F33E2 /* ggml-tiny.en-q5_1.bin in Resources */,
 				E1ACCA5B2F51477700F47B6F /* sherpa-onnx-kokoro-en-v0_19 in Resources */,
+				E1B96B5F2F52B73100D0A6D0 /* ggml-silero-v6.2.0.bin in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				93AF54290AD78900524DB4CD /* PrivacyInfo.xcprivacy in Resources */,

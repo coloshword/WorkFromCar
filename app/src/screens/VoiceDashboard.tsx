@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View, ScrollView, ActivityIndicator, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import RNFS from 'react-native-fs';
@@ -11,9 +11,12 @@ import { authFetch } from '../utils/fetchUtils';
 import { sendEmail } from '../api/sendEmail';
 import * as Keychain from 'react-native-keychain';
 import { useAccessToken } from '../context/AccessTokenContext';
+import { VoiceListenerState } from '../components/VoiceListener';
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
+const VAD_FILENAME = 'ggml-silero-v6.2.0.bin';
 const MODEL_PATH = `${RNFS.MainBundlePath}/${MODEL_FILENAME}`;
+const VAD_PATH = `${RNFS.MainBundlePath}/${VAD_FILENAME}`;
 const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 const TTS_BENCHMARK_TEXT =
   'This is a stable text to benchmark text to speech inference performance across runs. ' +
@@ -34,6 +37,14 @@ export default function VoiceDashboard() {
   const [executeObj, setExecuteObj] = useState<any>(null);
   const [statusText, setStatusText] = useState('');
   const { authToken, setAuthToken } = useAccessToken();
+  const [voiceListenerState, setVoiceListenerState] = useState<VoiceListenerState>('disabled');
+  const sendMessageRef = useRef<((transcript: string) => Promise<void>) | undefined>(undefined);
+  const activeTtsCountRef = useRef(0);
+  const handleTranscript = useCallback((transcript: string) => {
+    sendMessageRef.current?.(transcript);
+  }, []);
+
+  const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
   useEffect(() => {
     const requestMicPermission = async () => {
@@ -64,8 +75,10 @@ export default function VoiceDashboard() {
 
       const ok = await NativeWhisper.loadModel(MODEL_PATH);
       const ok2 = await NativeKokoro.loadModel(KOKORO_MODEL_DIR);
-      console.log('[Kokoro] loadModel result:', ok2);
+      const ok3 = await NativeWhisper.initVad(VAD_PATH);
+      // verify if vad exists
       setStatusText(ok ? '✓ Model loaded' : '✗ Returned false');
+      setVoiceListenerState('listening');
     } catch (e: any) {
       console.log('[Kokoro] loadModel error:', e.message);
       setStatusText(`Error: ${e.message}`);
@@ -73,7 +86,14 @@ export default function VoiceDashboard() {
   };
 
   const speak = async (text: string) => {
+    const shouldRestoreListener = voiceListenerState !== 'disabled';
+    activeTtsCountRef.current += 1;
     try {
+      if (shouldRestoreListener && activeTtsCountRef.current === 1) {
+        // Pause live mic/VAD while TTS is speaking to avoid iOS audio-session conflicts.
+        setVoiceListenerState('disabled');
+        await sleep(120);
+      }
       await NativeKokoro.stop();
       setSpeaking(true);
       await NativeKokoro.speak(text, 1.0);
@@ -81,6 +101,10 @@ export default function VoiceDashboard() {
       console.log('[Kokoro] speak error:', e.message);
     } finally {
       setSpeaking(false);
+      activeTtsCountRef.current = Math.max(0, activeTtsCountRef.current - 1);
+      if (shouldRestoreListener && activeTtsCountRef.current === 0) {
+        setVoiceListenerState('listening');
+      }
     }
   };
 
@@ -95,7 +119,7 @@ export default function VoiceDashboard() {
     setAuthToken(null);
   };
 
-  const sendMessage = async (transcript: string) => {
+  const sendMessage = async (transcript: string): Promise<void> => {
     if (!transcript.trim()) return;
 
     setLoading(true);
@@ -170,6 +194,7 @@ export default function VoiceDashboard() {
       setLoading(false);
     }
   };
+  sendMessageRef.current = sendMessage;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -194,8 +219,7 @@ export default function VoiceDashboard() {
 
       <View style={styles.inputContainer}>
         <Button title="Load Model" onPress={handleLoadModel} />
-        <Button title="Run TTS Benchmark" onPress={runTtsBenchmark} />
-        <VoiceListener onTranscript={sendMessage} disabled={loading || speaking} />
+        <VoiceListener state={voiceListenerState} onTranscript={handleTranscript} onStateChange={setVoiceListenerState} />
       </View>
     </SafeAreaView>
   );
