@@ -18,7 +18,7 @@ export const EMAIL_CREATE_DRAFT_INSTRUCTIONS = `
   - assistantMessage (string)
   - tool: "gmail.createDraft"
   - toolParameters:
-    - to: string | null **MUST BE AN EMAIL ADDRESS, else leave null**
+    - to: string | null **MUST BE AN EMAIL ADDRESS, else leave null. Normalize potential emails from transcripts (spelled-out letters, hyphens, spaces, “at/dot” words, remove dashes from spelling).**
     - subject: string | null
     - body: string | null
 ` 
