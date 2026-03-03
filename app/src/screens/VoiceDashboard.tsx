@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View, ScrollView, ActivityIndicator, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import RNFS from 'react-native-fs';
@@ -38,6 +38,13 @@ export default function VoiceDashboard() {
   const [statusText, setStatusText] = useState('');
   const { authToken, setAuthToken } = useAccessToken();
   const [voiceListenerState, setVoiceListenerState] = useState<VoiceListenerState>('disabled');
+  const sendMessageRef = useRef<((transcript: string) => Promise<void>) | undefined>(undefined);
+  const activeTtsCountRef = useRef(0);
+  const handleTranscript = useCallback((transcript: string) => {
+    sendMessageRef.current?.(transcript);
+  }, []);
+
+  const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
   useEffect(() => {
     const requestMicPermission = async () => {
@@ -79,7 +86,14 @@ export default function VoiceDashboard() {
   };
 
   const speak = async (text: string) => {
+    const shouldRestoreListener = voiceListenerState !== 'disabled';
+    activeTtsCountRef.current += 1;
     try {
+      if (shouldRestoreListener && activeTtsCountRef.current === 1) {
+        // Pause live mic/VAD while TTS is speaking to avoid iOS audio-session conflicts.
+        setVoiceListenerState('disabled');
+        await sleep(120);
+      }
       await NativeKokoro.stop();
       setSpeaking(true);
       await NativeKokoro.speak(text, 1.0);
@@ -87,6 +101,10 @@ export default function VoiceDashboard() {
       console.log('[Kokoro] speak error:', e.message);
     } finally {
       setSpeaking(false);
+      activeTtsCountRef.current = Math.max(0, activeTtsCountRef.current - 1);
+      if (shouldRestoreListener && activeTtsCountRef.current === 0) {
+        setVoiceListenerState('listening');
+      }
     }
   };
 
@@ -101,7 +119,7 @@ export default function VoiceDashboard() {
     setAuthToken(null);
   };
 
-  const sendMessage = async (transcript: string) => {
+  const sendMessage = async (transcript: string): Promise<void> => {
     if (!transcript.trim()) return;
 
     setLoading(true);
@@ -176,6 +194,7 @@ export default function VoiceDashboard() {
       setLoading(false);
     }
   };
+  sendMessageRef.current = sendMessage;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -200,7 +219,7 @@ export default function VoiceDashboard() {
 
       <View style={styles.inputContainer}>
         <Button title="Load Model" onPress={handleLoadModel} />
-        <VoiceListener state={voiceListenerState} onTranscript={sendMessage} onStateChange={setVoiceListenerState} />
+        <VoiceListener state={voiceListenerState} onTranscript={handleTranscript} onStateChange={setVoiceListenerState} />
       </View>
     </SafeAreaView>
   );
