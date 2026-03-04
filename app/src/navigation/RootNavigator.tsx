@@ -5,9 +5,11 @@ import * as Keychain from "react-native-keychain";
 
 import LoginScreen from '../screens/Login';
 import VoiceDashboardScreen from '../screens/VoiceDashboard';
+import VoiceDashboardScreen2 from '../screens/VoiceDashboard2';
 import { useAccessToken } from '../context/AccessTokenContext';
 import { silentLogin } from '../api/auth';
 import DemoScreen from '../screens/Demo';
+
 
 type RootStackParamList = {
   Login: undefined;
@@ -45,7 +47,8 @@ export const RootNavigator = () => {
         {isAuthed ? (
           <Stack.Screen 
             name="VoiceDashboard"
-            component={VoiceDashboardScreen}
+            component={VoiceDashboardScreen2}
+            options={{ headerShown: false }}
           />
         ) : (
           <Stack.Screen 
