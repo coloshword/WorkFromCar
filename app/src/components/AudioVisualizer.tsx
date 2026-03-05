@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
   wave: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: 7,
     height: MAX_HEIGHT + 4,
   },

@@ -115,6 +115,7 @@ const styles = StyleSheet.create({
   },
   topbar: {
     height: 80,
+    marginTop: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -130,7 +131,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   loadBtn: {
-    paddingTop: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 14,
