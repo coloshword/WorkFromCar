@@ -56,7 +56,6 @@ export default function VoiceDashboard2() {
   return (
     <View style={styles.root}>
       <View style={styles.topbar}>
-        <Text style={styles.topbarTitle}>Voice</Text>
         {modelStatus !== 'ready' && (
           <Pressable
             style={[styles.loadBtn, modelStatus === 'loading' && styles.loadBtnDisabled]}
@@ -114,11 +113,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f271f',
   },
   topbar: {
-    height: 80,
-    marginTop: 20,
+    height: 100,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingHorizontal: 16,
     backgroundColor: '#08110e',
     borderBottomWidth: 1,
@@ -131,6 +129,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   loadBtn: {
+    marginTop: 30,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 14,
