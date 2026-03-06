@@ -33,23 +33,33 @@ export default function VoiceDashboard2() {
     requestMicPermission();
   }, []);
 
-  const handleLoadModel = async () => {
-    setModelStatus('loading');
-    setStatusMsg('Loading models...');
-    try {
-      await NativeWhisper.loadModel(MODEL_PATH);
-      await NativeKokoro.loadModel(KOKORO_MODEL_DIR);
-      await NativeWhisper.initVad(VAD_PATH);
-      setModelStatus('ready');
-      setStatusMsg('');
-      setVoiceListenerState('listening');
-    } catch (e: any) {
-      setModelStatus('error');
-      setStatusMsg(`Error: ${e.message}`);
-    }
-  };
+  useEffect(() => {
+    let cancelled = false;
+
+    const handleLoadModel = async () => {
+      if (cancelled) return;
+      setModelStatus('loading');
+      setStatusMsg('Loading models...');
+      try {
+        await NativeWhisper.loadModel(MODEL_PATH);
+        await NativeKokoro.loadModel(KOKORO_MODEL_DIR);
+        await NativeWhisper.initVad(VAD_PATH);
+        setModelStatus('ready');
+        setStatusMsg('');
+        setVoiceListenerState('listening');
+      } catch (e: any) {
+        setModelStatus('error');
+        setStatusMsg(`Error: ${e.message}`);
+      }
+    };
+    handleLoadModel();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleTranscript = useCallback((text: string) => {
+    console.log('[VAD] transcript:', text);
     if (text.trim()) setTranscript(text.trim());
   }, []);
 
@@ -59,7 +69,6 @@ export default function VoiceDashboard2() {
         {modelStatus !== 'ready' && (
           <Pressable
             style={[styles.loadBtn, modelStatus === 'loading' && styles.loadBtnDisabled]}
-            onPress={handleLoadModel}
             disabled={modelStatus === 'loading'}
           >
             {modelStatus === 'loading'
@@ -83,18 +92,6 @@ export default function VoiceDashboard2() {
       {statusMsg ? (
         <Text style={styles.statusMsg}>{statusMsg}</Text>
       ) : null}
-
-      <View style={styles.transcriptBox}>
-        <ScrollView
-          style={styles.transcriptScroll}
-          contentContainerStyle={styles.transcriptContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <Text style={transcript ? styles.transcriptText : styles.transcriptPlaceholder}>
-            {transcript || 'Say something...'}
-          </Text>
-        </ScrollView>
-      </View>
 
       <View style={styles.voiceListenerWrapper}>
         <VoiceListener
@@ -148,6 +145,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   readyBadge: {
+    marginTop: 30,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 999,
@@ -177,15 +175,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 8,
     paddingHorizontal: 16,
-  },
-  transcriptBox: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    maxHeight: 120,
-    borderRadius: 18,
-    backgroundColor: 'rgba(15,23,42,0.55)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
   },
   transcriptScroll: {
     flex: 1,
