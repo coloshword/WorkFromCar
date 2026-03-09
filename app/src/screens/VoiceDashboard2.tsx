@@ -81,6 +81,13 @@ export default function VoiceDashboard2() {
           activeTtsCountRef,
           setSpeaking
         });
+        if (planOrExecute === 'execute') {
+          setPlanOrExecute('plan');
+          setExecuteObj(null);
+        } else if (message.tool?.toolParameters && Object.values(message.tool.toolParameters).every(v => v !== null)) {
+          setPlanOrExecute('execute');
+          setExecuteObj({ messages: [...messages, { role: 'user', content: text }], tool: message.tool });
+        }
       }
     } catch (e: any) {
       console.log('[handleTranscript] error:', e?.message ?? e);

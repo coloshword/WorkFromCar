@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExecuteState, Message, AgentPlanResponse } from '../../../types/Agent';
+import { ExecuteState, Message, AgentPlanResponse, ExecutePermissionRouteResponseBody } from '../../../types/Agent';
 import { authFetch } from './fetchUtils';
 import { speak } from './ttsUtils';
 
@@ -25,10 +25,13 @@ export async function useSendMessage({
   console.log('useSendMessage:', updatedMessages);
 
   const endpoint = planOrExecute === 'execute' ? '/api/agent/executePermission' : '/api/agent/plan';
+  const body = planOrExecute === 'execute'
+    ? { messages: updatedMessages, tool: executeObj.tool }
+    : { messages: updatedMessages };
   const response = await authFetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: updatedMessages }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
@@ -37,8 +40,12 @@ export async function useSendMessage({
   }
 
   const data = await response.json();
-  if (false) {
-    console.log("use send message");
+  if (planOrExecute === 'execute') {
+    const executePermission: ExecutePermissionRouteResponseBody = data;
+    console.log('executePermission:', executePermission);
+    const assistantMessage: Message = { role: 'assistant', content: executePermission.assistant };
+    setMessages((prev: Message[]) => [...prev, assistantMessage]);
+    return { message: assistantMessage, tool: executePermission.tool };
   } else {
     const assistantMessage: AgentPlanResponse = data;
     console.log('assistantMessage:', assistantMessage);
