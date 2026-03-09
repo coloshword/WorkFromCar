@@ -111,8 +111,15 @@ export default function VoiceDashboard2() {
       </View>
 
       <View style={[styles.visualizerContainer, { paddingTop: height * 0.15 }]}>
-        <AudioVisualizer mode={voiceListenerState} />
-        <Text style={styles.modeLabel}>{voiceListenerState}</Text>
+        {voiceListenerState === 'disabled' && !speaking
+          ? <ActivityIndicator size="large" color="#e8fff6" style={{ height: 150 }} />
+          : <AudioVisualizer mode={voiceListenerState} />
+        }
+        <Text style={styles.modeLabel}>
+          {voiceListenerState === 'disabled'
+            ? speaking ? 'Speaking...' : 'Processing...'
+            : voiceListenerState}
+        </Text>
 
         {tool && (
           <View style={styles.toolPanel}>
