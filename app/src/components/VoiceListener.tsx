@@ -8,7 +8,6 @@ export type VoiceListenerState = 'listening' | 'speaking' | 'transcribing' | 'di
 const SILENCE_THRESHOLD = 100;
 const MAX_SPEECH_SAMPLES = 480_000;
 const RING_BUFFER_SIZE = 10;
-
 interface Props {
   state: VoiceListenerState;
   onStateChange: (state: VoiceListenerState) => void;
@@ -67,8 +66,6 @@ export default function VoiceListener({ state, onStateChange, onTranscript }: Pr
         .then((text) => {
           if (!isMounted) return;
           onTranscriptRef.current?.(text);
-          stateRef.current = 'listening';
-          onStateChangeRef.current('listening');
         })
         .catch((err) => {
           console.log('[VAD] transcription error:', err);
