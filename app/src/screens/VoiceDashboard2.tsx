@@ -9,6 +9,9 @@ import { VoiceProcessor } from '@picovoice/react-native-voice-processor';
 import { FRAME_LENGTH, FREQUENCY_HZ } from '../services/audio/voiceProcessor';
 import AudioVisualizer from '../components/AudioVisualizer';
 import VoiceListener, { VoiceListenerState } from '../components/VoiceListener';
+import { useSendMessage } from '../utils/useSendMessage';
+import { Message, AgentTool } from '../../../types/Agent';
+import { speak } from '../utils/ttsUtils';
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
 const VAD_FILENAME = 'ggml-silero-v6.2.0.bin';
@@ -19,9 +22,14 @@ const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 export default function VoiceDashboard2() {
   const { height } = useWindowDimensions();
   const [voiceListenerState, setVoiceListenerState] = useState<VoiceListenerState>('disabled');
-  const [transcript, setTranscript] = useState('');
   const [modelStatus, setModelStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [statusMsg, setStatusMsg] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [planOrExecute, setPlanOrExecute] = useState<'plan' | 'execute'>('plan');
+  const [executeObj, setExecuteObj] = useState<any>(null);
+  const activeTtsCountRef = useRef(0);
+  const [speaking, setSpeaking] = useState(false);
+  const [tool, setTool] = useState<AgentTool | null>(null);
 
   useEffect(() => {
     const requestMicPermission = async () => {
@@ -58,10 +66,28 @@ export default function VoiceDashboard2() {
     };
   }, []);
 
-  const handleTranscript = useCallback((text: string) => {
-    console.log('[VAD] transcript:', text);
-    if (text.trim()) setTranscript(text.trim());
-  }, []);
+  const handleTranscript = useCallback(async (text: string) => {
+    setVoiceListenerState('disabled');
+    try {
+      const message = await useSendMessage({ transcript: text, messages, setMessages, planOrExecute, executeObj });
+      if (message) {
+        if (message.tool) {
+          setTool(message.tool);
+        }
+        await speak({
+          text: message.message.content,
+          voiceListenerState: 'disabled',
+          setVoiceListenerState,
+          activeTtsCountRef,
+          setSpeaking
+        });
+      }
+    } catch (e: any) {
+      console.log('[handleTranscript] error:', e?.message ?? e);
+    } finally {
+      setVoiceListenerState('listening');
+    }
+  }, [messages, planOrExecute, executeObj]);
 
   return (
     <View style={styles.root}>
@@ -87,6 +113,23 @@ export default function VoiceDashboard2() {
       <View style={[styles.visualizerContainer, { paddingTop: height * 0.15 }]}>
         <AudioVisualizer mode={voiceListenerState} />
         <Text style={styles.modeLabel}>{voiceListenerState}</Text>
+
+        {tool && (
+          <View style={styles.toolPanel}>
+            <View style={styles.toolHeader}>
+              <Text style={styles.toolHeaderLabel}>Current tool</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{tool.tool}</Text>
+              </View>
+            </View>
+            {tool.toolParameters && Object.entries(tool.toolParameters).map(([k, v]) => (
+              <View key={k} style={styles.kv}>
+                <Text style={styles.kvKey}>{k}</Text>
+                <Text style={[styles.kvVal, !v && styles.kvValNull]}>{v ?? 'null'}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
 
       {statusMsg ? (
@@ -197,5 +240,63 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -999,
     opacity: 0,
+  },
+  toolPanel: {
+    marginTop: 24,
+    width: '90%',
+    borderRadius: 18,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    paddingTop: 14,
+    gap: 10,
+  },
+  toolHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  toolHeaderLabel: {
+    color: 'rgba(229,231,235,0.9)',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.11)',
+  },
+  badgeText: {
+    color: '#9aa4b2',
+    fontSize: 11,
+  },
+  kv: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
+    gap: 10,
+  },
+  kvKey: {
+    width: 72,
+    color: '#9aa4b2',
+    fontSize: 12,
+  },
+  kvVal: {
+    flex: 1,
+    color: '#e5e7eb',
+    fontSize: 12,
+  },
+  kvValNull: {
+    color: 'rgba(229,231,235,0.45)',
+    fontStyle: 'italic',
   },
 });
