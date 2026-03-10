@@ -1,33 +1,15 @@
-import React from 'react';
-import { ExecuteState, Message, AgentPlanResponse, ExecutePermissionRouteResponseBody } from '../../../types/Agent';
+import { AgentTool, Message, AgentPlanResponse, ExecutePermissionRouteResponseBody, SummarizeRouteResponseBody, ToolExecutionLog } from '../../../types/Agent';
 import { authFetch } from './fetchUtils';
-import { speak } from './ttsUtils';
 
-type sendMessageParams = {
-  transcript: string;
-  messages: Message[];
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
-  planOrExecute: 'plan' | 'execute';
-  executeObj: ExecuteState;
-}
+export async function sendAgentMessage(
+  messages: Message[],
+  pendingTool: AgentTool | null
+): Promise<AgentPlanResponse> {
+  const endpoint = pendingTool ? '/api/agent/executePermission' : '/api/agent/plan';
+  const body = pendingTool
+    ? { messages, tool: pendingTool }
+    : { messages };
 
-export async function useSendMessage({
-  transcript,
-  messages,
-  setMessages,
-  planOrExecute,
-  executeObj,
-}: sendMessageParams): Promise<AgentPlanResponse | null> {
-  if (!transcript.trim()) return null;
-  const userMessage: Message = { role: 'user', content: transcript.trim() };
-  const updatedMessages = [...messages, userMessage];
-  setMessages(updatedMessages);
-  console.log('useSendMessage:', updatedMessages);
-
-  const endpoint = planOrExecute === 'execute' ? '/api/agent/executePermission' : '/api/agent/plan';
-  const body = planOrExecute === 'execute'
-    ? { messages: updatedMessages, tool: executeObj.tool }
-    : { messages: updatedMessages };
   const response = await authFetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -40,17 +22,34 @@ export async function useSendMessage({
   }
 
   const data = await response.json();
-  if (planOrExecute === 'execute') {
-    const executePermission: ExecutePermissionRouteResponseBody = data;
-    console.log('executePermission:', executePermission);
-    const assistantMessage: Message = { role: 'assistant', content: executePermission.assistant };
-    setMessages((prev: Message[]) => [...prev, assistantMessage]);
-    return { message: assistantMessage, tool: executePermission.tool };
+
+  if (pendingTool) {
+    const result: ExecutePermissionRouteResponseBody = data;
+    return {
+      message: { role: 'assistant', content: result.assistant },
+      tool: result.tool,
+      executePermissionGranted: result.executePermissionGranted,
+    };
   } else {
-    const assistantMessage: AgentPlanResponse = data;
-    console.log('assistantMessage:', assistantMessage);
-    console.log(executeObj);
-    setMessages((prev: Message[]) => [...prev, assistantMessage.message]);
-    return assistantMessage;
+    const result: AgentPlanResponse = data;
+    return result;
   }
+}
+
+export async function callSummarize(
+  messages: Message[],
+  toolLog: ToolExecutionLog,
+): Promise<SummarizeRouteResponseBody> {
+  const response = await authFetch('/api/agent/summarize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, toolLog }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`HTTP ${response.status}: ${errorText}`);
+  }
+
+  return response.json();
 }
