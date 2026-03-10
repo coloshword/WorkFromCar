@@ -10,6 +10,7 @@ export type PlanState = {
 export type AgentPlanResponse = {
   message: Message;
   tool: AgentTool;
+  executePermissionGranted?: boolean;
 };
 
 export type AgentTool = {

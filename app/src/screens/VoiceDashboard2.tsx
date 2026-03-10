@@ -9,9 +9,11 @@ import { VoiceProcessor } from '@picovoice/react-native-voice-processor';
 import { FRAME_LENGTH, FREQUENCY_HZ } from '../services/audio/voiceProcessor';
 import AudioVisualizer from '../components/AudioVisualizer';
 import VoiceListener, { VoiceListenerState } from '../components/VoiceListener';
-import { useSendMessage } from '../utils/useSendMessage';
+import { sendAgentMessage } from '../utils/useSendMessage';
 import { Message, AgentTool } from '../../../types/Agent';
 import { speak } from '../utils/ttsUtils';
+import { executeTool } from '../api/toolExecutor';
+import { useAccessToken } from '../context/AccessTokenContext';
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
 const VAD_FILENAME = 'ggml-silero-v6.2.0.bin';
@@ -21,12 +23,12 @@ const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 
 export default function VoiceDashboard2() {
   const { height } = useWindowDimensions();
+  const { authToken } = useAccessToken();
   const [voiceListenerState, setVoiceListenerState] = useState<VoiceListenerState>('disabled');
   const [modelStatus, setModelStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [statusMsg, setStatusMsg] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [planOrExecute, setPlanOrExecute] = useState<'plan' | 'execute'>('plan');
-  const [executeObj, setExecuteObj] = useState<any>(null);
+  const [pendingTool, setPendingTool] = useState<AgentTool | null>(null);
   const activeTtsCountRef = useRef(0);
   const [speaking, setSpeaking] = useState(false);
   const [tool, setTool] = useState<AgentTool | null>(null);
@@ -69,24 +71,44 @@ export default function VoiceDashboard2() {
   const handleTranscript = useCallback(async (text: string) => {
     setVoiceListenerState('disabled');
     try {
-      const message = await useSendMessage({ transcript: text, messages, setMessages, planOrExecute, executeObj });
-      if (message) {
-        if (message.tool) {
-          setTool(message.tool);
+      const userMessage: Message = { role: 'user', content: text.trim() };
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
+
+      const result = await sendAgentMessage(updatedMessages, pendingTool);
+      setMessages(prev => [...prev, result.message]);
+
+      if (result.tool) {
+        setTool(result.tool);
+      }
+
+      if (pendingTool) {
+        if (result.executePermissionGranted) {
+          // execute the tool, then speak outcome
+          if (!authToken) {
+            throw new Error('No auth gmail accesstoken');
+          }
+          const toolResult = await executeTool(result.tool, authToken);
+        } else {
+          await speak({
+            text: result.message.content,
+            voiceListenerState: 'disabled',
+            setVoiceListenerState,
+            activeTtsCountRef,
+            setSpeaking
+          });
         }
+        setPendingTool(null);
+      } else {
         await speak({
-          text: message.message.content,
+          text: result.message.content,
           voiceListenerState: 'disabled',
           setVoiceListenerState,
           activeTtsCountRef,
           setSpeaking
         });
-        if (planOrExecute === 'execute') {
-          setPlanOrExecute('plan');
-          setExecuteObj(null);
-        } else if (message.tool?.toolParameters && Object.values(message.tool.toolParameters).every(v => v !== null)) {
-          setPlanOrExecute('execute');
-          setExecuteObj({ messages: [...messages, { role: 'user', content: text }], tool: message.tool });
+        if (result.tool?.toolParameters && Object.values(result.tool.toolParameters).every(v => v !== null)) {
+          setPendingTool(result.tool);
         }
       }
     } catch (e: any) {
@@ -94,7 +116,7 @@ export default function VoiceDashboard2() {
     } finally {
       setVoiceListenerState('listening');
     }
-  }, [messages, planOrExecute, executeObj]);
+  }, [messages, pendingTool]);
 
   return (
     <View style={styles.root}>

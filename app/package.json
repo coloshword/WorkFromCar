@@ -25,7 +25,8 @@
     "react-native-linear-gradient": "^2.8.3",
     "react-native-safe-area-context": "^5.6.2",
     "react-native-screens": "^4.23.0",
-    "whisper": "file:../packages/whisper"
+    "whisper": "file:../packages/whisper",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
