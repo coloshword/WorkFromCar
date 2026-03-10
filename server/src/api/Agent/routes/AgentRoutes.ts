@@ -1,8 +1,8 @@
 import { Context } from 'koa';
 import * as z from "zod";
-import { AgentPlanResponse, PlanState, Message, ExecuteState } from "Types/Agent";
+import { AgentPlanResponse, PlanState, Message, SummarizeRouteRequestBody, ToolExecutionLog } from "Types/Agent";
 import { generateLLMPlan } from '../actions/PlanActions';
-import { checkUserIntent, validateToolCall } from '../actions/ExecutePermissionsActions';
+import { checkUserIntent, validateToolCall, summarizeToolResult } from '../actions/ExecutePermissionsActions';
 
 const planRouteSchema = z.object({
   messages: z.array(
@@ -42,10 +42,9 @@ const executeToolRouteSchema = z.object({
     tool: z.string(),
     toolParameters: z.record(z.string(), z.any()).nullable()
   })
-}) satisfies z.ZodType<ExecuteState>;
+});
 
 /**
- * 
  * Purpose of this route is to 1) validate tool call parameters
  * 2) Check user intent 
  */
@@ -53,11 +52,31 @@ export const executePermissionRoute = async (ctx: Context) => {
   const { messages, tool } = executeToolRouteSchema.parse(ctx.request.body);
   console.log("START OF PERMISSION ROUTE", messages);
   await validateToolCall(tool);
-  // check user intent 
   const userIntent = await checkUserIntent(messages);
   ctx.body = {
     ...userIntent,
     tool,
   }
+  ctx.status = 200;
+}
+
+const summarizeRouteSchema = z.object({
+  messages: z.array(
+    z.object({
+      role: z.string(),
+      content: z.string(),
+    })
+  ),
+  toolLog: z.object({
+    tool: z.string(),
+    status: z.enum(['success', 'error']),
+    result: z.record(z.string(), z.any()),
+  })
+}) satisfies z.ZodType<SummarizeRouteRequestBody>;
+
+export const summarizeRoute = async (ctx: Context) => {
+  const { messages, toolLog } = summarizeRouteSchema.parse(ctx.request.body);
+  const summary = await summarizeToolResult(messages, toolLog as ToolExecutionLog);
+  ctx.body = summary;
   ctx.status = 200;
 }

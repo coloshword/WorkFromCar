@@ -1,9 +1,10 @@
-import { AgentTool } from "Types/Agent";
+import { AgentTool, ToolExecutionLog } from "Types/Agent";
 import { emailCreateDraftParametersSchema } from "../tools/gmail/EmailCreateDraft";
 import { Message, ExecutePermissionResponse } from "Types/Agent";
 import { generateJsonWithRetry } from "./PlanActions";
-import { generateOpenRouterMessage } from "../utils/LMProviders";
+import { generateLLMMessage, generateOpenRouterMessage } from "../utils/LMProviders";
 import { EXECUTE_PERMISSION_INSTRUCTION, EXECUTE_PERMISSION_JSON_SCHEMA_SCHEMA } from "../utils/ExecutePermissionsInstructions";
+import { SUMMARY_INSTRUCTION, SUMMARY_JSON_SCHEMA_SCHEMA } from "../utils/SummaryInstructions";
 
 export async function validateToolCall(tool: AgentTool): Promise<void>{
   switch (tool.tool) {
@@ -29,4 +30,24 @@ export async function checkUserIntent(Messages: Message[]): Promise<ExecutePermi
     }
   );
   return response;
+}
+
+/**
+ * Narrates the outcome of a tool execution in natural language
+ */
+export async function summarizeToolResult(
+  messages: Message[],
+  toolLog: ToolExecutionLog,
+): Promise<{ assistant: string }> {
+  const augmented = [
+    ...messages,
+    { role: 'user', content: `Tool result: ${JSON.stringify(toolLog)}` }
+  ];
+  return generateJsonWithRetry(
+    augmented,
+    "gemini-3.1-flash-lite-preview",
+    SUMMARY_INSTRUCTION,
+    generateLLMMessage,
+    (json) => SUMMARY_JSON_SCHEMA_SCHEMA.parse(json)
+  );
 }

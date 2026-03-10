@@ -9,7 +9,7 @@ import { VoiceProcessor } from '@picovoice/react-native-voice-processor';
 import { FRAME_LENGTH, FREQUENCY_HZ } from '../services/audio/voiceProcessor';
 import AudioVisualizer from '../components/AudioVisualizer';
 import VoiceListener, { VoiceListenerState } from '../components/VoiceListener';
-import { sendAgentMessage } from '../utils/useSendMessage';
+import { sendAgentMessage, callSummarize } from '../utils/useSendMessage';
 import { Message, AgentTool } from '../../../types/Agent';
 import { speak } from '../utils/ttsUtils';
 import { executeTool } from '../api/toolExecutor';
@@ -84,11 +84,19 @@ export default function VoiceDashboard2() {
 
       if (pendingTool) {
         if (result.executePermissionGranted) {
-          // execute the tool, then speak outcome
           if (!authToken) {
             throw new Error('No auth gmail accesstoken');
           }
-          const toolResult = await executeTool(result.tool, authToken);
+          const toolLog = await executeTool(result.tool, authToken);
+          const summary = await callSummarize(updatedMessages, toolLog);
+          setMessages(prev => [...prev, { role: 'assistant', content: summary.assistant }]);
+          await speak({
+            text: summary.assistant,
+            voiceListenerState: 'disabled',
+            setVoiceListenerState,
+            activeTtsCountRef,
+            setSpeaking
+          });
         } else {
           await speak({
             text: result.message.content,

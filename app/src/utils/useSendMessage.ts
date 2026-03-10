@@ -1,4 +1,4 @@
-import { AgentTool, Message, AgentPlanResponse, ExecutePermissionRouteResponseBody } from '../../../types/Agent';
+import { AgentTool, Message, AgentPlanResponse, ExecutePermissionRouteResponseBody, SummarizeRouteResponseBody, ToolExecutionLog } from '../../../types/Agent';
 import { authFetch } from './fetchUtils';
 
 export async function sendAgentMessage(
@@ -34,4 +34,22 @@ export async function sendAgentMessage(
     const result: AgentPlanResponse = data;
     return result;
   }
+}
+
+export async function callSummarize(
+  messages: Message[],
+  toolLog: ToolExecutionLog,
+): Promise<SummarizeRouteResponseBody> {
+  const response = await authFetch('/api/agent/summarize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, toolLog }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`HTTP ${response.status}: ${errorText}`);
+  }
+
+  return response.json();
 }

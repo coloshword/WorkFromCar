@@ -40,3 +40,18 @@ export type ExecutePermissionRouteResponseBody = {
   executePermissionGranted: boolean;
   tool: AgentTool;
 }
+
+export type ToolExecutionLog = {
+  tool: string;
+  status: 'success' | 'error';
+  result: Record<string, any>;
+}
+
+export type SummarizeRouteRequestBody = {
+  messages: Message[];
+  toolLog: ToolExecutionLog;
+}
+
+export type SummarizeRouteResponseBody = {
+  assistant: string;
+}
