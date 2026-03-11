@@ -16,6 +16,7 @@ export type AgentPlanResponse = {
 export type AgentTool = {
   tool: string;
   toolParameters: Record<string, string> | null;
+  silent: boolean | null; // whether or not the result should trigger human prompt on the next turn
 }
 
 export type LLMPlanResponse = {
