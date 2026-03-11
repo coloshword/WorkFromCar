@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Pressable, Text, View, ScrollView, ActivityIndicator } from 'react-native';
+import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import RNFS from 'react-native-fs';
@@ -32,6 +32,8 @@ export default function VoiceDashboard2() {
   const activeTtsCountRef = useRef(0);
   const [speaking, setSpeaking] = useState(false);
   const [tool, setTool] = useState<AgentTool | null>(null);
+  const [devInput, setDevInput] = useState('');
+  const [devMode] = useState(__DEV__ && false);
 
   useEffect(() => {
     const requestMicPermission = async () => {
@@ -56,7 +58,7 @@ export default function VoiceDashboard2() {
         await NativeWhisper.initVad(VAD_PATH);
         setModelStatus('ready');
         setStatusMsg('');
-        setVoiceListenerState('listening');
+        if (!devMode) setVoiceListenerState('listening');
       } catch (e: any) {
         setModelStatus('error');
         setStatusMsg(`Error: ${e.message}`);
@@ -70,6 +72,7 @@ export default function VoiceDashboard2() {
 
   const handleTranscript = useCallback(async (text: string) => {
     setVoiceListenerState('disabled');
+    console.log('[handleTranscript] text:', text);
     try {
       const userMessage: Message = { role: 'user', content: text.trim() };
       const updatedMessages = [...messages, userMessage];
@@ -122,7 +125,7 @@ export default function VoiceDashboard2() {
     } catch (e: any) {
       console.log('[handleTranscript] error:', e?.message ?? e);
     } finally {
-      setVoiceListenerState('listening');
+      if (!devMode) setVoiceListenerState('listening');
     }
   }, [messages, pendingTool]);
 
@@ -179,6 +182,36 @@ export default function VoiceDashboard2() {
       {statusMsg ? (
         <Text style={styles.statusMsg}>{statusMsg}</Text>
       ) : null}
+
+      {__DEV__ && (
+        <View style={styles.devRow}>
+          <TextInput
+            style={styles.devInput}
+            value={devInput}
+            onChangeText={setDevInput}
+            placeholder="Type a message..."
+            placeholderTextColor="rgba(232,255,246,0.3)"
+            returnKeyType="send"
+            onSubmitEditing={() => {
+              if (devInput.trim()) {
+                handleTranscript(devInput.trim());
+                setDevInput('');
+              }
+            }}
+          />
+          <Pressable
+            style={styles.devSendBtn}
+            onPress={() => {
+              if (devInput.trim()) {
+                handleTranscript(devInput.trim());
+                setDevInput('');
+              }
+            }}
+          >
+            <Text style={styles.devSendBtnText}>Send</Text>
+          </Pressable>
+        </View>
+      )}
 
       <View style={styles.voiceListenerWrapper}>
         <VoiceListener
@@ -342,5 +375,39 @@ const styles = StyleSheet.create({
   kvValNull: {
     color: 'rgba(229,231,235,0.45)',
     fontStyle: 'italic',
+  },
+  devRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#08110e',
+  },
+  devInput: {
+    flex: 1,
+    height: 40,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(232,255,246,0.18)',
+    backgroundColor: 'rgba(232,255,246,0.05)',
+    color: '#e8fff6',
+    fontSize: 13,
+  },
+  devSendBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: 'rgba(34,197,94,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(34,197,94,0.35)',
+  },
+  devSendBtnText: {
+    color: '#22c55e',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
