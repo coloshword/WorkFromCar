@@ -75,59 +75,57 @@ export default function VoiceDashboard2() {
     console.log('[handleTranscript] text:', text);
     try {
       const userMessage: Message = { role: 'user', content: text.trim() };
-      const updatedMessages = [...messages, userMessage];
-      setMessages(updatedMessages);
+      let currentMessages = [...messages, userMessage];
+      setMessages(currentMessages);
 
-      const result = await sendAgentMessage(updatedMessages, pendingTool);
-      setMessages(prev => [...prev, result.message]);
-
-      if (result.tool) {
-        setTool(result.tool);
-      }
-
+      // --- permission / execute path (pendingTool already set) ---
       if (pendingTool) {
+        const result = await sendAgentMessage(currentMessages, pendingTool);
+        setMessages(prev => [...prev, result.message]);
+        if (result.tool) setTool(result.tool);
+
         if (result.executePermissionGranted) {
-          if (!authToken) {
-            throw new Error('No auth gmail accesstoken');
-          }
+          if (!authToken) throw new Error('No auth gmail accesstoken');
           const toolLog = await executeTool(result.tool, authToken);
-          const summary = await callSummarize(updatedMessages, toolLog);
+          const summary = await callSummarize(currentMessages, toolLog);
           setMessages(prev => [...prev, { role: 'assistant', content: summary.assistant }]);
-          await speak({
-            text: summary.assistant,
-            voiceListenerState: 'disabled',
-            setVoiceListenerState,
-            activeTtsCountRef,
-            setSpeaking
-          });
+          await speak({ text: summary.assistant, voiceListenerState: 'disabled', setVoiceListenerState, activeTtsCountRef, setSpeaking });
         } else {
-          await speak({
-            text: result.message.content,
-            voiceListenerState: 'disabled',
-            setVoiceListenerState,
-            activeTtsCountRef,
-            setSpeaking
-          });
+          await speak({ text: result.message.content, voiceListenerState: 'disabled', setVoiceListenerState, activeTtsCountRef, setSpeaking });
         }
         setPendingTool(null);
-      } else {
-        await speak({
-          text: result.message.content,
-          voiceListenerState: 'disabled',
-          setVoiceListenerState,
-          activeTtsCountRef,
-          setSpeaking
-        });
-        if (result.tool?.toolParameters && Object.values(result.tool.toolParameters).every(v => v !== null)) {
-          setPendingTool(result.tool);
-        }
+        return;
+      }
+
+      // --- planning path with silent tool loop ---
+      let result = await sendAgentMessage(currentMessages, null);
+      if (result.tool) setTool(result.tool);
+
+      while (result.tool?.silent === true) {
+        if (!authToken) throw new Error('No auth gmail accesstoken');
+        const toolLog = await executeTool(result.tool, authToken);
+        // inject tool result as user-role context, skip the silent assistant message
+        currentMessages = [
+          ...currentMessages,
+          { role: 'user', content: `Tool result: ${JSON.stringify(toolLog.result)}` },
+        ];
+        setMessages(currentMessages);
+        result = await sendAgentMessage(currentMessages, null);
+        if (result.tool) setTool(result.tool);
+      }
+
+      // non-silent step — speak and optionally set pending tool
+      setMessages(prev => [...prev, result.message]);
+      await speak({ text: result.message.content, voiceListenerState: 'disabled', setVoiceListenerState, activeTtsCountRef, setSpeaking });
+      if (result.tool?.toolParameters && Object.values(result.tool.toolParameters).every(v => v !== null)) {
+        setPendingTool(result.tool);
       }
     } catch (e: any) {
       console.log('[handleTranscript] error:', e?.message ?? e);
     } finally {
       if (!devMode) setVoiceListenerState('listening');
     }
-  }, [messages, pendingTool]);
+  }, [messages, pendingTool, authToken, devMode]);
 
   return (
     <View style={styles.root}>

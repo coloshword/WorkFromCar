@@ -1,5 +1,6 @@
 import { AgentTool, ToolExecutionLog } from "../../../types/Agent";
 import { sendEmail } from "./sendEmail";
+import { resolveContact } from "./resolveContact";
 import { emailCreateDraftSchema } from "./toolSchemas/email";
 
 export async function executeTool(tool: AgentTool, accessToken: string): Promise<ToolExecutionLog> {
@@ -10,6 +11,17 @@ export async function executeTool(tool: AgentTool, accessToken: string): Promise
         const result = await sendEmail({ ...params, accessToken });
         return { tool: tool.tool, status: 'success', result };
       } catch (e: any) {
+        return { tool: tool.tool, status: 'error', result: { message: e.message } };
+      }
+    }
+    case 'gmail.resolveContact': {
+      const name = tool.toolParameters?.['name'];
+      if (!name) return { tool: tool.tool, status: 'error', result: { message: 'Missing name parameter' } };
+      try {
+        const resolvedEmail = await resolveContact(name, accessToken);
+        return { tool: tool.tool, status: 'success', result: { resolvedEmail } };
+      } catch (e: any) {
+        console.log(`[executeTool] error: ${e.message}`);
         return { tool: tool.tool, status: 'error', result: { message: e.message } };
       }
     }
