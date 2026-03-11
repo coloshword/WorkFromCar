@@ -6,6 +6,8 @@ import RNFS from 'react-native-fs';
 import NativeWhisper from 'whisper/src/NativeWhisper';
 import NativeKokoro from 'kokoro/src/NativeKokoro';
 import { VoiceProcessor } from '@picovoice/react-native-voice-processor';
+import * as Keychain from 'react-native-keychain';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { FRAME_LENGTH, FREQUENCY_HZ } from '../services/audio/voiceProcessor';
 import AudioVisualizer from '../components/AudioVisualizer';
 import VoiceListener, { VoiceListenerState } from '../components/VoiceListener';
@@ -23,7 +25,7 @@ const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 
 export default function VoiceDashboard2() {
   const { height } = useWindowDimensions();
-  const { authToken } = useAccessToken();
+  const { authToken, setAuthToken } = useAccessToken();
   const [voiceListenerState, setVoiceListenerState] = useState<VoiceListenerState>('disabled');
   const [modelStatus, setModelStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [statusMsg, setStatusMsg] = useState('');
@@ -32,8 +34,18 @@ export default function VoiceDashboard2() {
   const activeTtsCountRef = useRef(0);
   const [speaking, setSpeaking] = useState(false);
   const [tool, setTool] = useState<AgentTool | null>(null);
-  const [devInput, setDevInput] = useState('');
-  const [devMode] = useState(__DEV__ && true);
+  // const [devInput, setDevInput] = useState('');
+  // const [devMode] = useState(__DEV__ && true);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await GoogleSignin.signOut();
+      await Keychain.resetGenericPassword();
+      setAuthToken(null);
+    } catch (e: any) {
+      console.log('[handleLogout] error:', e?.message ?? e);
+    }
+  }, [setAuthToken]);
 
   useEffect(() => {
     const requestMicPermission = async () => {
@@ -58,7 +70,7 @@ export default function VoiceDashboard2() {
         await NativeWhisper.initVad(VAD_PATH);
         setModelStatus('ready');
         setStatusMsg('');
-        if (!devMode) setVoiceListenerState('listening');
+        setVoiceListenerState('listening');
       } catch (e: any) {
         setModelStatus('error');
         setStatusMsg(`Error: ${e.message}`);
@@ -105,9 +117,12 @@ export default function VoiceDashboard2() {
         if (!authToken) throw new Error('No auth gmail accesstoken');
         const toolLog = await executeTool(result.tool, authToken);
         // inject tool result as user-role context, skip the silent assistant message
+        const toolResultContent = toolLog.status === 'success'
+          ? `Tool result for ${toolLog.tool}: ${JSON.stringify(toolLog.result)}. If allMatches contains multiple contacts, inform the user which one was selected (name and email) and mention the other options by name so they can ask you to switch.`
+          : `Tool error for ${toolLog.tool}: ${toolLog.result.message}`;
         currentMessages = [
           ...currentMessages,
-          { role: 'user', content: `Tool result: ${JSON.stringify(toolLog.result)}` },
+          { role: 'user', content: toolResultContent },
         ];
         setMessages(currentMessages);
         result = await sendAgentMessage(currentMessages, null);
@@ -123,13 +138,17 @@ export default function VoiceDashboard2() {
     } catch (e: any) {
       console.log('[handleTranscript] error:', e?.message ?? e);
     } finally {
-      if (!devMode) setVoiceListenerState('listening');
+      //if (!devMode) setVoiceListenerState('listening');
+      setVoiceListenerState('listening');
     }
-  }, [messages, pendingTool, authToken, devMode]);
+  }, [messages, pendingTool, authToken]);
 
   return (
     <View style={styles.root}>
       <View style={styles.topbar}>
+        <Pressable style={styles.logoutBtn} onPress={handleLogout}>
+          <Text style={styles.logoutBtnText}>Logout</Text>
+        </Pressable>
         {modelStatus !== 'ready' && (
           <Pressable
             style={[styles.loadBtn, modelStatus === 'loading' && styles.loadBtnDisabled]}
@@ -181,7 +200,7 @@ export default function VoiceDashboard2() {
         <Text style={styles.statusMsg}>{statusMsg}</Text>
       ) : null}
 
-      {__DEV__ && (
+      {/* {__DEV__ && (
         <View style={styles.devRow}>
           <TextInput
             style={styles.devInput}
@@ -209,7 +228,7 @@ export default function VoiceDashboard2() {
             <Text style={styles.devSendBtnText}>Send</Text>
           </Pressable>
         </View>
-      )}
+      )} */}
 
       <View style={styles.voiceListenerWrapper}>
         <VoiceListener
@@ -231,7 +250,7 @@ const styles = StyleSheet.create({
     height: 100,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     backgroundColor: '#08110e',
     borderBottomWidth: 1,
@@ -244,8 +263,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   loadBtn: {
-    marginTop: 30,
-    paddingHorizontal: 16,
+    marginTop: 30,    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 14,
     borderWidth: 1,
@@ -263,8 +281,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   readyBadge: {
-    marginTop: 30,
-    paddingHorizontal: 14,
+    marginTop: 30,    paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 999,
     backgroundColor: 'rgba(34,197,94,0.18)',
@@ -374,8 +391,21 @@ const styles = StyleSheet.create({
     color: 'rgba(229,231,235,0.45)',
     fontStyle: 'italic',
   },
-  devRow: {
-    flexDirection: 'row',
+  logoutBtn: {
+    marginTop: 30,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.35)',
+    backgroundColor: 'rgba(239,68,68,0.1)',
+  },
+  logoutBtnText: {
+    color: '#ef4444',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  devRow: {    flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 10,

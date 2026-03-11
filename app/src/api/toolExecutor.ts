@@ -18,8 +18,8 @@ export async function executeTool(tool: AgentTool, accessToken: string): Promise
       const name = tool.toolParameters?.['name'];
       if (!name) return { tool: tool.tool, status: 'error', result: { message: 'Missing name parameter' } };
       try {
-        const resolvedEmail = await resolveContact(name, accessToken);
-        return { tool: tool.tool, status: 'success', result: { resolvedEmail } };
+        const { resolvedEmail, allMatches } = await resolveContact(name, accessToken);
+        return { tool: tool.tool, status: 'success', result: { resolvedEmail, allMatches } };
       } catch (e: any) {
         console.log(`[executeTool] error: ${e.message}`);
         return { tool: tool.tool, status: 'error', result: { message: e.message } };
