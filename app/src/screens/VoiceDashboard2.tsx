@@ -33,7 +33,7 @@ export default function VoiceDashboard2() {
   const [speaking, setSpeaking] = useState(false);
   const [tool, setTool] = useState<AgentTool | null>(null);
   const [devInput, setDevInput] = useState('');
-  const [devMode] = useState(__DEV__ && false);
+  const [devMode] = useState(__DEV__ && true);
 
   useEffect(() => {
     const requestMicPermission = async () => {
