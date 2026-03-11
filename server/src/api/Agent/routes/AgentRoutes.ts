@@ -1,7 +1,7 @@
 import { Context } from 'koa';
 import * as z from "zod";
 import { AgentPlanResponse, PlanState, Message, SummarizeRouteRequestBody, ToolExecutionLog } from "Types/Agent";
-import { generateLLMPlan } from '../actions/PlanActions';
+import { generateLLMPlan, shouldBeSilent } from '../actions/PlanActions';
 import { checkUserIntent, validateToolCall, summarizeToolResult } from '../actions/ExecutePermissionsActions';
 
 const planRouteSchema = z.object({
@@ -25,7 +25,7 @@ export const planRoute = async (ctx: Context) => {
     tool: {
       tool: plan.tool,
       toolParameters: plan.toolParameters,
-      silent: null,
+      silent: shouldBeSilent(plan.tool),
     }
   }
   ctx.body = response;
