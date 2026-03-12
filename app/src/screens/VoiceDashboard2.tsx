@@ -1,11 +1,13 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Pressable, Text, View, ScrollView, ActivityIndicator } from 'react-native';
+import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import RNFS from 'react-native-fs';
 import NativeWhisper from 'whisper/src/NativeWhisper';
 import NativeKokoro from 'kokoro/src/NativeKokoro';
 import { VoiceProcessor } from '@picovoice/react-native-voice-processor';
+import * as Keychain from 'react-native-keychain';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { FRAME_LENGTH, FREQUENCY_HZ } from '../services/audio/voiceProcessor';
 import AudioVisualizer from '../components/AudioVisualizer';
 import VoiceListener, { VoiceListenerState } from '../components/VoiceListener';
@@ -23,7 +25,7 @@ const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 
 export default function VoiceDashboard2() {
   const { height } = useWindowDimensions();
-  const { authToken } = useAccessToken();
+  const { authToken, setAuthToken } = useAccessToken();
   const [voiceListenerState, setVoiceListenerState] = useState<VoiceListenerState>('disabled');
   const [modelStatus, setModelStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [statusMsg, setStatusMsg] = useState('');
@@ -32,6 +34,18 @@ export default function VoiceDashboard2() {
   const activeTtsCountRef = useRef(0);
   const [speaking, setSpeaking] = useState(false);
   const [tool, setTool] = useState<AgentTool | null>(null);
+  // const [devInput, setDevInput] = useState('');
+  // const [devMode] = useState(__DEV__ && true);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await GoogleSignin.signOut();
+      await Keychain.resetGenericPassword();
+      setAuthToken(null);
+    } catch (e: any) {
+      console.log('[handleLogout] error:', e?.message ?? e);
+    }
+  }, [setAuthToken]);
 
   useEffect(() => {
     const requestMicPermission = async () => {
@@ -70,65 +84,71 @@ export default function VoiceDashboard2() {
 
   const handleTranscript = useCallback(async (text: string) => {
     setVoiceListenerState('disabled');
+    console.log('[handleTranscript] text:', text);
     try {
       const userMessage: Message = { role: 'user', content: text.trim() };
-      const updatedMessages = [...messages, userMessage];
-      setMessages(updatedMessages);
+      let currentMessages = [...messages, userMessage];
+      setMessages(currentMessages);
 
-      const result = await sendAgentMessage(updatedMessages, pendingTool);
-      setMessages(prev => [...prev, result.message]);
-
-      if (result.tool) {
-        setTool(result.tool);
-      }
-
+      // --- permission / execute path (pendingTool already set) ---
       if (pendingTool) {
+        const result = await sendAgentMessage(currentMessages, pendingTool);
+        setMessages(prev => [...prev, result.message]);
+        if (result.tool) setTool(result.tool);
+
         if (result.executePermissionGranted) {
-          if (!authToken) {
-            throw new Error('No auth gmail accesstoken');
-          }
+          if (!authToken) throw new Error('No auth gmail accesstoken');
           const toolLog = await executeTool(result.tool, authToken);
-          const summary = await callSummarize(updatedMessages, toolLog);
+          const summary = await callSummarize(currentMessages, toolLog);
           setMessages(prev => [...prev, { role: 'assistant', content: summary.assistant }]);
-          await speak({
-            text: summary.assistant,
-            voiceListenerState: 'disabled',
-            setVoiceListenerState,
-            activeTtsCountRef,
-            setSpeaking
-          });
+          await speak({ text: summary.assistant, voiceListenerState: 'disabled', setVoiceListenerState, activeTtsCountRef, setSpeaking });
         } else {
-          await speak({
-            text: result.message.content,
-            voiceListenerState: 'disabled',
-            setVoiceListenerState,
-            activeTtsCountRef,
-            setSpeaking
-          });
+          await speak({ text: result.message.content, voiceListenerState: 'disabled', setVoiceListenerState, activeTtsCountRef, setSpeaking });
         }
         setPendingTool(null);
-      } else {
-        await speak({
-          text: result.message.content,
-          voiceListenerState: 'disabled',
-          setVoiceListenerState,
-          activeTtsCountRef,
-          setSpeaking
-        });
-        if (result.tool?.toolParameters && Object.values(result.tool.toolParameters).every(v => v !== null)) {
-          setPendingTool(result.tool);
-        }
+        return;
+      }
+
+      // --- planning path with silent tool loop ---
+      let result = await sendAgentMessage(currentMessages, null);
+      if (result.tool) setTool(result.tool);
+
+      while (result.tool?.silent === true) {
+        if (!authToken) throw new Error('No auth gmail accesstoken');
+        const toolLog = await executeTool(result.tool, authToken);
+        // inject tool result as user-role context, skip the silent assistant message
+        const toolResultContent = toolLog.status === 'success'
+          ? `Tool result for ${toolLog.tool}: ${JSON.stringify(toolLog.result)}. If allMatches contains multiple contacts, inform the user which one was selected (name and email) and mention the other options by name so they can ask you to switch.`
+          : `Tool error for ${toolLog.tool}: ${toolLog.result.message}`;
+        currentMessages = [
+          ...currentMessages,
+          { role: 'user', content: toolResultContent },
+        ];
+        setMessages(currentMessages);
+        result = await sendAgentMessage(currentMessages, null);
+        if (result.tool) setTool(result.tool);
+      }
+
+      // non-silent step — speak and optionally set pending tool
+      setMessages(prev => [...prev, result.message]);
+      await speak({ text: result.message.content, voiceListenerState: 'disabled', setVoiceListenerState, activeTtsCountRef, setSpeaking });
+      if (result.tool?.toolParameters && Object.values(result.tool.toolParameters).every(v => v !== null)) {
+        setPendingTool(result.tool);
       }
     } catch (e: any) {
       console.log('[handleTranscript] error:', e?.message ?? e);
     } finally {
+      //if (!devMode) setVoiceListenerState('listening');
       setVoiceListenerState('listening');
     }
-  }, [messages, pendingTool]);
+  }, [messages, pendingTool, authToken]);
 
   return (
     <View style={styles.root}>
       <View style={styles.topbar}>
+        <Pressable style={styles.logoutBtn} onPress={handleLogout}>
+          <Text style={styles.logoutBtnText}>Logout</Text>
+        </Pressable>
         {modelStatus !== 'ready' && (
           <Pressable
             style={[styles.loadBtn, modelStatus === 'loading' && styles.loadBtnDisabled]}
@@ -180,6 +200,36 @@ export default function VoiceDashboard2() {
         <Text style={styles.statusMsg}>{statusMsg}</Text>
       ) : null}
 
+      {/* {__DEV__ && (
+        <View style={styles.devRow}>
+          <TextInput
+            style={styles.devInput}
+            value={devInput}
+            onChangeText={setDevInput}
+            placeholder="Type a message..."
+            placeholderTextColor="rgba(232,255,246,0.3)"
+            returnKeyType="send"
+            onSubmitEditing={() => {
+              if (devInput.trim()) {
+                handleTranscript(devInput.trim());
+                setDevInput('');
+              }
+            }}
+          />
+          <Pressable
+            style={styles.devSendBtn}
+            onPress={() => {
+              if (devInput.trim()) {
+                handleTranscript(devInput.trim());
+                setDevInput('');
+              }
+            }}
+          >
+            <Text style={styles.devSendBtnText}>Send</Text>
+          </Pressable>
+        </View>
+      )} */}
+
       <View style={styles.voiceListenerWrapper}>
         <VoiceListener
           state={voiceListenerState}
@@ -200,7 +250,7 @@ const styles = StyleSheet.create({
     height: 100,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     backgroundColor: '#08110e',
     borderBottomWidth: 1,
@@ -213,8 +263,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   loadBtn: {
-    marginTop: 30,
-    paddingHorizontal: 16,
+    marginTop: 30,    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 14,
     borderWidth: 1,
@@ -232,8 +281,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   readyBadge: {
-    marginTop: 30,
-    paddingHorizontal: 14,
+    marginTop: 30,    paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 999,
     backgroundColor: 'rgba(34,197,94,0.18)',
@@ -342,5 +390,52 @@ const styles = StyleSheet.create({
   kvValNull: {
     color: 'rgba(229,231,235,0.45)',
     fontStyle: 'italic',
+  },
+  logoutBtn: {
+    marginTop: 30,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.35)',
+    backgroundColor: 'rgba(239,68,68,0.1)',
+  },
+  logoutBtnText: {
+    color: '#ef4444',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  devRow: {    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#08110e',
+  },
+  devInput: {
+    flex: 1,
+    height: 40,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(232,255,246,0.18)',
+    backgroundColor: 'rgba(232,255,246,0.05)',
+    color: '#e8fff6',
+    fontSize: 13,
+  },
+  devSendBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: 'rgba(34,197,94,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(34,197,94,0.35)',
+  },
+  devSendBtnText: {
+    color: '#22c55e',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

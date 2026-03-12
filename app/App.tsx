@@ -9,7 +9,9 @@ const iosClientId = Config.GOOGLE_AUTH_CLIENT_ID_APP;
 GoogleSignin.configure({
   webClientId,
   scopes: [
-    'https://www.googleapis.com/auth/gmail.send'
+    'https://www.googleapis.com/auth/gmail.send',
+    'https://www.googleapis.com/auth/contacts.readonly',
+    'https://www.googleapis.com/auth/contacts.other.readonly',
   ],
   iosClientId
 });

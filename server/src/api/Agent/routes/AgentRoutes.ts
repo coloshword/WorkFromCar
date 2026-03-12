@@ -1,7 +1,7 @@
 import { Context } from 'koa';
 import * as z from "zod";
 import { AgentPlanResponse, PlanState, Message, SummarizeRouteRequestBody, ToolExecutionLog } from "Types/Agent";
-import { generateLLMPlan } from '../actions/PlanActions';
+import { generateLLMPlan, shouldBeSilent } from '../actions/PlanActions';
 import { checkUserIntent, validateToolCall, summarizeToolResult } from '../actions/ExecutePermissionsActions';
 
 const planRouteSchema = z.object({
@@ -25,6 +25,7 @@ export const planRoute = async (ctx: Context) => {
     tool: {
       tool: plan.tool,
       toolParameters: plan.toolParameters,
+      silent: shouldBeSilent(plan.tool),
     }
   }
   ctx.body = response;
@@ -40,7 +41,8 @@ const executeToolRouteSchema = z.object({
   ),
   tool: z.object({
     tool: z.string(),
-    toolParameters: z.record(z.string(), z.any()).nullable()
+    toolParameters: z.record(z.string(), z.any()).nullable(),
+    silent: z.boolean().nullable(),
   })
 });
 
