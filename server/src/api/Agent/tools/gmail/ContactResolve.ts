@@ -18,4 +18,8 @@ export const CONTACT_RESOLVE_INSTRUCTIONS = `
   - tool: "gmail.resolveContact"
   - toolParameters:
     - name: string | null — the full name (or best guess) as the user said it
+
+  If this tool returns no_match or an error:
+  - Do NOT call it again with the same name.
+  - Set tool to null and ask the user to spell the recipient's email address.
 `;
