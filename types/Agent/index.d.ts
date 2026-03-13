@@ -16,6 +16,7 @@ export type AgentPlanResponse = {
 export type AgentTool = {
   tool: string;
   toolParameters: Record<string, string> | null;
+  silent?: boolean; //TO BE ADDED IN THE NON-LLM LAYER!
 }
 
 export type LLMPlanResponse = {
