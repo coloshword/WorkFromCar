@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Pressable, Text, View, ScrollView, ActivityIndicator } from 'react-native';
+import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import RNFS from 'react-native-fs';
@@ -21,6 +21,8 @@ const MODEL_PATH = `${RNFS.MainBundlePath}/${MODEL_FILENAME}`;
 const VAD_PATH = `${RNFS.MainBundlePath}/${VAD_FILENAME}`;
 const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 
+const DEV_TEXT_MODE = true;
+
 export default function VoiceDashboard2() {
   const { height } = useWindowDimensions();
   const { authToken } = useAccessToken();
@@ -32,8 +34,10 @@ export default function VoiceDashboard2() {
   const activeTtsCountRef = useRef(0);
   const [speaking, setSpeaking] = useState(false);
   const [tool, setTool] = useState<AgentTool | null>(null);
+  const [devText, setDevText] = useState('');
 
   useEffect(() => {
+    if (DEV_TEXT_MODE) return;
     const requestMicPermission = async () => {
       try {
         await VoiceProcessor.instance.start(FRAME_LENGTH, FREQUENCY_HZ);
@@ -44,6 +48,17 @@ export default function VoiceDashboard2() {
   }, []);
 
   useEffect(() => {
+    if (DEV_TEXT_MODE) {
+      setModelStatus('loading');
+      NativeKokoro.loadModel(KOKORO_MODEL_DIR)
+        .then(() => setModelStatus('ready'))
+        .catch((e: any) => {
+          setModelStatus('error');
+          setStatusMsg(`Error: ${e.message}`);
+        });
+      return;
+    }
+
     let cancelled = false;
 
     const handleLoadModel = async () => {
@@ -69,14 +84,15 @@ export default function VoiceDashboard2() {
   }, []);
 
   const handleTranscript = useCallback(async (text: string) => {
-    setVoiceListenerState('disabled');
+    if (!DEV_TEXT_MODE) setVoiceListenerState('disabled');
     try {
       const userMessage: Message = { role: 'user', content: text.trim() };
-      const updatedMessages = [...messages, userMessage];
-      setMessages(updatedMessages);
+      let currentMessages = [...messages, userMessage];
+      setMessages([...currentMessages]);
 
-      const result = await sendAgentMessage(updatedMessages, pendingTool);
-      setMessages(prev => [...prev, result.message]);
+      const result = await sendAgentMessage(currentMessages, pendingTool);
+      currentMessages = [...currentMessages, result.message];
+      setMessages([...currentMessages]);
 
       if (result.tool) {
         setTool(result.tool);
@@ -88,8 +104,9 @@ export default function VoiceDashboard2() {
             throw new Error('No auth gmail accesstoken');
           }
           const toolLog = await executeTool(result.tool, authToken);
-          const summary = await callSummarize(updatedMessages, toolLog);
-          setMessages(prev => [...prev, { role: 'assistant', content: summary.assistant }]);
+          const summary = await callSummarize(currentMessages, toolLog);
+          currentMessages = [...currentMessages, { role: 'assistant', content: summary.assistant }];
+          setMessages([...currentMessages]);
           await speak({
             text: summary.assistant,
             voiceListenerState: 'disabled',
@@ -108,28 +125,58 @@ export default function VoiceDashboard2() {
         }
         setPendingTool(null);
       } else {
-        // check if the tool is silent 
-        if (result.tool?.silent) {
-          // its a silent tool, so execute the tool
-          console.log('silent tool');
+        const MAX_SILENT_ITERATIONS = 5;
+        let currentResult = result;
+        let iterations = 0;
+
+        while (currentResult.tool?.silent && iterations < MAX_SILENT_ITERATIONS) {
+          iterations++;
+          if (!authToken) {
+            throw new Error('No auth gmail accesstoken');
+          }
+          const toolLog = await executeTool(currentResult.tool, authToken);
+          currentMessages = [...currentMessages, { role: 'system', content: JSON.stringify(toolLog) }];
+          setMessages([...currentMessages]);
+
+          currentResult = await sendAgentMessage(currentMessages, null);
+          currentMessages = [...currentMessages, currentResult.message];
+          setMessages([...currentMessages]);
+
+          if (currentResult.tool) {
+            setTool(currentResult.tool);
+          }
         }
+
+        const hitLoopLimit = iterations >= MAX_SILENT_ITERATIONS && currentResult.tool?.silent;
+
         await speak({
-          text: result.message.content,
+          text: currentResult.message.content?.trim()
+            || "Sorry, I wasn't able to finish processing. Please try again.",
           voiceListenerState: 'disabled',
           setVoiceListenerState,
           activeTtsCountRef,
           setSpeaking
         });
-        if (result.tool?.toolParameters && Object.values(result.tool.toolParameters).every(v => v !== null)) {
-          setPendingTool(result.tool);
+
+        if (!hitLoopLimit && currentResult.tool && !currentResult.tool.silent &&
+            currentResult.tool.toolParameters &&
+            Object.values(currentResult.tool.toolParameters).every(v => v !== null)) {
+          setPendingTool(currentResult.tool);
         }
       }
     } catch (e: any) {
       console.log('[handleTranscript] error:', e?.message ?? e);
     } finally {
-      setVoiceListenerState('listening');
+      if (!DEV_TEXT_MODE) setVoiceListenerState('listening');
     }
-  }, [messages, pendingTool]);
+  }, [messages, pendingTool, authToken]);
+
+  const handleDevSubmit = useCallback(() => {
+    if (!devText.trim()) return;
+    const text = devText.trim();
+    setDevText('');
+    handleTranscript(text);
+  }, [devText, handleTranscript]);
 
   return (
     <View style={styles.root}>
@@ -184,6 +231,27 @@ export default function VoiceDashboard2() {
       {statusMsg ? (
         <Text style={styles.statusMsg}>{statusMsg}</Text>
       ) : null}
+
+      {DEV_TEXT_MODE && (
+        <View style={styles.devInputRow}>
+          <TextInput
+            style={styles.devTextInput}
+            value={devText}
+            onChangeText={setDevText}
+            placeholder="Type a message..."
+            placeholderTextColor="rgba(232,255,246,0.3)"
+            onSubmitEditing={handleDevSubmit}
+            returnKeyType="send"
+          />
+          <Pressable
+            style={[styles.devSendBtn, !devText.trim() && styles.devSendBtnDisabled]}
+            onPress={handleDevSubmit}
+            disabled={!devText.trim()}
+          >
+            <Text style={styles.devSendBtnText}>Send</Text>
+          </Pressable>
+        </View>
+      )}
 
       <View style={styles.voiceListenerWrapper}>
         <VoiceListener
@@ -347,5 +415,41 @@ const styles = StyleSheet.create({
   kvValNull: {
     color: 'rgba(229,231,235,0.45)',
     fontStyle: 'italic',
+  },
+  devInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    gap: 8,
+  },
+  devTextInput: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: '#e5e7eb',
+    fontSize: 14,
+  },
+  devSendBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: 'rgba(34,197,94,0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(34,197,94,0.4)',
+  },
+  devSendBtnDisabled: {
+    opacity: 0.4,
+  },
+  devSendBtnText: {
+    color: '#22c55e',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
