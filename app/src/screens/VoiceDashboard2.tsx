@@ -6,8 +6,6 @@ import RNFS from 'react-native-fs';
 import NativeWhisper from 'whisper/src/NativeWhisper';
 import NativeKokoro from 'kokoro/src/NativeKokoro';
 import { VoiceProcessor } from '@picovoice/react-native-voice-processor';
-import * as Keychain from 'react-native-keychain';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { FRAME_LENGTH, FREQUENCY_HZ } from '../services/audio/voiceProcessor';
 import AudioVisualizer from '../components/AudioVisualizer';
 import VoiceListener, { VoiceListenerState } from '../components/VoiceListener';
@@ -27,7 +25,7 @@ const DEV_TEXT_MODE = true;
 
 export default function VoiceDashboard2() {
   const { height } = useWindowDimensions();
-  const { authToken, setAuthToken } = useAccessToken();
+  const { authToken } = useAccessToken();
   const [voiceListenerState, setVoiceListenerState] = useState<VoiceListenerState>('disabled');
   const [modelStatus, setModelStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [statusMsg, setStatusMsg] = useState('');
@@ -100,14 +98,11 @@ export default function VoiceDashboard2() {
         setTool(result.tool);
       }
 
-      // --- permission / execute path (pendingTool already set) ---
       if (pendingTool) {
-        const result = await sendAgentMessage(currentMessages, pendingTool);
-        setMessages(prev => [...prev, result.message]);
-        if (result.tool) setTool(result.tool);
-
         if (result.executePermissionGranted) {
-          if (!authToken) throw new Error('No auth gmail accesstoken');
+          if (!authToken) {
+            throw new Error('No auth gmail accesstoken');
+          }
           const toolLog = await executeTool(result.tool, authToken);
           const summary = await callSummarize(currentMessages, toolLog);
           currentMessages = [...currentMessages, { role: 'assistant', content: summary.assistant }];
@@ -120,7 +115,13 @@ export default function VoiceDashboard2() {
             setSpeaking
           });
         } else {
-          await speak({ text: result.message.content, voiceListenerState: 'disabled', setVoiceListenerState, activeTtsCountRef, setSpeaking });
+          await speak({
+            text: result.message.content,
+            voiceListenerState: 'disabled',
+            setVoiceListenerState,
+            activeTtsCountRef,
+            setSpeaking
+          });
         }
         setPendingTool(null);
       } else {
@@ -180,9 +181,6 @@ export default function VoiceDashboard2() {
   return (
     <View style={styles.root}>
       <View style={styles.topbar}>
-        <Pressable style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutBtnText}>Logout</Text>
-        </Pressable>
         {modelStatus !== 'ready' && (
           <Pressable
             style={[styles.loadBtn, modelStatus === 'loading' && styles.loadBtnDisabled]}
@@ -275,7 +273,7 @@ const styles = StyleSheet.create({
     height: 100,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingHorizontal: 16,
     backgroundColor: '#08110e',
     borderBottomWidth: 1,
@@ -288,7 +286,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   loadBtn: {
-    marginTop: 30,    paddingHorizontal: 16,
+    marginTop: 30,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 14,
     borderWidth: 1,
@@ -306,7 +305,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   readyBadge: {
-    marginTop: 30,    paddingHorizontal: 14,
+    marginTop: 30,
+    paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 999,
     backgroundColor: 'rgba(34,197,94,0.18)',
