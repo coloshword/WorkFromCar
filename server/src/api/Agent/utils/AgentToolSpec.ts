@@ -1,5 +1,7 @@
 import { EMAIL_CREATE_DRAFT_INSTRUCTIONS } from "../tools/gmail/EmailCreateDraft";
+import { RESOLVE_CONTACT_INSTRUCTIONS } from "../tools/gmail/ResolveContact";
 
 export const ALL_TOOLS_DESCRIPTION = `
   ${EMAIL_CREATE_DRAFT_INSTRUCTIONS}\n
+  ${RESOLVE_CONTACT_INSTRUCTIONS}
   `;

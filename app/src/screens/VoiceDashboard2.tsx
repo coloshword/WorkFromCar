@@ -108,6 +108,11 @@ export default function VoiceDashboard2() {
         }
         setPendingTool(null);
       } else {
+        // check if the tool is silent 
+        if (result.tool?.silent) {
+          // its a silent tool, so execute the tool
+          console.log('silent tool');
+        }
         await speak({
           text: result.message.content,
           voiceListenerState: 'disabled',

@@ -5,3 +5,7 @@ export const emailCreateDraftSchema = z.object({
   subject: z.string(),
   body: z.string(),
 });
+
+export const resolveContactParametersSchema = z.object({
+  value: z.string(),
+});

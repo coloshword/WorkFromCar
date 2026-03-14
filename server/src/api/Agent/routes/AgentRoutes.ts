@@ -3,6 +3,7 @@ import * as z from "zod";
 import { AgentPlanResponse, PlanState, Message, SummarizeRouteRequestBody, ToolExecutionLog } from "Types/Agent";
 import { generateLLMPlan } from '../actions/PlanActions';
 import { checkUserIntent, validateToolCall, summarizeToolResult } from '../actions/ExecutePermissionsActions';
+import { isSilent } from '../utils/isSilent';
 
 const planRouteSchema = z.object({
   messages: z.array(
@@ -27,6 +28,10 @@ export const planRoute = async (ctx: Context) => {
       toolParameters: plan.toolParameters,
     }
   }
+  if (isSilent(response.tool)) {
+    response.tool.silent = true;
+  }
+  // append silent if the tool is supplementary
   ctx.body = response;
   ctx.status = 200;
 };
