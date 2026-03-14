@@ -1,6 +1,7 @@
 import { PLAN_JSON_SCHEMA_SCHEMA } from "../utils/PlanInstructions";
 import { LLMPlanResponse } from "Types/Agent";
 import { emailCreateDraftParametersSchema } from "../tools/gmail/EmailCreateDraft";
+import { contactResolveParametersSchema } from "../tools/gmail/ContactResolve";
 import { PLAN_INSTRUCTION, RETRY_COUNT } from "../utils/PlanInstructions";
 import { Message } from "Types/Agent";
 import { generateLLMMessage, generateOpenAIMessage } from "../utils/LMProviders";
@@ -81,6 +82,9 @@ export const verifyLLMToolCall = (plan: LLMPlanResponse) => {
     case "gmail.createDraft":
       plan.toolParameters = emailCreateDraftParametersSchema.parse(plan.toolParameters);
       return;
+    case "gmail.resolveContact":
+      plan.toolParameters = contactResolveParametersSchema.parse(plan.toolParameters);
+      return
   }
 };
 // 6
@@ -102,3 +106,10 @@ export const generateLLMPlan = async (messages: Message[]): Promise<LLMPlanRespo
   }
   return plan;
 };
+
+export function shouldBeSilent(tool: string): boolean | null {
+  switch (tool) {
+    case 'gmail.resolveContact': return true;
+    default: return null;
+  }
+}
