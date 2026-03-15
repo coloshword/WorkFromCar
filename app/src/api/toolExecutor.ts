@@ -6,8 +6,8 @@ import { emailCreateDraftSchema, resolveContactParametersSchema } from "./toolSc
 export async function executeTool(tool: AgentTool, accessToken: string): Promise<ToolExecutionLog> {
   switch (tool.tool) {
     case 'gmail.createDraft': {
-      const params = emailCreateDraftSchema.parse(tool.toolParameters);
       try {
+        const params = emailCreateDraftSchema.parse(tool.toolParameters);
         const result = await sendEmail({ ...params, accessToken });
         return { tool: tool.tool, status: 'success', result };
       } catch (e: any) {
@@ -15,8 +15,8 @@ export async function executeTool(tool: AgentTool, accessToken: string): Promise
       }
     }
     case 'gmail.resolveContact': {
-      const params = resolveContactParametersSchema.parse(tool.toolParameters);
       try {
+        const params = resolveContactParametersSchema.parse(tool.toolParameters);
         const result = await resolveContact(params.value, accessToken);
         return { tool: tool.tool, status: 'success', result };
       } catch (e: any) {

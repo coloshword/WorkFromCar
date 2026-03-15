@@ -125,7 +125,7 @@ export default function VoiceDashboard2() {
         }
         setPendingTool(null);
       } else {
-        const MAX_SILENT_ITERATIONS = 5;
+        const MAX_SILENT_ITERATIONS = 3;
         let currentResult = result;
         let iterations = 0;
 
