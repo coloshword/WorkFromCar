@@ -56,3 +56,16 @@ export type SummarizeRouteRequestBody = {
 export type SummarizeRouteResponseBody = {
   assistant: string;
 }
+
+export type ResolvedContact = {
+  name: string;
+  email: string;
+};
+
+export type ResolveContactResult = {
+  status: 'resolved' | 'ambiguous' | 'no_match';
+  resolvedEmail?: string;
+  allMatches: Array<{ name: string; email: string; score: number }>;
+  suggestions: Array<{ name: string; email: string; score: number }>;
+  reason: string;
+};

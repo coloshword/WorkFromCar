@@ -16,11 +16,10 @@ export async function executeTool(tool: AgentTool, accessToken: string): Promise
     }
     case 'gmail.resolveContact': {
       const params = resolveContactParametersSchema.parse(tool.toolParameters);
-      // call the resolve contact tool
       try {
-        const result = await resolveContact(params);
+        const result = await resolveContact(params.value, accessToken);
         return { tool: tool.tool, status: 'success', result };
-      } catch(e: any) {
+      } catch (e: any) {
         return { tool: tool.tool, status: 'error', result: { message: e.message } };
       }
     }
