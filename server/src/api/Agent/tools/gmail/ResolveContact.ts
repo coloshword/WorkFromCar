@@ -15,12 +15,11 @@ export const RESOLVE_CONTACT_INSTRUCTIONS = `
   - value: string (the name or email to resolve)
 
   The tool returns a result with:
-  - status: "resolved" | "ambiguous" | "no_match"
-  - resolvedEmail: the verified email address (only present when status is "resolved")
-  - suggestions: array of top matches with name and email (present when status is "ambiguous")
+  - status: "resolved" | "no_match"
+  - resolvedEmail: the verified email address (present when status is "resolved")
+  - suggestions: array of top matches with name and email (may contain multiple matches)
 
   After receiving the result:
-  - If status is "resolved": use resolvedEmail as the "to" parameter in gmail.createDraft. Do not ask the user to confirm the email again.
-  - If status is "ambiguous": present the suggestions to the user and ask them to pick one, then use the chosen email as "to".
+  - If status is "resolved": use resolvedEmail as the "to" parameter in gmail.createDraft. If there are multiple entries in suggestions, briefly tell the user which matches were found and which one you are using, then proceed to call gmail.createDraft immediately without waiting for confirmation.
   - If status is "no_match": ask the user to spell out the email address.
 `;

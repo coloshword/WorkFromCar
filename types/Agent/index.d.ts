@@ -63,7 +63,7 @@ export type ResolvedContact = {
 };
 
 export type ResolveContactResult = {
-  status: 'resolved' | 'ambiguous' | 'no_match';
+  status: 'resolved' | 'no_match';
   resolvedEmail?: string;
   allMatches: Array<{ name: string; email: string; score: number }>;
   suggestions: Array<{ name: string; email: string; score: number }>;

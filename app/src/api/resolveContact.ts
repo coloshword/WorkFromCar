@@ -306,11 +306,11 @@ export async function resolveContact(value: string, accessToken: string): Promis
       console.log(`[resolveContact] resolved: "${top.name}" <${top.email}> score=${top.score.toFixed(3)} gap=${gap.toFixed(3)}`);
       return { status: 'resolved', resolvedEmail: top.email, allMatches, suggestions, reason: 'high_confidence' };
     }
-    return { status: 'ambiguous', allMatches, suggestions, reason: 'close_scores' };
+    return { status: 'resolved', resolvedEmail: top.email, allMatches, suggestions, reason: 'multiple_close_matches' };
   }
 
   if (top.score >= LOW_CONFIDENCE) {
-    return { status: 'ambiguous', allMatches, suggestions, reason: 'moderate_confidence' };
+    return { status: 'resolved', resolvedEmail: top.email, allMatches, suggestions, reason: 'moderate_confidence' };
   }
 
   return { status: 'no_match', allMatches, suggestions, reason: 'low_confidence' };
