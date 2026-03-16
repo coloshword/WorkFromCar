@@ -14,6 +14,7 @@ import { Message, AgentTool } from '../../../types/Agent';
 import { speak } from '../utils/ttsUtils';
 import { executeTool } from '../api/toolExecutor';
 import { useAccessToken } from '../context/AccessTokenContext';
+import * as Keychain from 'react-native-keychain';
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
 const VAD_FILENAME = 'ggml-silero-v6.2.0.bin';
@@ -21,11 +22,11 @@ const MODEL_PATH = `${RNFS.MainBundlePath}/${MODEL_FILENAME}`;
 const VAD_PATH = `${RNFS.MainBundlePath}/${VAD_FILENAME}`;
 const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 
-const DEV_TEXT_MODE = true;
+const DEV_TEXT_MODE = false;
 
 export default function VoiceDashboard2() {
   const { height } = useWindowDimensions();
-  const { authToken } = useAccessToken();
+  const { authToken, setAuthToken } = useAccessToken();
   const [voiceListenerState, setVoiceListenerState] = useState<VoiceListenerState>('disabled');
   const [modelStatus, setModelStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [statusMsg, setStatusMsg] = useState('');
@@ -35,6 +36,11 @@ export default function VoiceDashboard2() {
   const [speaking, setSpeaking] = useState(false);
   const [tool, setTool] = useState<AgentTool | null>(null);
   const [devText, setDevText] = useState('');
+
+  const handleLogout = useCallback(async () => {
+    await Keychain.resetGenericPassword();
+    setAuthToken(null);
+  }, [setAuthToken]);
 
   useEffect(() => {
     if (DEV_TEXT_MODE) return;
@@ -181,6 +187,9 @@ export default function VoiceDashboard2() {
   return (
     <View style={styles.root}>
       <View style={styles.topbar}>
+        <Pressable style={styles.logoutBtn} onPress={handleLogout}>
+          <Text style={styles.logoutBtnText}>Logout</Text>
+        </Pressable>
         {modelStatus !== 'ready' && (
           <Pressable
             style={[styles.loadBtn, modelStatus === 'loading' && styles.loadBtnDisabled]}
@@ -273,11 +282,24 @@ const styles = StyleSheet.create({
     height: 100,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     backgroundColor: '#08110e',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  logoutBtn: {
+    marginTop: 30,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(232,255,246,0.25)',
+  },
+  logoutBtnText: {
+    color: 'rgba(232,255,246,0.7)',
+    fontSize: 13,
+    fontWeight: '600',
   },
   topbarTitle: {
     color: '#e5e7eb',
