@@ -39,7 +39,7 @@ export const RootNavigator = () => {
     checkAuth();
   }, []);
 
-  const isAuthed = !!authToken && !!hasJwt;
+  const isAuthed = !!authToken;
 
   return (
     <NavigationContainer>
@@ -54,7 +54,7 @@ export const RootNavigator = () => {
           <Stack.Screen 
             name="Login"
             component={LoginScreen}
-            options={{ title: "" }}
+            options={{ headerShown: false }}
           />
         )}
       </Stack.Navigator>
