@@ -4,6 +4,7 @@ import { AgentTool } from "Types/Agent";
 export const isSilent = (call: AgentTool) => {
   switch (call.tool) {
     case "gmail.resolveContact":
+    case "gmail.summarizeEmails":
       return true;
     default:
       return false;

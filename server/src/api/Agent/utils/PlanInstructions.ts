@@ -11,7 +11,7 @@ Do NOT include JSON inside any string field.
 export const PLAN_JSON_SCHEMA =`Schema (exact):
 {
   "assistant": string,
-  "tool": string,
+  "tool": string | null,
   "toolParameters": object | null,
 }
 For example:
@@ -28,7 +28,7 @@ For example:
 
 export const PLAN_JSON_SCHEMA_SCHEMA = z.object({
   assistant: z.string(),
-  tool: z.string(),
+  tool: z.string().nullable(),
   toolParameters: z.record(z.string(), z.any()).nullable()
 }) satisfies z.ZodType<LLMPlanResponse>;
 

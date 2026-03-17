@@ -1,6 +1,7 @@
 import { PLAN_JSON_SCHEMA_SCHEMA } from "../utils/PlanInstructions";
 import { LLMPlanResponse } from "Types/Agent";
 import { emailCreateDraftParametersSchema } from "../tools/gmail/EmailCreateDraft";
+import { emailSummarizeParametersSchema } from "../tools/gmail/EmailSummarize";
 import { PLAN_INSTRUCTION, RETRY_COUNT } from "../utils/PlanInstructions";
 import { Message } from "Types/Agent";
 import { generateLLMMessage, generateOpenAIMessage } from "../utils/LMProviders";
@@ -80,6 +81,9 @@ export const verifyLLMToolCall = (plan: LLMPlanResponse) => {
   switch (plan.tool) {
     case "gmail.createDraft":
       plan.toolParameters = emailCreateDraftParametersSchema.parse(plan.toolParameters);
+      return;
+    case "gmail.summarizeEmails":
+      plan.toolParameters = emailSummarizeParametersSchema.parse(plan.toolParameters);
       return;
   }
 };
