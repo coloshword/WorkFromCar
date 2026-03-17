@@ -9,3 +9,8 @@ export const emailCreateDraftSchema = z.object({
 export const resolveContactParametersSchema = z.object({
   value: z.string(),
 });
+
+export const emailSummarizeParametersSchema = z.object({
+  query: z.string().nullable(),
+  maxResults: z.number().nullable(),
+});
