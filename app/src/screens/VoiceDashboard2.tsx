@@ -219,6 +219,18 @@ export default function VoiceDashboard2() {
             : voiceListenerState}
         </Text>
 
+        {messages.length > 0 && (
+          <ScrollView style={styles.transcriptScroll} contentContainerStyle={styles.transcriptContent}>
+            {messages.map((msg, idx) => (
+              <View key={idx} style={msg.role === 'user' ? styles.userMsg : styles.assistantMsg}>
+                <Text style={msg.role === 'user' ? styles.userMsgText : styles.assistantMsgText}>
+                  {msg.role === 'user' ? 'You' : 'Assistant'}: {msg.content}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+        )}
+
         {tool && (
           <View style={styles.toolPanel}>
             <View style={styles.toolHeader}>
@@ -359,10 +371,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   transcriptScroll: {
-    flex: 1,
+    maxHeight: 150,
+    width: '90%',
+    marginBottom: 12,
   },
   transcriptContent: {
-    padding: 14,
+    padding: 10,
+    gap: 8,
+  },
+  userMsg: {
+    backgroundColor: 'rgba(34,197,94,0.12)',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(34,197,94,0.25)',
+  },
+  userMsgText: {
+    color: '#e8fff6',
+    fontSize: 13,
+  },
+  assistantMsg: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  assistantMsgText: {
+    color: 'rgba(232,255,246,0.7)',
+    fontSize: 13,
   },
   transcriptText: {
     color: '#e5e7eb',
