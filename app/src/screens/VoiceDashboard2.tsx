@@ -184,6 +184,12 @@ export default function VoiceDashboard2() {
     handleTranscript(text);
   }, [devText, handleTranscript]);
 
+  const handleDismissTool = useCallback(() => {
+    setPendingTool(null);
+    setTool(null);
+    setVoiceListenerState('listening');
+  }, []);
+
   return (
     <View style={styles.root}>
       <View style={styles.topbar}>
@@ -233,6 +239,11 @@ export default function VoiceDashboard2() {
                 <Text style={[styles.kvVal, !v && styles.kvValNull]}>{v ?? 'null'}</Text>
               </View>
             ))}
+            {pendingTool && (
+              <Pressable style={styles.dismissBtn} onPress={handleDismissTool}>
+                <Text style={styles.dismissBtnText}>Cancel</Text>
+              </Pressable>
+            )}
           </View>
         )}
       </View>
@@ -437,6 +448,21 @@ const styles = StyleSheet.create({
   kvValNull: {
     color: 'rgba(229,231,235,0.45)',
     fontStyle: 'italic',
+  },
+  dismissBtn: {
+    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.4)',
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    alignItems: 'center',
+  },
+  dismissBtnText: {
+    color: '#ef4444',
+    fontSize: 13,
+    fontWeight: '600',
   },
   devInputRow: {
     flexDirection: 'row',
