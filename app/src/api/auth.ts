@@ -2,7 +2,7 @@ import {
   GoogleSignin,
 } from '@react-native-google-signin/google-signin';
 import { Alert } from 'react-native';
-import { API_BASE_URL } from "../utils/utils";
+import { authFetch } from "../utils/fetchUtils";
 import {
   AccessTokenProvider
 } from "../context/AccessTokenContext";
@@ -27,22 +27,22 @@ export const silentLogin = async () => {
 export const onLogin = async () => {
   const res = await signIn();
   if (!res.data) {
-    Alert.alert("error logging in")
-    throw new Error("Error logging in");
+    Alert.alert("Error", "Login failed. Please try again.");
+    throw new Error("Login failed");
   }
   const idToken = res.data.idToken;
   if (!idToken) throw new Error("No idToken");
   const { accessToken } = await GoogleSignin.getTokens();
-  const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
+  const response = await authFetch("/api/auth/google", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ idToken }),
-  });
+  }, 20_000);
   if (!response.ok) {
-    Alert.alert("error logging in")
-    throw new Error("Error logging in");
+    Alert.alert("Error", "Login failed. Please try again.");
+    throw new Error("Login failed");
   }
   const { token } = await response.json();
   return {
