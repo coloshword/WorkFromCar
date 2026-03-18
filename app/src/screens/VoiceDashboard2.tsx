@@ -36,6 +36,7 @@ export default function VoiceDashboard2() {
   const [speaking, setSpeaking] = useState(false);
   const [tool, setTool] = useState<AgentTool | null>(null);
   const [devText, setDevText] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogout = useCallback(async () => {
     await Keychain.resetGenericPassword();
@@ -171,6 +172,8 @@ export default function VoiceDashboard2() {
         }
       }
     } catch (e: any) {
+      const errorMsg = e?.message ?? 'Something went wrong. Please try again.';
+      setError(errorMsg);
       console.log('[handleTranscript] error:', e?.message ?? e);
     } finally {
       if (!DEV_TEXT_MODE) setVoiceListenerState('listening');
@@ -240,6 +243,15 @@ export default function VoiceDashboard2() {
       {statusMsg ? (
         <Text style={styles.statusMsg}>{statusMsg}</Text>
       ) : null}
+
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Pressable onPress={() => setError(null)}>
+            <Text style={styles.errorDismiss}>Dismiss</Text>
+          </Pressable>
+        </View>
+      )}
 
       {DEV_TEXT_MODE && (
         <View style={styles.devInputRow}>
@@ -357,6 +369,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 8,
     paddingHorizontal: 16,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(220,38,38,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(220,38,38,0.3)',
+    marginHorizontal: 16,
+    marginBottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    gap: 12,
+  },
+  errorText: {
+    flex: 1,
+    color: '#fca5a5',
+    fontSize: 13,
+  },
+  errorDismiss: {
+    color: '#ef4444',
+    fontSize: 13,
+    fontWeight: '600',
   },
   transcriptScroll: {
     flex: 1,
