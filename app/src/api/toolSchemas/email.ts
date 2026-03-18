@@ -14,3 +14,7 @@ export const emailSummarizeParametersSchema = z.object({
   query: z.string().nullable(),
   maxResults: z.number().nullable(),
 });
+
+export const readEmailParametersSchema = z.object({
+  messageId: z.string(),
+});
