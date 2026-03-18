@@ -1,8 +1,9 @@
 import { AgentTool, ToolExecutionLog } from "../../../types/Agent";
+import { readEmail } from "./readEmail";
 import { resolveContact } from "./resolveContact";
 import { sendEmail } from "./sendEmail";
 import { summarizeEmails } from "./summarizeEmails";
-import { emailCreateDraftSchema, resolveContactParametersSchema, emailSummarizeParametersSchema } from "./toolSchemas/email";
+import { emailCreateDraftSchema, resolveContactParametersSchema, emailSummarizeParametersSchema, readEmailParametersSchema } from "./toolSchemas/email";
 
 export async function executeTool(tool: AgentTool, accessToken: string): Promise<ToolExecutionLog> {
   switch (tool.tool) {
@@ -28,6 +29,16 @@ export async function executeTool(tool: AgentTool, accessToken: string): Promise
       try {
         const params = emailSummarizeParametersSchema.parse(tool.toolParameters);
         const result = await summarizeEmails(accessToken, params.query, params.maxResults);
+        return { tool: tool.tool, status: 'success', result };
+      } catch (e: any) {
+        return { tool: tool.tool, status: 'error', result: { message: e.message } };
+      }
+    }
+    case 'gmail.readEmail': {
+      try {
+        const params = readEmailParametersSchema.parse(tool.toolParameters);
+        const result = await readEmail({ token: accessToken, emailId: params.messageId });
+        console.log(result);
         return { tool: tool.tool, status: 'success', result };
       } catch (e: any) {
         return { tool: tool.tool, status: 'error', result: { message: e.message } };

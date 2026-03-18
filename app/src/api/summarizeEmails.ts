@@ -1,4 +1,4 @@
-const GMAIL_BASE = 'https://gmail.googleapis.com/gmail/v1/users/me';
+export const GMAIL_BASE = 'https://gmail.googleapis.com/gmail/v1/users/me';
 
 export interface EmailSummary {
   id: string;
@@ -55,6 +55,5 @@ export async function summarizeEmails(
       };
     }),
   );
-
   return emails;
 }
