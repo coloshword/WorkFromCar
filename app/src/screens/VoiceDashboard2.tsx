@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput } from 'react-native';
+import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput, Keyboard } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import RNFS from 'react-native-fs';
@@ -181,19 +181,23 @@ export default function VoiceDashboard2() {
     if (!devText.trim()) return;
     const text = devText.trim();
     setDevText('');
+    Keyboard.dismiss();
     handleTranscript(text);
   }, [devText, handleTranscript]);
 
   return (
     <View style={styles.root}>
       <View style={styles.topbar}>
-        <Pressable style={styles.logoutBtn} onPress={handleLogout}>
+        <Pressable style={styles.logoutBtn} onPress={handleLogout} accessibilityLabel="Logout" accessibilityHint="Sign out of your account">
           <Text style={styles.logoutBtnText}>Logout</Text>
         </Pressable>
         {modelStatus !== 'ready' && (
           <Pressable
             style={[styles.loadBtn, modelStatus === 'loading' && styles.loadBtnDisabled]}
             disabled={modelStatus === 'loading'}
+            accessibilityLabel={modelStatus === 'loading' ? 'Loading models' : 'Load voice models'}
+            accessibilityHint="Load Whisper and Kokoro models for speech recognition and synthesis"
+            accessibilityRole="button"
           >
             {modelStatus === 'loading'
               ? <ActivityIndicator size="small" color="#e8fff6" />
@@ -202,7 +206,7 @@ export default function VoiceDashboard2() {
           </Pressable>
         )}
         {modelStatus === 'ready' && (
-          <View style={styles.readyBadge}>
+          <View style={styles.readyBadge} accessibilityLabel="Voice models ready">
             <Text style={styles.readyBadgeText}>Ready</Text>
           </View>
         )}
@@ -251,11 +255,16 @@ export default function VoiceDashboard2() {
             placeholderTextColor="rgba(232,255,246,0.3)"
             onSubmitEditing={handleDevSubmit}
             returnKeyType="send"
+            accessibilityLabel="Message input"
+            accessibilityHint="Enter a message to send to the voice assistant"
           />
           <Pressable
             style={[styles.devSendBtn, !devText.trim() && styles.devSendBtnDisabled]}
             onPress={handleDevSubmit}
             disabled={!devText.trim()}
+            accessibilityLabel="Send message"
+            accessibilityHint="Send typed message to the voice assistant"
+            accessibilityRole="button"
           >
             <Text style={styles.devSendBtnText}>Send</Text>
           </Pressable>
