@@ -36,7 +36,8 @@ Run `npx tsc --noEmit` from the `app/` directory to confirm your changes introdu
 2. Push the branch: `git push -u origin HEAD`
 3. Open a pull request against `master` using the `gh` CLI:
    - The PR title MUST be prefixed with `[FE-ENG-AGENT]` (e.g., `[FE-ENG-AGENT] Add error boundary to VoiceDashboard`).
-   - The PR body MUST contain two sections:
+   - The PR body MUST contain three sections:
+     - **Agent**: Your agent identifier (provided in your prompt, e.g., "opencode" or "composer-2").
      - **What**: A concise description of what you changed.
      - **Why**: An explanation of why this improvement matters — what problem it solves or what it makes better.
 
