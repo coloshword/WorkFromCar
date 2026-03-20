@@ -38,13 +38,27 @@ export default function AudioVisualizer({ mode = 'disabled' }: Props) {
       smoothedRmsRef.current =
         SMOOTHING * rms + (1 - SMOOTHING) * smoothedRmsRef.current;
 
-      const isSpeaking = modeRef.current === 'speaking';
+      const mode = modeRef.current;
+      const isSpeaking = mode === 'speaking';
+      const isListening = mode === 'listening';
 
       animatedHeights.forEach((anim, i) => {
-        const targetHeight = isSpeaking
-          ? MIN_HEIGHT + (MAX_HEIGHT - MIN_HEIGHT) * Math.min(smoothedRmsRef.current * 12, 1) *
-            (0.5 + 0.5 * Math.sin((Date.now() / 80 + BAR_OFFSETS[i] * 0.01)))
-          : MIN_HEIGHT;
+        let targetHeight = MIN_HEIGHT;
+        if (isSpeaking) {
+          targetHeight =
+            MIN_HEIGHT +
+            (MAX_HEIGHT - MIN_HEIGHT) *
+              Math.min(smoothedRmsRef.current * 12, 1) *
+              (0.5 + 0.5 * Math.sin((Date.now() / 80 + BAR_OFFSETS[i] * 0.01)));
+        } else if (isListening) {
+          const level = Math.min(smoothedRmsRef.current * 10, 1);
+          targetHeight =
+            MIN_HEIGHT +
+            (MAX_HEIGHT - MIN_HEIGHT) *
+              0.28 *
+              level *
+              (0.88 + 0.12 * Math.sin(Date.now() / 240 + i * 0.9));
+        }
 
         Animated.spring(anim, {
           toValue: targetHeight,

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput } from 'react-native';
+import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput, StatusBar } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import RNFS from 'react-native-fs';
@@ -23,6 +23,22 @@ const VAD_PATH = `${RNFS.MainBundlePath}/${VAD_FILENAME}`;
 const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 
 const DEV_TEXT_MODE = false;
+
+function voiceModeLabel(state: VoiceListenerState, speaking: boolean): string {
+  if (state === 'disabled') {
+    return speaking ? 'Speaking…' : 'Processing…';
+  }
+  switch (state) {
+    case 'listening':
+      return 'Listening…';
+    case 'speaking':
+      return 'Hearing you…';
+    case 'transcribing':
+      return 'Transcribing…';
+    default:
+      return state;
+  }
+}
 
 export default function VoiceDashboard2() {
   const { height } = useWindowDimensions();
@@ -186,6 +202,7 @@ export default function VoiceDashboard2() {
 
   return (
     <View style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor="#0f271f" />
       <View style={styles.topbar}>
         <Pressable style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutBtnText}>Logout</Text>
@@ -214,9 +231,7 @@ export default function VoiceDashboard2() {
           : <AudioVisualizer mode={voiceListenerState} />
         }
         <Text style={styles.modeLabel}>
-          {voiceListenerState === 'disabled'
-            ? speaking ? 'Speaking...' : 'Processing...'
-            : voiceListenerState}
+          {voiceModeLabel(voiceListenerState, speaking)}
         </Text>
 
         {tool && (
