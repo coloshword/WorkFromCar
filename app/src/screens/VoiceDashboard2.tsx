@@ -193,6 +193,18 @@ export default function VoiceDashboard2() {
         }
       }
     } catch (e: any) {
+      const errorMessage = e?.message || 'Something went wrong';
+      console.log('[handleTranscript] error:', errorMessage);
+      const userMessage = errorMessage.includes('network') || errorMessage.includes('fetch')
+        ? "I'm having trouble connecting. Please check your internet connection and try again."
+        : "Sorry, something went wrong. Please try again.";
+      await speak({
+        text: userMessage,
+        voiceListenerState: 'disabled',
+        setVoiceListenerState,
+        activeTtsCountRef,
+        setSpeaking
+      });
       console.log('[handleTranscript] error:', e?.message ?? e);
       setToolExecuting(false);
     } finally {
