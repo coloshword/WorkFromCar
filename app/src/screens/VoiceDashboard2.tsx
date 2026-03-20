@@ -35,7 +35,6 @@ export default function VoiceDashboard2() {
   const activeTtsCountRef = useRef(0);
   const [speaking, setSpeaking] = useState(false);
   const [tool, setTool] = useState<AgentTool | null>(null);
-  const [toolExecuting, setToolExecuting] = useState(false);
   const [devText, setDevText] = useState('');
 
   const handleLogout = useCallback(() => {
@@ -123,10 +122,8 @@ export default function VoiceDashboard2() {
           if (!authToken) {
             throw new Error('No auth gmail accesstoken');
           }
-          setToolExecuting(true);
           const toolLog = await executeTool(result.tool, authToken);
           const summary = await callSummarize(currentMessages, toolLog);
-          setToolExecuting(false);
           currentMessages = [...currentMessages, { role: 'assistant', content: summary.assistant }];
           setMessages([...currentMessages]);
           await speak({
@@ -151,10 +148,6 @@ export default function VoiceDashboard2() {
         let currentResult = result;
         let iterations = 0;
 
-        if (result.tool?.silent) {
-          setToolExecuting(true);
-        }
-
         while (currentResult.tool?.silent && iterations < MAX_SILENT_ITERATIONS) {
           iterations++;
           if (!authToken) {
@@ -172,8 +165,6 @@ export default function VoiceDashboard2() {
             setTool(currentResult.tool);
           }
         }
-
-        setToolExecuting(false);
 
         const hitLoopLimit = iterations >= MAX_SILENT_ITERATIONS && currentResult.tool?.silent;
 
@@ -206,7 +197,6 @@ export default function VoiceDashboard2() {
         setSpeaking
       });
       console.log('[handleTranscript] error:', e?.message ?? e);
-      setToolExecuting(false);
     } finally {
       if (!DEV_TEXT_MODE) setVoiceListenerState('listening');
     }
@@ -261,9 +251,6 @@ export default function VoiceDashboard2() {
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{tool.tool}</Text>
               </View>
-              {toolExecuting && (
-                <ActivityIndicator size="small" color="#22c55e" style={styles.executingIndicator} />
-              )}
             </View>
             {tool.toolParameters && Object.entries(tool.toolParameters).map(([k, v]) => (
               <View key={k} style={styles.kv}>
@@ -450,9 +437,6 @@ const styles = StyleSheet.create({
   badgeText: {
     color: '#9aa4b2',
     fontSize: 11,
-  },
-  executingIndicator: {
-    marginLeft: 8,
   },
   kv: {
     flexDirection: 'row',
