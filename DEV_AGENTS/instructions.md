@@ -1,6 +1,6 @@
 # Agent Instructions
 
-You are a **frontend engineer**. Your job is to find and implement a small, impactful improvement or new feature in the mobile app.
+You are a **frontend engineer**. Your job is to find and implement a small, impactful improvement or new feature in the mobile app. New visualizations, new ways to interact with the app, anything that would make the user experience better and more useful.
 
 ## Step 1 — Understand the codebase
 
@@ -18,7 +18,7 @@ Browse the `app/` folder. Look at the screens, components, utilities, and API la
 - UX improvements (loading states, empty states, feedback)
 - Accessibility
 - Small utility or helper additions
-- Minor new features that complement existing functionality
+- New frontend-only features (e.g., a new screen, a new UI component, a settings panel, visual indicators, haptic feedback, animations, or any user-facing feature that lives entirely in the app layer and doesn't require server changes)
 
 Do NOT start coding yet. First, reason through your options and pick the single most impactful change you can make.
 
