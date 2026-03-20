@@ -27,7 +27,7 @@ case "$BACKEND" in
     opencode run "$PROMPT"
     ;;
   cursor)
-    agent "$PROMPT" --model "$CURSOR_MODEL"
+    agent "$PROMPT" --model "$CURSOR_MODEL" --yolo
     ;;
   *)
     echo "Unknown backend: $BACKEND (use 'opencode' or 'cursor')"
