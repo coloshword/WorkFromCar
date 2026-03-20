@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput } from 'react-native';
+import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput, Alert } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import RNFS from 'react-native-fs';
@@ -37,9 +37,22 @@ export default function VoiceDashboard2() {
   const [tool, setTool] = useState<AgentTool | null>(null);
   const [devText, setDevText] = useState('');
 
-  const handleLogout = useCallback(async () => {
-    await Keychain.resetGenericPassword();
-    setAuthToken(null);
+  const handleLogout = useCallback(() => {
+    Alert.alert(
+      'Log out?',
+      'You will need to sign in again to use Gmail from the car.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Log out',
+          style: 'destructive',
+          onPress: async () => {
+            await Keychain.resetGenericPassword();
+            setAuthToken(null);
+          },
+        },
+      ],
+    );
   }, [setAuthToken]);
 
   useEffect(() => {
