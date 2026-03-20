@@ -38,11 +38,24 @@ const LoginScreen = () => {
       <StatusBar barStyle="light-content" backgroundColor="#0f271f" />
 
       <View style={styles.content}>
-        <View style={styles.logoCircle}>
-          <Text style={styles.logoText}>W</Text>
+        <View
+          style={styles.logoCircle}
+          accessible
+          accessibilityRole="image"
+          accessibilityLabel="WorkFromCar"
+        >
+          <Text
+            style={styles.logoText}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            W
+          </Text>
         </View>
 
-        <Text style={styles.title}>Welcome back</Text>
+        <Text style={styles.title} accessibilityRole="header">
+          Welcome back
+        </Text>
         <Text style={styles.subtitle}>Sign in to continue</Text>
 
         <Pressable
@@ -53,6 +66,10 @@ const LoginScreen = () => {
           ]}
           onPress={handleLogin}
           disabled={loading}
+          accessibilityRole="button"
+          accessibilityLabel="Sign in with Google"
+          accessibilityHint="Opens the Google account picker to sign in"
+          accessibilityState={{ disabled: loading, busy: loading }}
         >
           {loading ? (
             <ActivityIndicator size="small" color="#0f271f" />
