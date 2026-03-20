@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput } from 'react-native';
+import { Pressable, Text, View, ActivityIndicator, TextInput } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import RNFS from 'react-native-fs';
@@ -36,6 +36,42 @@ export default function VoiceDashboard2() {
   const [speaking, setSpeaking] = useState(false);
   const [tool, setTool] = useState<AgentTool | null>(null);
   const [devText, setDevText] = useState('');
+  const loadSeqRef = useRef(0);
+
+  const loadModels = useCallback(async () => {
+    const seq = ++loadSeqRef.current;
+    if (DEV_TEXT_MODE) {
+      setModelStatus('loading');
+      setStatusMsg('Loading models...');
+      try {
+        await NativeKokoro.loadModel(KOKORO_MODEL_DIR);
+        if (seq !== loadSeqRef.current) return;
+        setModelStatus('ready');
+        setStatusMsg('');
+      } catch (e: any) {
+        if (seq !== loadSeqRef.current) return;
+        setModelStatus('error');
+        setStatusMsg(`Error: ${e.message}`);
+      }
+      return;
+    }
+
+    setModelStatus('loading');
+    setStatusMsg('Loading models...');
+    try {
+      await NativeWhisper.loadModel(MODEL_PATH);
+      await NativeKokoro.loadModel(KOKORO_MODEL_DIR);
+      await NativeWhisper.initVad(VAD_PATH);
+      if (seq !== loadSeqRef.current) return;
+      setModelStatus('ready');
+      setStatusMsg('');
+      setVoiceListenerState('listening');
+    } catch (e: any) {
+      if (seq !== loadSeqRef.current) return;
+      setModelStatus('error');
+      setStatusMsg(`Error: ${e.message}`);
+    }
+  }, []);
 
   const handleLogout = useCallback(async () => {
     await Keychain.resetGenericPassword();
@@ -54,40 +90,11 @@ export default function VoiceDashboard2() {
   }, []);
 
   useEffect(() => {
-    if (DEV_TEXT_MODE) {
-      setModelStatus('loading');
-      NativeKokoro.loadModel(KOKORO_MODEL_DIR)
-        .then(() => setModelStatus('ready'))
-        .catch((e: any) => {
-          setModelStatus('error');
-          setStatusMsg(`Error: ${e.message}`);
-        });
-      return;
-    }
-
-    let cancelled = false;
-
-    const handleLoadModel = async () => {
-      if (cancelled) return;
-      setModelStatus('loading');
-      setStatusMsg('Loading models...');
-      try {
-        await NativeWhisper.loadModel(MODEL_PATH);
-        await NativeKokoro.loadModel(KOKORO_MODEL_DIR);
-        await NativeWhisper.initVad(VAD_PATH);
-        setModelStatus('ready');
-        setStatusMsg('');
-        setVoiceListenerState('listening');
-      } catch (e: any) {
-        setModelStatus('error');
-        setStatusMsg(`Error: ${e.message}`);
-      }
-    };
-    handleLoadModel();
+    loadModels();
     return () => {
-      cancelled = true;
+      loadSeqRef.current++;
     };
-  }, []);
+  }, [loadModels]);
 
   const handleTranscript = useCallback(async (text: string) => {
     if (!DEV_TEXT_MODE) setVoiceListenerState('disabled');
@@ -194,10 +201,17 @@ export default function VoiceDashboard2() {
           <Pressable
             style={[styles.loadBtn, modelStatus === 'loading' && styles.loadBtnDisabled]}
             disabled={modelStatus === 'loading'}
+            onPress={loadModels}
+            accessibilityRole="button"
+            accessibilityLabel={
+              modelStatus === 'error' ? 'Retry loading voice models' : 'Load voice models'
+            }
           >
             {modelStatus === 'loading'
               ? <ActivityIndicator size="small" color="#e8fff6" />
-              : <Text style={styles.loadBtnText}>Load Model</Text>
+              : <Text style={styles.loadBtnText}>
+                  {modelStatus === 'error' ? 'Retry' : 'Load Model'}
+                </Text>
             }
           </Pressable>
         )}
