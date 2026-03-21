@@ -7,6 +7,8 @@ import { Message } from "Types/Agent";
 import { generateLLMMessage, generateOpenAIMessage } from "../utils/LMProviders";
 import { normalizeNullStrings } from "../utils/AgentUtils";
 import { jsonrepair } from "jsonrepair";
+import { emailReadParametersSchema } from "../tools/gmail/EmailRead";
+import { emailReplyParametersSchema } from "../tools/gmail/EmailReply";
 
 function formatZodError(err: any): string {
   if (err?.issues && Array.isArray(err.issues)) {
@@ -84,6 +86,12 @@ export const verifyLLMToolCall = (plan: LLMPlanResponse) => {
       return;
     case "gmail.summarizeEmails":
       plan.toolParameters = emailSummarizeParametersSchema.parse(plan.toolParameters);
+      return;
+    case "gmail.readEmail":
+      plan.toolParameters = emailReadParametersSchema.parse(plan.toolParameters);
+      return;
+    case "gmail.replyToEmail":
+      plan.toolParameters = emailReplyParametersSchema.parse(plan.toolParameters);
       return;
   }
 };
