@@ -102,6 +102,9 @@ sequenceDiagram
 - `**gmail.createDraft**` -- Compose and send email (to, subject, body). Non-silent; requires user confirmation.
 - `**gmail.summarizeEmails**` -- List and summarize inbox (query, maxResults). Silent; auto-executes.
 - `**gmail.resolveContact**` -- Resolve contact name to email (value). Silent; auto-executes. Uses edit distance + phonetic scoring.
+- `**gmail.readEmail**` -- Read full email body by messageId. Silent; auto-executes. Decodes base64url body, strips links, truncates to 750 chars.
+- `**gmail.replyToEmail**` -- Reply to an email thread (to, subject, body, messageId, threadId). Non-silent; requires confirmation.
+- `**gmail.forwardEmail**` -- Forward full email with all content (messageId, to). Non-silent; uses format=raw to preserve HTML/images/attachments.
 
 ## Key Files Quick Reference
 
