@@ -26,3 +26,8 @@ export const emailReplyParametersSchema = z.object({
   messageId: z.string(),
   threadId: z.string(),
 });
+
+export const emailForwardParametersSchema = z.object({
+  messageId: z.string(),
+  to: z.string(),
+});

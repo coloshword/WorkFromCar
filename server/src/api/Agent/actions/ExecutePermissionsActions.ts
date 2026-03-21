@@ -6,6 +6,7 @@ import { generateLLMMessage, generateOpenRouterMessage } from "../utils/LMProvid
 import { EXECUTE_PERMISSION_INSTRUCTION, EXECUTE_PERMISSION_JSON_SCHEMA_SCHEMA } from "../utils/ExecutePermissionsInstructions";
 import { SUMMARY_INSTRUCTION, SUMMARY_JSON_SCHEMA_SCHEMA } from "../utils/SummaryInstructions";
 import { emailReplyParametersSchema } from "../tools/gmail/EmailReply";
+import { emailForwardParametersSchema } from "../tools/gmail/EmailForward";
 
 export async function validateToolCall(tool: AgentTool): Promise<void>{
   switch (tool.tool) {
@@ -14,6 +15,9 @@ export async function validateToolCall(tool: AgentTool): Promise<void>{
       return;
     case 'gmail.replyToEmail':
       emailReplyParametersSchema.parse(tool.toolParameters);
+      return;
+    case 'gmail.forwardEmail':
+      emailForwardParametersSchema.parse(tool.toolParameters);
       return;
     default:
       throw new Error(`Unsupported tool: ${tool.tool}`);

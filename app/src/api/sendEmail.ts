@@ -51,7 +51,7 @@ export async function sendEmail({
   threadId?: string;
 }) {
 
-  const raw = buildRawEmail({ to, subject, body });
+  const raw = buildRawEmail({ to, subject, body, messageId });
 
   const rawB64Url = toBase64Url(btoa(unescape(encodeURIComponent(raw))));
 

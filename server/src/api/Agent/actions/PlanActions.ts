@@ -9,6 +9,7 @@ import { normalizeNullStrings } from "../utils/AgentUtils";
 import { jsonrepair } from "jsonrepair";
 import { emailReadParametersSchema } from "../tools/gmail/EmailRead";
 import { emailReplyParametersSchema } from "../tools/gmail/EmailReply";
+import { emailForwardParametersSchema } from "../tools/gmail/EmailForward";
 
 function formatZodError(err: any): string {
   if (err?.issues && Array.isArray(err.issues)) {
@@ -92,6 +93,9 @@ export const verifyLLMToolCall = (plan: LLMPlanResponse) => {
       return;
     case "gmail.replyToEmail":
       plan.toolParameters = emailReplyParametersSchema.parse(plan.toolParameters);
+      return;
+    case "gmail.forwardEmail":
+      plan.toolParameters = emailForwardParametersSchema.parse(plan.toolParameters);
       return;
   }
 };
