@@ -36,6 +36,8 @@ export default function VoiceDashboard2() {
   const [speaking, setSpeaking] = useState(false);
   const [tool, setTool] = useState<AgentTool | null>(null);
   const [devText, setDevText] = useState('');
+  const [transcriptExpanded, setTranscriptExpanded] = useState(false);
+  const transcriptScrollRef = useRef<ScrollView>(null);
 
   const handleLogout = useCallback(() => {
     Alert.alert(
@@ -294,6 +296,35 @@ export default function VoiceDashboard2() {
           onTranscript={handleTranscript}
         />
       </View>
+
+      {messages.length > 0 && (
+        <View style={styles.transcriptContainer}>
+          <Pressable
+            style={styles.transcriptToggle}
+            onPress={() => setTranscriptExpanded(!transcriptExpanded)}
+          >
+            <Text style={styles.transcriptToggleText}>
+              {transcriptExpanded ? 'Hide transcript' : `Transcript (${messages.length})`}
+            </Text>
+            <Text style={styles.transcriptChevron}>{transcriptExpanded ? '▼' : '▲'}</Text>
+          </Pressable>
+          {transcriptExpanded && (
+            <ScrollView
+              ref={transcriptScrollRef}
+              style={styles.transcriptScrollView}
+              contentContainerStyle={styles.transcriptScrollContent}
+              onContentSizeChange={() => transcriptScrollRef.current?.scrollToEnd()}
+            >
+              {messages.map((msg, i) => (
+                <View key={i} style={msg.role === 'user' ? styles.userMessage : styles.assistantMessage}>
+                  <Text style={styles.messageRole}>{msg.role === 'user' ? 'You' : 'Assistant'}</Text>
+                  <Text style={styles.messageContent}>{msg.content}</Text>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -498,5 +529,69 @@ const styles = StyleSheet.create({
     color: '#22c55e',
     fontSize: 14,
     fontWeight: '600',
+  },
+  transcriptContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#08110e',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    maxHeight: 300,
+  },
+  transcriptToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  transcriptToggleText: {
+    color: 'rgba(232,255,246,0.7)',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  transcriptChevron: {
+    color: 'rgba(232,255,246,0.5)',
+    fontSize: 12,
+  },
+  transcriptScrollView: {
+    maxHeight: 250,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+  },
+  transcriptScrollContent: {
+    padding: 12,
+    gap: 8,
+  },
+  userMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: 'rgba(34,197,94,0.15)',
+    borderRadius: 12,
+    borderBottomRightRadius: 4,
+    padding: 10,
+    maxWidth: '85%',
+  },
+  assistantMessage: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    borderBottomLeftRadius: 4,
+    padding: 10,
+    maxWidth: '85%',
+  },
+  messageRole: {
+    color: 'rgba(232,255,246,0.5)',
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  messageContent: {
+    color: '#e5e7eb',
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
