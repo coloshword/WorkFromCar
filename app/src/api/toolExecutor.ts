@@ -2,6 +2,7 @@ import { AgentTool, ToolExecutionLog } from "../../../types/Agent";
 import { readEmail } from "./readEmail";
 import { resolveContact } from "./resolveContact";
 import { sendEmail } from "./sendEmail";
+import { replyEmail } from "./replyEmail";
 import { summarizeEmails } from "./summarizeEmails";
 import { emailCreateDraftSchema, resolveContactParametersSchema, emailSummarizeParametersSchema, readEmailParametersSchema } from "./toolSchemas/email";
 

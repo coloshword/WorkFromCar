@@ -2,6 +2,7 @@ export const GMAIL_BASE = 'https://gmail.googleapis.com/gmail/v1/users/me';
 
 export interface EmailSummary {
   id: string;
+  threadId: string;
   from: string;
   subject: string;
   snippet: string;
@@ -48,6 +49,7 @@ export async function summarizeEmails(
 
       return {
         id,
+        threadId: msg.threadId ?? '',
         from: get('From'),
         subject: get('Subject'),
         snippet: msg.snippet ?? '',
