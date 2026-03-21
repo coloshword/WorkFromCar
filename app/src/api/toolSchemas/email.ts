@@ -18,3 +18,11 @@ export const emailSummarizeParametersSchema = z.object({
 export const readEmailParametersSchema = z.object({
   messageId: z.string(),
 });
+
+export const emailReplyParametersSchema = z.object({
+  to: z.string(),
+  subject: z.string(),
+  body: z.string(),
+  messageId: z.string(),
+  threadId: z.string(),
+});

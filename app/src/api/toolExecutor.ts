@@ -4,7 +4,7 @@ import { resolveContact } from "./resolveContact";
 import { sendEmail } from "./sendEmail";
 import { replyEmail } from "./replyEmail";
 import { summarizeEmails } from "./summarizeEmails";
-import { emailCreateDraftSchema, resolveContactParametersSchema, emailSummarizeParametersSchema, readEmailParametersSchema } from "./toolSchemas/email";
+import { emailCreateDraftSchema, resolveContactParametersSchema, emailSummarizeParametersSchema, readEmailParametersSchema, emailReplyParametersSchema } from "./toolSchemas/email";
 
 export async function executeTool(tool: AgentTool, accessToken: string): Promise<ToolExecutionLog> {
   switch (tool.tool) {
@@ -40,6 +40,15 @@ export async function executeTool(tool: AgentTool, accessToken: string): Promise
         const params = readEmailParametersSchema.parse(tool.toolParameters);
         const result = await readEmail({ token: accessToken, emailId: params.messageId });
         console.log(result);
+        return { tool: tool.tool, status: 'success', result };
+      } catch (e: any) {
+        return { tool: tool.tool, status: 'error', result: { message: e.message } };
+      }
+    }
+    case 'gmail.replyToEmail': {
+      try {
+        const params = emailReplyParametersSchema.parse(tool.toolParameters);
+        const result = await replyEmail({ ...params, accessToken });
         return { tool: tool.tool, status: 'success', result };
       } catch (e: any) {
         return { tool: tool.tool, status: 'error', result: { message: e.message } };
