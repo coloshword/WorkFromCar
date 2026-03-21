@@ -15,6 +15,7 @@ import { speak } from '../utils/ttsUtils';
 import { executeTool } from '../api/toolExecutor';
 import { useAccessToken } from '../context/AccessTokenContext';
 import * as Keychain from 'react-native-keychain';
+import OnboardingOverlay from '../components/OnboardingOverlay';
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
 const VAD_FILENAME = 'ggml-silero-v6.2.0.bin';
@@ -36,6 +37,7 @@ export default function VoiceDashboard2() {
   const [speaking, setSpeaking] = useState(false);
   const [tool, setTool] = useState<AgentTool | null>(null);
   const [devText, setDevText] = useState('');
+  const [showOnboarding, setShowOnboarding] = useState(true);
 
   const handleLogout = useCallback(() => {
     Alert.alert(
@@ -215,22 +217,27 @@ export default function VoiceDashboard2() {
         <Pressable style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutBtnText}>Logout</Text>
         </Pressable>
-        {modelStatus !== 'ready' && (
-          <Pressable
-            style={[styles.loadBtn, modelStatus === 'loading' && styles.loadBtnDisabled]}
-            disabled={modelStatus === 'loading'}
-          >
-            {modelStatus === 'loading'
-              ? <ActivityIndicator size="small" color="#e8fff6" />
-              : <Text style={styles.loadBtnText}>Load Model</Text>
-            }
+        <View style={styles.topbarRight}>
+          <Pressable style={styles.helpBtn} onPress={() => setShowOnboarding(true)}>
+            <Text style={styles.helpBtnText}>?</Text>
           </Pressable>
-        )}
-        {modelStatus === 'ready' && (
-          <View style={styles.readyBadge}>
-            <Text style={styles.readyBadgeText}>Ready</Text>
-          </View>
-        )}
+          {modelStatus !== 'ready' && (
+            <Pressable
+              style={[styles.loadBtn, modelStatus === 'loading' && styles.loadBtnDisabled]}
+              disabled={modelStatus === 'loading'}
+            >
+              {modelStatus === 'loading'
+                ? <ActivityIndicator size="small" color="#e8fff6" />
+                : <Text style={styles.loadBtnText}>Load Model</Text>
+              }
+            </Pressable>
+          )}
+          {modelStatus === 'ready' && (
+            <View style={styles.readyBadge}>
+              <Text style={styles.readyBadgeText}>Ready</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       <View style={[styles.visualizerContainer, { paddingTop: height * 0.15 }]}>
@@ -294,6 +301,11 @@ export default function VoiceDashboard2() {
           onTranscript={handleTranscript}
         />
       </View>
+
+      <OnboardingOverlay
+        visible={showOnboarding}
+        onDismiss={() => setShowOnboarding(false)}
+      />
     </View>
   );
 }
@@ -326,6 +338,26 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+  topbarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 30,
+  },
+  helpBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(232,255,246,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  helpBtnText: {
+    color: 'rgba(232,255,246,0.7)',
+    fontSize: 14,
+    fontWeight: '700',
+  },
   topbarTitle: {
     color: '#e5e7eb',
     fontSize: 17,
@@ -333,7 +365,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   loadBtn: {
-    marginTop: 30,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 14,
@@ -352,7 +383,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   readyBadge: {
-    marginTop: 30,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 999,
