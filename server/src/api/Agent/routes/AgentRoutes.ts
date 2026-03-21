@@ -24,7 +24,7 @@ export const planRoute = async (ctx: Context) => {
   const response: AgentPlanResponse = {
     message,
     tool: {
-      tool: plan.tool,
+      tool: plan.tool ?? '',
       toolParameters: plan.toolParameters,
     }
   }

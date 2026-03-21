@@ -5,11 +5,15 @@ import { generateJsonWithRetry } from "./PlanActions";
 import { generateLLMMessage, generateOpenRouterMessage } from "../utils/LMProviders";
 import { EXECUTE_PERMISSION_INSTRUCTION, EXECUTE_PERMISSION_JSON_SCHEMA_SCHEMA } from "../utils/ExecutePermissionsInstructions";
 import { SUMMARY_INSTRUCTION, SUMMARY_JSON_SCHEMA_SCHEMA } from "../utils/SummaryInstructions";
+import { emailReplyParametersSchema } from "../tools/gmail/EmailReply";
 
 export async function validateToolCall(tool: AgentTool): Promise<void>{
   switch (tool.tool) {
     case 'gmail.createDraft':
-      const validatedParams = emailCreateDraftParametersSchema.parse(tool.toolParameters);
+      emailCreateDraftParametersSchema.parse(tool.toolParameters);
+      return;
+    case 'gmail.replyToEmail':
+      emailReplyParametersSchema.parse(tool.toolParameters);
       return;
     default:
       throw new Error(`Unsupported tool: ${tool.tool}`);
