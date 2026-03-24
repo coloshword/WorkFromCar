@@ -9,11 +9,11 @@ export async function createEvent({
 }: {
   accessToken: string;
   summary: string;
-  description: string;
+  description: string | null;
   startIso: string;
   endIso: string;
   timeZone: string;
-  location: string;
+  location: string | null;
 }) {
   const res = await fetch(
     'https://www.googleapis.com/calendar/v3/calendars/primary/events',
