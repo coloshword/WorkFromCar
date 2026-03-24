@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { AgentTool } from '../../../types/Agent';
 
@@ -139,39 +139,43 @@ export default function ToolCallGlass({ tool }: Props) {
         <View style={styles.innerHighlight} />
 
         {tool ? (
-          <Animated.View style={[styles.content, { opacity: contentFade }]}>
-            <View style={styles.header}>
-              <View style={styles.dotActive} />
-              <Text style={styles.headerLabel}>{displayName}</Text>
-              <View style={styles.toolBadge}>
-                <Text style={styles.toolBadgeText}>{tool.tool}</Text>
+          <ScrollView
+            style={styles.scrollArea}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <Animated.View style={[styles.content, { opacity: contentFade }]}>
+              <View style={styles.header}>
+                <View style={styles.dotActive} />
+                <Text style={styles.headerLabel}>{displayName}</Text>
+                <View style={styles.toolBadge}>
+                  <Text style={styles.toolBadgeText}>{tool.tool}</Text>
+                </View>
               </View>
-            </View>
-            <ToolVizContent tool={tool} />
-          </Animated.View>
+              <ToolVizContent tool={tool} />
+            </Animated.View>
+          </ScrollView>
         ) : (
-          <View style={styles.emptyContent}>
-            <View style={styles.dotIdle} />
-            <Text style={styles.emptyText}>No active tool</Text>
-          </View>
+          <View style={styles.emptyContent} />
         )}
       </LinearGradient>
     </Animated.View>
   );
 }
 
+const GLASS_HEIGHT = 240;
+
 const styles = StyleSheet.create({
   wrapper: {
-    width: '90%',
+    alignSelf: 'center',
+    width: '95%',
     marginTop: 24,
   },
   glass: {
     borderRadius: 22,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
     overflow: 'hidden',
+    height: GLASS_HEIGHT,
     padding: 18,
-    minHeight: 72,
   },
   innerHighlight: {
     position: 'absolute',
@@ -180,6 +184,12 @@ const styles = StyleSheet.create({
     right: 0,
     height: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  scrollArea: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     gap: 14,
@@ -200,13 +210,14 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   headerLabel: {
-    flex: 1,
+    flexShrink: 1,
     color: 'rgba(232, 255, 246, 0.9)',
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.3,
   },
   toolBadge: {
+    flexShrink: 0,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 999,
@@ -220,23 +231,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   emptyContent: {
-    flexDirection: 'row',
+    flex: 1,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 6,
-  },
-  dotIdle: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(154, 164, 178, 0.4)',
-  },
-  emptyText: {
-    color: 'rgba(154, 164, 178, 0.4)',
-    fontSize: 12,
-    fontWeight: '500',
-    letterSpacing: 0.5,
   },
 });
 
@@ -280,6 +278,7 @@ const vizStyles = StyleSheet.create({
     color: '#e5e7eb',
     fontSize: 13,
     fontWeight: '500',
+    flexShrink: 1,
   },
   valueNull: {
     color: 'rgba(229, 231, 235, 0.4)',
