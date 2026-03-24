@@ -1,0 +1,55 @@
+export async function createEvent({
+  accessToken,
+  summary,
+  description,
+  startIso,
+  endIso,
+  timeZone = 'America/New_York',
+  location
+}: {
+  accessToken: string;
+  summary: string;
+  description: string | null;
+  startIso: string;
+  endIso: string;
+  timeZone: string;
+  location: string | null;
+}) {
+  const res = await fetch(
+    'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        summary,
+        description,
+        location,
+        start: {
+          dateTime: startIso,
+          timeZone,
+        },
+        end: {
+          dateTime: endIso,
+          timeZone,
+        },
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to create event: ${res.status} ${text}`);
+  }
+  const data = await res.json();
+  return {
+    success: true,
+    eventId: data.id,
+    summary: data.summary,
+    start: data.start.dateTime,
+    end: data.end.dateTime,
+    htmlLink: data.htmlLink,
+  };
+}

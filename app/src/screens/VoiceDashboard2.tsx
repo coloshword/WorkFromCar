@@ -23,7 +23,7 @@ const MODEL_PATH = `${RNFS.MainBundlePath}/${MODEL_FILENAME}`;
 const VAD_PATH = `${RNFS.MainBundlePath}/${VAD_FILENAME}`;
 const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 
-const DEV_TEXT_MODE = false;
+const DEV_TEXT_MODE = true;
 
 export default function VoiceDashboard2() {
   const { height } = useWindowDimensions();

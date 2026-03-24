@@ -6,6 +6,8 @@ import { replyEmail } from "./replyEmail";
 import { forwardEmail } from "./forwardEmail";
 import { summarizeEmails } from "./summarizeEmails";
 import { emailCreateDraftSchema, resolveContactParametersSchema, emailSummarizeParametersSchema, readEmailParametersSchema, emailReplyParametersSchema, emailForwardParametersSchema } from "./toolSchemas/email";
+import { gcalCreateEventSchema } from "./toolSchemas/gcal";
+import { createEvent } from "./gcalCreateEvent";
 
 export async function executeTool(tool: AgentTool, accessToken: string): Promise<ToolExecutionLog> {
   switch (tool.tool) {
@@ -59,6 +61,15 @@ export async function executeTool(tool: AgentTool, accessToken: string): Promise
       try {
         const params = emailForwardParametersSchema.parse(tool.toolParameters);
         const result = await forwardEmail({ ...params, accessToken });
+        return { tool: tool.tool, status: 'success', result };
+      } catch (e: any) {
+        return { tool: tool.tool, status: 'error', result: { message: e.message } };
+      }
+    }
+    case 'gcal.createEvent': {
+      try {
+        const params = gcalCreateEventSchema.parse(tool.toolParameters);
+        const result = await createEvent({ ...params, accessToken });
         return { tool: tool.tool, status: 'success', result };
       } catch (e: any) {
         return { tool: tool.tool, status: 'error', result: { message: e.message } };

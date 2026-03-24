@@ -10,6 +10,7 @@ import { jsonrepair } from "jsonrepair";
 import { emailReadParametersSchema } from "../tools/gmail/EmailRead";
 import { emailReplyParametersSchema } from "../tools/gmail/EmailReply";
 import { emailForwardParametersSchema } from "../tools/gmail/EmailForward";
+import { gcalCreateEventParametersSchema } from "../tools/gcal/GcalCreateEvent";
 
 function formatZodError(err: any): string {
   if (err?.issues && Array.isArray(err.issues)) {
@@ -96,6 +97,9 @@ export const verifyLLMToolCall = (plan: LLMPlanResponse) => {
       return;
     case "gmail.forwardEmail":
       plan.toolParameters = emailForwardParametersSchema.parse(plan.toolParameters);
+      return;
+    case "gcal.createEvent":
+      plan.toolParameters = gcalCreateEventParametersSchema.parse(plan.toolParameters);
       return;
   }
 };
