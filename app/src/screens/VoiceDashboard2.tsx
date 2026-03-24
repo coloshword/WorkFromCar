@@ -105,7 +105,7 @@ export default function VoiceDashboard2() {
   }, []);
 
   const handleTranscript = useCallback(async (text: string) => {
-    if (!DEV_TEXT_MODE) setVoiceListenerState('disabled');
+    if (!DEV_TEXT_MODE) setVoiceListenerState('transcribing');
     try {
       const userMessage: Message = { role: 'user', content: text.trim() };
       let currentMessages = [...messages, userMessage];
@@ -130,7 +130,7 @@ export default function VoiceDashboard2() {
           setMessages([...currentMessages]);
           await speak({
             text: summary.assistant,
-            voiceListenerState: 'disabled',
+            voiceListenerState: 'transcribing',
             setVoiceListenerState,
             activeTtsCountRef,
             setSpeaking
@@ -138,7 +138,7 @@ export default function VoiceDashboard2() {
         } else {
           await speak({
             text: result.message.content,
-            voiceListenerState: 'disabled',
+            voiceListenerState: 'transcribing',
             setVoiceListenerState,
             activeTtsCountRef,
             setSpeaking
@@ -173,7 +173,7 @@ export default function VoiceDashboard2() {
         await speak({
           text: currentResult.message.content?.trim()
             || "Sorry, I wasn't able to finish processing. Please try again.",
-          voiceListenerState: 'disabled',
+          voiceListenerState: 'transcribing',
           setVoiceListenerState,
           activeTtsCountRef,
           setSpeaking
@@ -193,7 +193,7 @@ export default function VoiceDashboard2() {
         : "Sorry, something went wrong. Please try again.";
       await speak({
         text: userMessage,
-        voiceListenerState: 'disabled',
+        voiceListenerState: 'transcribing',
         setVoiceListenerState,
         activeTtsCountRef,
         setSpeaking
@@ -241,12 +241,12 @@ export default function VoiceDashboard2() {
       </View>
 
       <View style={[styles.visualizerContainer, { paddingTop: height * 0.15 }]}>
-        {voiceListenerState === 'disabled' && !speaking
+        {(voiceListenerState === 'disabled' || voiceListenerState === 'transcribing') && !speaking
           ? <ActivityIndicator size="large" color="#e8fff6" style={{ height: 150 }} />
           : <AudioVisualizer mode={voiceListenerState} />
         }
         <Text style={styles.modeLabel}>
-          {voiceListenerState === 'disabled'
+          {(voiceListenerState === 'disabled' || voiceListenerState === 'transcribing')
             ? speaking ? 'Speaking...' : 'Processing...'
             : voiceListenerState}
         </Text>
