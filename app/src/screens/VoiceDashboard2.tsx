@@ -16,6 +16,7 @@ import { executeTool } from '../api/toolExecutor';
 import { useAccessToken } from '../context/AccessTokenContext';
 import * as Keychain from 'react-native-keychain';
 import OnboardingOverlay from '../components/OnboardingOverlay';
+import ToolCallGlass from '../components/ToolCallGlass';
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
 const VAD_FILENAME = 'ggml-silero-v6.2.0.bin';
@@ -251,22 +252,7 @@ export default function VoiceDashboard2() {
             : voiceListenerState}
         </Text>
 
-        {tool && (
-          <View style={styles.toolPanel}>
-            <View style={styles.toolHeader}>
-              <Text style={styles.toolHeaderLabel}>Current tool</Text>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{tool.tool}</Text>
-              </View>
-            </View>
-            {tool.toolParameters && Object.entries(tool.toolParameters).map(([k, v]) => (
-              <View key={k} style={styles.kv}>
-                <Text style={styles.kvKey}>{k}</Text>
-                <Text style={[styles.kvVal, !v && styles.kvValNull]}>{v ?? 'null'}</Text>
-              </View>
-            ))}
-          </View>
-        )}
+        <ToolCallGlass tool={tool} />
       </View>
 
       {statusMsg ? (
@@ -434,64 +420,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -999,
     opacity: 0,
-  },
-  toolPanel: {
-    marginTop: 24,
-    width: '90%',
-    borderRadius: 18,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
-    paddingTop: 14,
-    gap: 10,
-  },
-  toolHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  toolHeaderLabel: {
-    color: 'rgba(229,231,235,0.9)',
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.11)',
-  },
-  badgeText: {
-    color: '#9aa4b2',
-    fontSize: 11,
-  },
-  kv: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
-    gap: 10,
-  },
-  kvKey: {
-    width: 72,
-    color: '#9aa4b2',
-    fontSize: 12,
-  },
-  kvVal: {
-    flex: 1,
-    color: '#e5e7eb',
-    fontSize: 12,
-  },
-  kvValNull: {
-    color: 'rgba(229,231,235,0.45)',
-    fontStyle: 'italic',
   },
   devInputRow: {
     flexDirection: 'row',
