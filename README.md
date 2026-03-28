@@ -2,8 +2,7 @@
 
 A voice-first AI assistant for hands-free email and calendar management. Built for use while driving, WorkFromCar lets you read, reply to, and compose emails, manage contacts, and create calendar events — all through natural voice interaction.
 
-
-https://github.com/user-attachments/assets/c035b59a-c4f9-42a0-9584-a4f62c4f38da
+https://github.com/user-attachments/assets/4f10ea57-789b-4bf4-b2e6-c0c18d319f9b
 
 
 ## How It Works
