@@ -1,30 +1,24 @@
 import { AgentTool } from '../../../types/Agent';
+import {
+  emailCreateDraftSchema,
+  emailForwardParametersSchema,
+  emailReplyParametersSchema,
+} from '../api/toolSchemas/email';
+import { gcalCreateEventSchema } from '../api/toolSchemas/gcal';
+import * as z from 'zod';
 
-function hasRequiredParameters(tool: AgentTool, requiredParameters: string[]): boolean {
-  const params = tool.toolParameters as Record<string, unknown> | null;
-
-  if (!params) {
-    return false;
-  }
-
-  return requiredParameters.every((parameter) => params[parameter] !== null && params[parameter] !== undefined);
-}
+const EXECUTABLE_TOOL_SCHEMAS: Record<string, z.ZodTypeAny> = {
+  'gmail.createDraft': emailCreateDraftSchema,
+  'gmail.replyToEmail': emailReplyParametersSchema,
+  'gmail.forwardEmail': emailForwardParametersSchema,
+  'gcal.createEvent': gcalCreateEventSchema,
+};
 
 export function isToolReadyForExecution(tool: AgentTool | null | undefined): boolean {
   if (!tool || tool.silent) {
     return false;
   }
 
-  switch (tool.tool) {
-    case 'gmail.createDraft':
-      return hasRequiredParameters(tool, ['to', 'subject', 'body']);
-    case 'gmail.replyToEmail':
-      return hasRequiredParameters(tool, ['to', 'subject', 'body', 'messageId', 'threadId']);
-    case 'gmail.forwardEmail':
-      return hasRequiredParameters(tool, ['messageId', 'to']);
-    case 'gcal.createEvent':
-      return hasRequiredParameters(tool, ['summary', 'startIso', 'endIso', 'timeZone']);
-    default:
-      return false;
-  }
+  const schema = EXECUTABLE_TOOL_SCHEMAS[tool.tool];
+  return schema ? schema.safeParse(tool.toolParameters).success : false;
 }
