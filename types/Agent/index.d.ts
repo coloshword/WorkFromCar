@@ -5,7 +5,7 @@ export type Message = {
 
 export type PlanState = {
   messages: Message[];
-  contextTool?: AgentTool;
+  contextTool?: AgentTool | undefined;
 };
 
 export type AgentPlanResponse = {
@@ -17,7 +17,7 @@ export type AgentPlanResponse = {
 
 export type AgentTool = {
   tool: string;
-  toolParameters: Record<string, string> | null;
+  toolParameters: Record<string, any> | null;
   silent?: boolean; //TO BE ADDED IN THE NON-LLM LAYER!
 }
 
