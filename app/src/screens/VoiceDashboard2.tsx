@@ -10,7 +10,7 @@ import { FRAME_LENGTH, FREQUENCY_HZ } from '../services/audio/voiceProcessor';
 import AudioVisualizer from '../components/AudioVisualizer';
 import VoiceListener, { VoiceListenerState } from '../components/VoiceListener';
 import { sendAgentMessage, callSummarize } from '../utils/useSendMessage';
-import { Message, AgentTool } from '../../../types/Agent';
+import { Message, AgentTool, AgentPlanResponse } from '../../../types/Agent';
 import { speak } from '../utils/ttsUtils';
 import { executeTool } from '../api/toolExecutor';
 import { useAccessToken } from '../context/AccessTokenContext';
@@ -106,6 +106,59 @@ export default function VoiceDashboard2() {
     };
   }, []);
 
+  const handlePlannedResult = useCallback(async (
+    initialResult: AgentPlanResponse,
+    initialMessages: Message[],
+  ) => {
+    const MAX_SILENT_ITERATIONS = 3;
+    let currentMessages = [...initialMessages, initialResult.message];
+    let currentResult = initialResult;
+    let iterations = 0;
+
+    setMessages([...currentMessages]);
+
+    if (currentResult.tool) {
+      setTool(currentResult.tool);
+    }
+
+    while (currentResult.tool?.silent && iterations < MAX_SILENT_ITERATIONS) {
+      iterations++;
+      if (!authToken) {
+        throw new Error('No auth gmail accesstoken');
+      }
+      const toolLog = await executeTool(currentResult.tool, authToken);
+      currentMessages = [...currentMessages, { role: 'system', content: JSON.stringify(toolLog) }];
+      setMessages([...currentMessages]);
+
+      currentResult = await sendAgentMessage(currentMessages, null);
+      currentMessages = [...currentMessages, currentResult.message];
+      setMessages([...currentMessages]);
+
+      if (currentResult.tool) {
+        setTool(currentResult.tool);
+      }
+    }
+
+    const hitLoopLimit = iterations >= MAX_SILENT_ITERATIONS && currentResult.tool?.silent;
+
+    await speak({
+      text: currentResult.message.content?.trim()
+        || "Sorry, I wasn't able to finish processing. Please try again.",
+      voiceListenerState: 'disabled',
+      setVoiceListenerState,
+      activeTtsCountRef,
+      setSpeaking
+    });
+
+    if (!hitLoopLimit && isToolReadyForExecution(currentResult.tool)) {
+      setPendingTool(currentResult.tool);
+    } else {
+      setPendingTool(null);
+    }
+
+    return currentMessages;
+  }, [authToken]);
+
   const handleTranscript = useCallback(async (text: string) => {
     if (!DEV_TEXT_MODE) setVoiceListenerState('disabled');
     try {
@@ -114,15 +167,21 @@ export default function VoiceDashboard2() {
       setMessages([...currentMessages]);
 
       const result = await sendAgentMessage(currentMessages, pendingTool);
-      currentMessages = [...currentMessages, result.message];
-      setMessages([...currentMessages]);
-
-      if (result.tool) {
-        setTool(result.tool);
-      }
 
       if (pendingTool) {
-        if (result.executePermissionGranted) {
+        if (result.executeDecision === 'revise') {
+          setPendingTool(null);
+          const revisedResult = await sendAgentMessage(currentMessages, null, pendingTool);
+          await handlePlannedResult(revisedResult, currentMessages);
+          return;
+        } else if (result.executePermissionGranted) {
+          currentMessages = [...currentMessages, result.message];
+          setMessages([...currentMessages]);
+
+          if (result.tool) {
+            setTool(result.tool);
+          }
+
           if (!authToken) {
             throw new Error('No auth gmail accesstoken');
           }
@@ -138,6 +197,13 @@ export default function VoiceDashboard2() {
             setSpeaking
           });
         } else {
+          currentMessages = [...currentMessages, result.message];
+          setMessages([...currentMessages]);
+
+          if (result.tool) {
+            setTool(result.tool);
+          }
+
           await speak({
             text: result.message.content,
             voiceListenerState: 'disabled',
@@ -148,42 +214,7 @@ export default function VoiceDashboard2() {
         }
         setPendingTool(null);
       } else {
-        const MAX_SILENT_ITERATIONS = 3;
-        let currentResult = result;
-        let iterations = 0;
-
-        while (currentResult.tool?.silent && iterations < MAX_SILENT_ITERATIONS) {
-          iterations++;
-          if (!authToken) {
-            throw new Error('No auth gmail accesstoken');
-          }
-          const toolLog = await executeTool(currentResult.tool, authToken);
-          currentMessages = [...currentMessages, { role: 'system', content: JSON.stringify(toolLog) }];
-          setMessages([...currentMessages]);
-
-          currentResult = await sendAgentMessage(currentMessages, null);
-          currentMessages = [...currentMessages, currentResult.message];
-          setMessages([...currentMessages]);
-
-          if (currentResult.tool) {
-            setTool(currentResult.tool);
-          }
-        }
-
-        const hitLoopLimit = iterations >= MAX_SILENT_ITERATIONS && currentResult.tool?.silent;
-
-        await speak({
-          text: currentResult.message.content?.trim()
-            || "Sorry, I wasn't able to finish processing. Please try again.",
-          voiceListenerState: 'disabled',
-          setVoiceListenerState,
-          activeTtsCountRef,
-          setSpeaking
-        });
-
-        if (!hitLoopLimit && isToolReadyForExecution(currentResult.tool)) {
-          setPendingTool(currentResult.tool);
-        }
+        await handlePlannedResult(result, currentMessages);
       }
     } catch (e: any) {
       const errorMessage = e?.message || 'Something went wrong';
@@ -202,7 +233,7 @@ export default function VoiceDashboard2() {
     } finally {
       if (!DEV_TEXT_MODE) setVoiceListenerState('listening');
     }
-  }, [messages, pendingTool, authToken]);
+  }, [messages, pendingTool, authToken, handlePlannedResult]);
 
   const handleDevSubmit = useCallback(() => {
     if (!devText.trim()) return;

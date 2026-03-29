@@ -64,10 +64,40 @@ const DemoScreen = () => {
       const data = await response.json();
 
       if (planOrExecute === 'execute') {
-        setPlanOrExecute('plan');
-        setExecuteObj(null);
-        
-        if (data.executePermissionGranted) {
+        if (data.decision === 'revise') {
+          setPlanOrExecute('plan');
+          setExecuteObj(null);
+
+          const replanResponse = await authFetch("/api/agent/plan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              messages: updatedMessages,
+              contextTool: executeObj.tool,
+            }),
+          });
+
+          if (!replanResponse.ok) {
+            const errorText = await replanResponse.text();
+            throw new Error(`HTTP ${replanResponse.status}: ${errorText}`);
+          }
+
+          const replanData = await replanResponse.json();
+          const assistantMessage = replanData.message;
+          setMessages(prev => [...prev, assistantMessage]);
+          setStatusText(`✓ Updated plan received (tool: ${replanData.tool.tool})`);
+
+          if (isToolReadyForExecution(replanData.tool)) {
+            setPlanOrExecute('execute');
+            setExecuteObj({
+              messages: [...updatedMessages, assistantMessage],
+              tool: replanData.tool,
+            });
+            setStatusText(`✓ Plan updated. Next message will execute: ${replanData.tool.tool}`);
+          }
+        } else if (data.executePermissionGranted) {
+          setPlanOrExecute('plan');
+          setExecuteObj(null);
           try {
             if (!authToken) {
               throw new Error("Missing auth token");
@@ -83,10 +113,12 @@ const DemoScreen = () => {
             setStatusText(`Error executing tool: ${toolError.message}`);
           }
         } else {
-          setStatusText("✗ Tool execution denied");
+          setPlanOrExecute('plan');
+          setExecuteObj(null);
+          setStatusText(data.decision === 'cancel' ? "✓ Tool execution canceled" : "✗ Tool execution denied");
         }
 
-        if (data.assistant) {
+        if (data.assistant && data.decision !== 'revise') {
           setMessages(prev => [...prev, { role: 'assistant', content: data.assistant }]);
         }
       } else {

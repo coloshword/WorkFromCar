@@ -5,12 +5,14 @@ export type Message = {
 
 export type PlanState = {
   messages: Message[];
+  contextTool?: AgentTool;
 };
 
 export type AgentPlanResponse = {
   message: Message;
   tool: AgentTool;
   executePermissionGranted?: boolean;
+  executeDecision?: ExecuteDecision;
 };
 
 export type AgentTool = {
@@ -30,14 +32,17 @@ export type ExecuteState = {
   tool: AgentTool;
 }
 
+export type ExecuteDecision = 'execute' | 'revise' | 'cancel';
+
 /** Whether or not to execute the tool, and provide the updated message to the user  */
 export type ExecutePermissionResponse = {
   assistant: string;
-  executePermissionGranted: boolean;
+  decision: ExecuteDecision;
 }
 
 export type ExecutePermissionRouteResponseBody = {
   assistant: string;
+  decision: ExecuteDecision;
   executePermissionGranted: boolean;
   tool: AgentTool;
 }
