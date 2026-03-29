@@ -29,7 +29,6 @@ export async function createEvent({
     },
   };
 
-  console.log('[gcal.createEvent] request body', requestBody);
 
   let res: Response;
   try {
@@ -52,10 +51,6 @@ export async function createEvent({
     throw error;
   }
 
-  console.log('[gcal.createEvent] response status', {
-    status: res.status,
-    statusText: res.statusText,
-  });
 
   if (!res.ok) {
     const text = await res.text();
@@ -69,10 +64,6 @@ export async function createEvent({
   }
 
   const data = await res.json();
-  console.log('[gcal.createEvent] success', {
-    eventId: data.id,
-    htmlLink: data.htmlLink,
-  });
 
   return {
     success: true,
