@@ -72,6 +72,10 @@ export async function executeTool(tool: AgentTool, accessToken: string): Promise
         const result = await createEvent({ ...params, accessToken });
         return { tool: tool.tool, status: 'success', result };
       } catch (e: any) {
+        console.error('[executeTool] gcal.createEvent failed', {
+          toolParameters: tool.toolParameters,
+          message: e?.message,
+        });
         return { tool: tool.tool, status: 'error', result: { message: e.message } };
       }
     }

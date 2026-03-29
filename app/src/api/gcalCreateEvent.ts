@@ -15,35 +15,65 @@ export async function createEvent({
   timeZone: string;
   location: string | null;
 }) {
-  const res = await fetch(
-    'https://www.googleapis.com/calendar/v3/calendars/primary/events',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        summary,
-        description,
-        location,
-        start: {
-          dateTime: startIso,
-          timeZone,
+  const requestBody = {
+    summary,
+    description,
+    location,
+    start: {
+      dateTime: startIso,
+      timeZone,
+    },
+    end: {
+      dateTime: endIso,
+      timeZone,
+    },
+  };
+
+  console.log('[gcal.createEvent] request body', requestBody);
+
+  let res: Response;
+  try {
+    res = await fetch(
+      'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
         },
-        end: {
-          dateTime: endIso,
-          timeZone,
-        },
-      }),
-    }
-  );
+        body: JSON.stringify(requestBody),
+      }
+    );
+  } catch (error: any) {
+    console.error('[gcal.createEvent] network error', {
+      message: error?.message,
+      requestBody,
+    });
+    throw error;
+  }
+
+  console.log('[gcal.createEvent] response status', {
+    status: res.status,
+    statusText: res.statusText,
+  });
 
   if (!res.ok) {
     const text = await res.text();
+    console.error('[gcal.createEvent] error response', {
+      status: res.status,
+      statusText: res.statusText,
+      body: text,
+      requestBody,
+    });
     throw new Error(`Failed to create event: ${res.status} ${text}`);
   }
+
   const data = await res.json();
+  console.log('[gcal.createEvent] success', {
+    eventId: data.id,
+    htmlLink: data.htmlLink,
+  });
+
   return {
     success: true,
     eventId: data.id,
