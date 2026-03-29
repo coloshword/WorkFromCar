@@ -15,14 +15,17 @@ Read the file `.cursor/plans/workfromcar_codebase_overview_d64d56f8.plan.md` in 
 ## Step 2 - Plan
 Think about the architecture and the feature, and think about the best way to implement the feature, do not code yet. Keep the code instructions in mind. 
 
-## Step 3 - Implement
+## Step 3 -- share your plan with me
+Share your plan before you act. Raise any potential blockers / ask questions / clarifications. Do not go to step 4 until I say you can build.
+
+## Step 4 - Implement
 
 Make your change.
 
-## Step 4 - Verify
+## Step 5 - Verify
 Use typescript to verify that you didn't introduce any type errors. Also look over your diff to confirm it does what you intended to.
 
-## Step 5 - Ship
+## Step 6 - Ship
 1. Stage and commit your changes with a clear commit message.
 2. Push the branch: `git push -u origin HEAD`
 3. Open a pull request against `master` using the `gh` CLI:
@@ -31,6 +34,6 @@ Use typescript to verify that you didn't introduce any type errors. Also look ov
      - **What**: A concise description of what you changed.
      - **Why**: An explanation of why this improvement matters — what problem it solves or what it makes better.
 
-## Step 6 — Clean up
+## Step 7 — Clean up
 
 Checkout back to `master`: `git checkout master`
