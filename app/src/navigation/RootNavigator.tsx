@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import * as Keychain from "react-native-keychain";
 
 import LoginScreen from '../screens/Login';
-import VoiceDashboardScreen from '../screens/VoiceDashboard';
+import VoiceDashboardScreen from '../screens/VoiceDashboard2';
 import VoiceDashboardScreen2 from '../screens/VoiceDashboard2';
 import { useAccessToken } from '../context/AccessTokenContext';
 import { silentLogin } from '../api/auth';
