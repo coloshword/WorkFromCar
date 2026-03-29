@@ -17,6 +17,7 @@ import { useAccessToken } from '../context/AccessTokenContext';
 import * as Keychain from 'react-native-keychain';
 import OnboardingOverlay from '../components/OnboardingOverlay';
 import ToolCallGlass from '../components/ToolCallGlass';
+import { isToolReadyForExecution } from '../utils/isToolReadyForExecution';
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
 const VAD_FILENAME = 'ggml-silero-v6.2.0.bin';
@@ -180,9 +181,7 @@ export default function VoiceDashboard2() {
           setSpeaking
         });
 
-        if (!hitLoopLimit && currentResult.tool && !currentResult.tool.silent &&
-            currentResult.tool.toolParameters &&
-            Object.values(currentResult.tool.toolParameters).every(v => v !== null)) {
+        if (!hitLoopLimit && isToolReadyForExecution(currentResult.tool)) {
           setPendingTool(currentResult.tool);
         }
       }

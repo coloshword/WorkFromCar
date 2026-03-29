@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { authFetch } from "../utils/fetchUtils";
-import { sendEmail } from "../api/sendEmail";
+import { executeTool } from "../api/toolExecutor";
 import * as Keychain from "react-native-keychain";
 import { useAccessToken } from "../context/AccessTokenContext";
+import { isToolReadyForExecution } from "../utils/isToolReadyForExecution";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -68,21 +69,18 @@ const DemoScreen = () => {
         
         if (data.executePermissionGranted) {
           try {
-            if (authToken && executeObj.tool.tool === 'gmail.createDraft') {
-              const { to, subject, body } = executeObj.tool.toolParameters;
-              await sendEmail({ 
-                to, 
-                subject, 
-                body, 
-                accessToken: authToken
-              });
-              setStatusText("✓ Email sent successfully");
-            } else {
-              setStatusText("✓ Tool execution permitted");
+            if (!authToken) {
+              throw new Error("Missing auth token");
             }
-          } catch (emailError: any) {
-            console.error(emailError);
-            setStatusText(`Error sending email: ${emailError.message}`);
+            const toolLog = await executeTool(executeObj.tool, authToken);
+            if (toolLog.status === 'success') {
+              setStatusText(`✓ ${executeObj.tool.tool} executed successfully`);
+            } else {
+              setStatusText(`Error executing ${executeObj.tool.tool}: ${toolLog.result.message ?? 'Unknown error'}`);
+            }
+          } catch (toolError: any) {
+            console.error(toolError);
+            setStatusText(`Error executing tool: ${toolError.message}`);
           }
         } else {
           setStatusText("✗ Tool execution denied");
@@ -96,7 +94,7 @@ const DemoScreen = () => {
         setMessages(prev => [...prev, assistantMessage]);
         setStatusText(`✓ Response received (tool: ${data.tool.tool})`);
 
-        if (data.tool.toolParameters && Object.values(data.tool.toolParameters).every(param => param !== null)) {
+        if (isToolReadyForExecution(data.tool)) {
           setPlanOrExecute('execute');
           setExecuteObj({
             messages: [...updatedMessages, assistantMessage],
