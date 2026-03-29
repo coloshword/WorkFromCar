@@ -5,17 +5,19 @@ export type Message = {
 
 export type PlanState = {
   messages: Message[];
+  contextTool?: AgentTool | undefined;
 };
 
 export type AgentPlanResponse = {
   message: Message;
   tool: AgentTool;
   executePermissionGranted?: boolean;
+  executeDecision?: ExecuteDecision;
 };
 
 export type AgentTool = {
   tool: string;
-  toolParameters: Record<string, string> | null;
+  toolParameters: Record<string, any> | null;
   silent?: boolean; //TO BE ADDED IN THE NON-LLM LAYER!
 }
 
@@ -30,14 +32,17 @@ export type ExecuteState = {
   tool: AgentTool;
 }
 
+export type ExecuteDecision = 'execute' | 'revise' | 'cancel';
+
 /** Whether or not to execute the tool, and provide the updated message to the user  */
 export type ExecutePermissionResponse = {
   assistant: string;
-  executePermissionGranted: boolean;
+  decision: ExecuteDecision;
 }
 
 export type ExecutePermissionRouteResponseBody = {
   assistant: string;
+  decision: ExecuteDecision;
   executePermissionGranted: boolean;
   tool: AgentTool;
 }

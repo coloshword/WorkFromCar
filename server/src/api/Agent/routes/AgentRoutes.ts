@@ -11,12 +11,27 @@ const planRouteSchema = z.object({
       role: z.string(),
       content: z.string(),
     })
-  )
+  ),
+  contextTool: z.object({
+    tool: z.string(),
+    toolParameters: z.record(z.string(), z.any()).nullable()
+  }).optional()
 }) satisfies z.ZodType<PlanState>;
 
 export const planRoute = async (ctx: Context) => {
-  const { messages } = planRouteSchema.parse(ctx.request.body);
-  const plan = await generateLLMPlan(messages);
+  const { messages, contextTool } = planRouteSchema.parse(ctx.request.body);
+  const lastMessage = messages[messages.length - 1];
+  const planningMessages = contextTool
+    ? [
+        ...messages.slice(0, -1),
+        {
+          role: "system",
+          content: `Pending tool awaiting confirmation: ${JSON.stringify(contextTool)}. The latest user message asked to revise this pending tool. Revise the existing tool call instead of treating it as permission to execute the old one.`
+        },
+        ...(lastMessage ? [lastMessage] : []),
+      ]
+    : messages;
+  const plan = await generateLLMPlan(planningMessages);
   const message: Message = {
     role: "assistant",
     content: plan.assistant,
@@ -60,6 +75,7 @@ export const executePermissionRoute = async (ctx: Context) => {
   const userIntent = await checkUserIntent(messages);
   ctx.body = {
     ...userIntent,
+    executePermissionGranted: userIntent.decision === 'execute',
     tool,
   }
   ctx.status = 200;

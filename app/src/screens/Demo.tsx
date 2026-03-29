@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { authFetch } from "../utils/fetchUtils";
-import { sendEmail } from "../api/sendEmail";
+import { executeTool } from "../api/toolExecutor";
 import * as Keychain from "react-native-keychain";
 import { useAccessToken } from "../context/AccessTokenContext";
+import { isToolReadyForExecution } from "../utils/isToolReadyForExecution";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -63,32 +64,61 @@ const DemoScreen = () => {
       const data = await response.json();
 
       if (planOrExecute === 'execute') {
-        setPlanOrExecute('plan');
-        setExecuteObj(null);
-        
-        if (data.executePermissionGranted) {
+        if (data.decision === 'revise') {
+          setPlanOrExecute('plan');
+          setExecuteObj(null);
+
+          const replanResponse = await authFetch("/api/agent/plan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              messages: updatedMessages,
+              contextTool: executeObj.tool,
+            }),
+          });
+
+          if (!replanResponse.ok) {
+            const errorText = await replanResponse.text();
+            throw new Error(`HTTP ${replanResponse.status}: ${errorText}`);
+          }
+
+          const replanData = await replanResponse.json();
+          const assistantMessage = replanData.message;
+          setMessages(prev => [...prev, assistantMessage]);
+          setStatusText(`✓ Updated plan received (tool: ${replanData.tool.tool})`);
+
+          if (isToolReadyForExecution(replanData.tool)) {
+            setPlanOrExecute('execute');
+            setExecuteObj({
+              messages: [...updatedMessages, assistantMessage],
+              tool: replanData.tool,
+            });
+            setStatusText(`✓ Plan updated. Next message will execute: ${replanData.tool.tool}`);
+          }
+        } else if (data.executePermissionGranted) {
+          setPlanOrExecute('plan');
+          setExecuteObj(null);
           try {
-            if (authToken && executeObj.tool.tool === 'gmail.createDraft') {
-              const { to, subject, body } = executeObj.tool.toolParameters;
-              await sendEmail({ 
-                to, 
-                subject, 
-                body, 
-                accessToken: authToken
-              });
-              setStatusText("✓ Email sent successfully");
-            } else {
-              setStatusText("✓ Tool execution permitted");
+            if (!authToken) {
+              throw new Error("Missing auth token");
             }
-          } catch (emailError: any) {
-            console.error(emailError);
-            setStatusText(`Error sending email: ${emailError.message}`);
+            const toolLog = await executeTool(executeObj.tool, authToken);
+            if (toolLog.status === 'success') {
+              setStatusText(`✓ ${executeObj.tool.tool} executed successfully`);
+            } else {
+              setStatusText(`Error executing ${executeObj.tool.tool}: ${toolLog.result.message ?? 'Unknown error'}`);
+            }
+          } catch (toolError: any) {
+            console.error(toolError);
+            setStatusText(`Error executing tool: ${toolError.message}`);
           }
         } else {
-          setStatusText("✗ Tool execution denied");
+          setPlanOrExecute('plan');
+          setExecuteObj(null);
+          setStatusText(data.decision === 'cancel' ? "✓ Tool execution canceled" : "✗ Tool execution denied");
         }
 
-        if (data.assistant) {
+        if (data.assistant && data.decision !== 'revise') {
           setMessages(prev => [...prev, { role: 'assistant', content: data.assistant }]);
         }
       } else {
@@ -96,7 +126,7 @@ const DemoScreen = () => {
         setMessages(prev => [...prev, assistantMessage]);
         setStatusText(`✓ Response received (tool: ${data.tool.tool})`);
 
-        if (data.tool.toolParameters && Object.values(data.tool.toolParameters).every(param => param !== null)) {
+        if (isToolReadyForExecution(data.tool)) {
           setPlanOrExecute('execute');
           setExecuteObj({
             messages: [...updatedMessages, assistantMessage],

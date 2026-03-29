@@ -3,12 +3,13 @@ import { authFetch } from './fetchUtils';
 
 export async function sendAgentMessage(
   messages: Message[],
-  pendingTool: AgentTool | null
+  pendingTool: AgentTool | null,
+  contextTool?: AgentTool | null
 ): Promise<AgentPlanResponse> {
   const endpoint = pendingTool ? '/api/agent/executePermission' : '/api/agent/plan';
   const body = pendingTool
     ? { messages, tool: pendingTool }
-    : { messages };
+    : { messages, ...(contextTool ? { contextTool } : {}) };
 
   const response = await authFetch(endpoint, {
     method: 'POST',
@@ -29,6 +30,7 @@ export async function sendAgentMessage(
       message: { role: 'assistant', content: result.assistant },
       tool: result.tool,
       executePermissionGranted: result.executePermissionGranted,
+      executeDecision: result.decision,
     };
   } else {
     const result: AgentPlanResponse = data;
