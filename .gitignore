@@ -7,5 +7,6 @@ queries
 .vscode
 ggml-base.en.bin
 whisper.xcframework
+.DS_Store
 
 models/
