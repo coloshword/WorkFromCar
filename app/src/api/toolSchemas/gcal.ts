@@ -7,4 +7,5 @@ export const gcalCreateEventSchema = z.object({
   timeZone: z.string(),
   location: z.string().nullable(),
   description: z.string().nullable(),
+  attendees: z.array(z.string()).nullable(),
 });
