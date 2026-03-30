@@ -10,7 +10,7 @@ export const resolveContactParametersSchema = z.object({
 
 export const RESOLVE_CONTACT_INSTRUCTIONS = `
   1. "gmail.resolveContact"
-  This tool resolves a contact name or email to a verified email address. Always call this tool before using gmail.createDraft to confirm the recipient.
+  This tool resolves a contact name or email to a verified email address. Use it whenever a downstream tool needs an email address for an email recipient or calendar attendee.
   When you decide to use this tool, output JSON with:
   - value: string (the name or email to resolve)
 
@@ -20,6 +20,9 @@ export const RESOLVE_CONTACT_INSTRUCTIONS = `
   - suggestions: array of top matches with name and email (may contain multiple matches)
 
   After receiving the result:
-  - If status is "resolved": use resolvedEmail as the "to" parameter in gmail.createDraft. If there are multiple entries in suggestions, briefly tell the user which matches were found and which one you are using, then proceed to call gmail.createDraft immediately without waiting for confirmation.
-  - If status is "no_match": ask the user to spell out the email address.
+  - If status is "resolved": use resolvedEmail in the downstream tool you are building.
+  - If status is "resolved" for gmail.createDraft, gmail.replyToEmail, or gmail.forwardEmail: use resolvedEmail as the "to" parameter.
+  - If status is "resolved" for gcal.createEvent: add resolvedEmail to the "attendees" array and preserve any attendees you already resolved earlier in the conversation.
+  - If status is "resolved" and other recipients or attendees from the user's request are still unresolved, immediately call gmail.resolveContact again for the next unresolved person instead of asking for confirmation yet.
+  - If status is "no_match": ask the user to spell out that person's email address.
 `;

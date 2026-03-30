@@ -7,6 +7,7 @@ export type gcalCreateEventParameters = {
   timeZone: string;
   location: string | null;
   description: string | null;
+  attendees: string[] | null;
 };
 
 export const gcalCreateEventParametersSchema = z.object({
@@ -16,6 +17,7 @@ export const gcalCreateEventParametersSchema = z.object({
   timeZone: z.string(),
   location: z.string().nullable(),
   description: z.string().nullable(),
+  attendees: z.array(z.string()).nullable(),
 }) satisfies z.ZodType<gcalCreateEventParameters>;
 
 export const GCAL_CREATE_EVENT_INSTRUCTIONS = `
@@ -31,9 +33,12 @@ export const GCAL_CREATE_EVENT_INSTRUCTIONS = `
     - timeZone: string — IANA timezone name, e.g. "America/New_York". Infer from context if possible. Default to "America/New_York" if unknown.
     - location: string | null — the event location or meeting link if mentioned. Leave null otherwise.
     - description: string | null — any additional notes or details the user mentioned. Leave null otherwise.
+    - attendees: string[] | null — attendee email addresses for people to invite. If the user did not mention attendees, leave null.
 
   ALL of summary, startIso, endIso, and timeZone MUST be non-null strings. Never emit null for these fields — use the defaults above instead.
-  This tool is NOT silent. Before calling it, confirm the event title and time back to the user in natural language. Only call the tool once the user has confirmed.
+  If the user names attendees without giving their email addresses, do NOT guess. Resolve one unresolved attendee at a time with gmail.resolveContact, then continue planning.
+  When prior gmail.resolveContact results appear in the conversation, carry forward every resolved attendee email you have already collected into the attendees array.
+  This tool is NOT silent. Before calling it, confirm the event title, time, and attendees back to the user in natural language. Only call the tool once the user has confirmed.
   When you see the gcal.createEvent result in the conversation:
   - Confirm the event was created successfully.
   - Speak back the event title and the scheduled time in natural language (e.g. "I've added Meeting with Sarah to your calendar for tomorrow at 2 PM").
