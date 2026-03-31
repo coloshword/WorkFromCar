@@ -11,6 +11,16 @@ const DEV_MOCK_TOOL: AgentTool = {
   },
 };
 
+const TOOL_LABELS: Record<string, string> = {
+  'gmail.summarizeEmails': 'Inbox',
+  'gmail.readEmail': 'Inbox',
+  'gmail.createDraft': 'Inbox',
+  'gmail.resolveContact': 'Contact',
+  'gmail.replyToEmail': 'Inbox',
+  'gmail.forwardEmail': 'Inbox',
+  'gcal.createEvent': 'Calendar',
+};
+
 interface Props {
   tool: AgentTool | null;
 }
@@ -91,6 +101,7 @@ const vizStyles = StyleSheet.create({
 
 export default function ToolIndicator({ tool: toolProp }: Props) {
   const tool = toolProp ?? DEV_MOCK_TOOL;
+  const displayName = TOOL_LABELS[tool.tool] ?? tool.tool;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -120,6 +131,13 @@ export default function ToolIndicator({ tool: toolProp }: Props) {
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
         >
+
+          <View style={styles.header}>
+            <Text style={styles.headerLabel}>{displayName}</Text>
+            <View style={styles.toolBadge}>
+              <Text style={styles.toolBadgeText}>{tool.tool}</Text>
+            </View>
+          </View>
           <GenericToolViz tool={tool} />
         </ScrollView>
       </LinearGradient>
@@ -144,5 +162,31 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 10,
+    gap: 14,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerLabel: {
+    flexShrink: 1,
+    color: 'rgba(232, 255, 246, 0.9)',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  toolBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  toolBadgeText: {
+    color: 'rgba(154, 164, 178, 0.9)',
+    fontSize: 11,
+    fontWeight: '500',
   },
 });
