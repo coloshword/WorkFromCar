@@ -5,7 +5,8 @@ export async function createEvent({
   startIso,
   endIso,
   timeZone = 'America/New_York',
-  location
+  location,
+  attendees,
 }: {
   accessToken: string;
   summary: string;
@@ -14,7 +15,9 @@ export async function createEvent({
   endIso: string;
   timeZone: string;
   location: string | null;
+  attendees: string[] | null;
 }) {
+  const hasAttendees = (attendees?.length ?? 0) > 0;
   const requestBody = {
     summary,
     description,
@@ -27,13 +30,17 @@ export async function createEvent({
       dateTime: endIso,
       timeZone,
     },
+    attendees: hasAttendees ? attendees!.map((email) => ({ email })) : undefined,
   };
 
 
   let res: Response;
   try {
+    const url = hasAttendees
+      ? 'https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all'
+      : 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
     res = await fetch(
-      'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+      url,
       {
         method: 'POST',
         headers: {

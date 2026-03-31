@@ -114,7 +114,7 @@ export default function VoiceDashboard2() {
     initialResult: AgentPlanResponse,
     initialMessages: Message[],
   ) => {
-    const MAX_SILENT_ITERATIONS = 3;
+    const MAX_SILENT_ITERATIONS = 6;
     let currentMessages = [...initialMessages, initialResult.message];
     let currentResult = initialResult;
     let iterations = 0;
