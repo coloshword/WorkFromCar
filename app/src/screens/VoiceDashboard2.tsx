@@ -16,8 +16,8 @@ import { executeTool } from '../api/toolExecutor';
 import { useAccessToken } from '../context/AccessTokenContext';
 import * as Keychain from 'react-native-keychain';
 import OnboardingOverlay from '../components/OnboardingOverlay';
-import ToolCallGlass from '../components/ToolCallGlass';
 import { isToolReadyForExecution } from '../utils/isToolReadyForExecution';
+import ToolIndicator from '../components/ToolIndicator';
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
 const VAD_FILENAME = 'ggml-silero-v6.2.0.bin';
@@ -40,6 +40,10 @@ export default function VoiceDashboard2() {
   const [tool, setTool] = useState<AgentTool | null>(null);
   const [devText, setDevText] = useState('');
   const [showOnboarding, setShowOnboarding] = useState(true);
+
+  useEffect(() => {
+    console.log('[tool]', tool);
+  }, [tool]);
 
   const handleLogout = useCallback(() => {
     Alert.alert(
@@ -282,7 +286,7 @@ export default function VoiceDashboard2() {
             : voiceListenerState}
         </Text>
 
-        <ToolCallGlass tool={tool} />
+        <ToolIndicator tool={tool} />
       </View>
 
       {statusMsg ? (
