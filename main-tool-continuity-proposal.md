@@ -31,6 +31,43 @@ Once the agent has chosen the main non-silent tool for the user's request, that 
 
 Silent tools should be treated as helper steps in service of that main tool, not as replacements for it.
 
+## Rollout Plan
+
+### Phase 1: App-Side MVP
+
+Goal:
+
+- stop dropping the chosen main non-silent tool in the UI and planning flow
+
+Scope:
+
+- add and preserve `contextTool` in the app
+- keep the chosen main tool visible while silent helpers execute
+- pass `contextTool` back into planning after silent tool results
+- promote `contextTool` into `pendingTool` once executable
+
+Why first:
+
+- this is where the main continuity bug actually shows up to the user
+- it should fix most of the visible regression without requiring route or shared-type changes
+
+### Phase 2: Server Cleanup And Hardening
+
+Goal:
+
+- make the planning contract cleaner and reduce ambiguity in the server response shape
+
+Scope:
+
+- return `tool: null` instead of fake empty tools
+- generalize `contextTool` semantics beyond revise-only flows
+- optionally add server-side planner framing that helper tools should continue the existing main tool rather than replace it
+
+Why second:
+
+- these changes make the system more robust and easier to reason about
+- they are useful, but they are not required to land the first user-visible continuity improvement
+
 ## Proposed Model
 
 Introduce a second piece of client state:
@@ -101,7 +138,7 @@ Clear `contextTool` when:
 
 Do not clear it just because the latest plan response has `tool: null`.
 
-## Server Changes
+## Phase 2 Server Changes
 
 ### Return `tool: null`
 
@@ -127,7 +164,7 @@ This should apply both:
 - when revising a pending tool
 - when continuing a partially built main tool after silent helper calls
 
-## Client Changes
+## Phase 1 Client Changes
 
 ### `VoiceDashboard2.tsx`
 
@@ -185,12 +222,20 @@ The fix is correct if:
 
 ## Suggested Implementation Order
 
+### Phase 1
+
+1. Add `contextTool` state to `VoiceDashboard2`.
+2. Preserve and reuse `contextTool` during silent replanning.
+3. Update display logic so the main tool remains visible.
+4. Promote `contextTool` to `pendingTool` only when executable.
+5. Retest email and calendar flows with silent helper chaining.
+
+### Phase 2
+
 1. Change shared types and route responses so plan responses can return `tool: null`.
-2. Add `contextTool` state to `VoiceDashboard2`.
-3. Preserve and reuse `contextTool` during silent replanning.
-4. Update display logic so the main tool remains visible.
-5. Generalize server `contextTool` prompting from "revise only" to "current main tool under construction".
-6. Retest email and calendar flows with silent helper chaining.
+2. Generalize server `contextTool` prompting from "revise only" to "current main tool under construction".
+3. Remove any client logic that depends on fake empty tool objects.
+4. Retest the same flows to confirm the app-side MVP still behaves the same on the cleaner contract.
 
 ## Open Questions
 
