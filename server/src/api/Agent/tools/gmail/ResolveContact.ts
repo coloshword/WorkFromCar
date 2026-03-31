@@ -20,9 +20,8 @@ export const RESOLVE_CONTACT_INSTRUCTIONS = `
   - suggestions: array of top matches with name and email (may contain multiple matches)
 
   After receiving the result:
-  - If status is "resolved": use resolvedEmail in the downstream tool you are building immediately.
-  - If status is "resolved" for gmail.createDraft: immediately continue by emitting gmail.createDraft in the same planning step. Set "to" to resolvedEmail. If "subject" or "body" is still missing, leave that field null and ask the user for the next missing field. Do not return tool: null just because those fields are still missing.
-  - If status is "resolved" for gmail.replyToEmail or gmail.forwardEmail: immediately continue with that downstream tool and use resolvedEmail as the "to" parameter.
+  - If status is "resolved": use resolvedEmail in the downstream tool you are building.
+  - If status is "resolved" for gmail.createDraft, gmail.replyToEmail, or gmail.forwardEmail: use resolvedEmail as the "to" parameter.
   - If status is "resolved" for gcal.createEvent: add resolvedEmail to the "attendees" array and preserve any attendees you already resolved earlier in the conversation.
   - If status is "resolved" and other recipients or attendees from the user's request are still unresolved, immediately call gmail.resolveContact again for the next unresolved person instead of asking for confirmation yet.
   - If status is "no_match": ask the user to spell out that person's email address.
