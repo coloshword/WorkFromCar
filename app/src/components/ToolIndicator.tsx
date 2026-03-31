@@ -1,21 +1,33 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, ScrollView, StyleSheet, View, Text } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import EmailLogo from './icons/emailLogo';
+import CalendarLogo from './icons/calendarLogo';
+import FindLogo from './icons/findLogo';
 import { AgentTool } from '../../../types/Agent';
 
-const DEV_MOCK_TOOL: AgentTool = {
-  tool: 'gmail.summarizeEmails',
-  toolParameters: {
-    query: 'is:unread',
-    maxResults: 'This is some really long text that should wrap around to the next line',
-  },
+const ICON_COLOR = '#22c55e';
+const ICON_SIZE = 18;
+
+const TOOL_ICONS: Record<string, React.ReactElement> = {
+  'gmail.summarizeEmails': <EmailLogo size={ICON_SIZE} color={ICON_COLOR} />,
+  'gmail.readEmail':       <EmailLogo size={ICON_SIZE} color={ICON_COLOR} />,
+  'gmail.createDraft':     <EmailLogo size={ICON_SIZE} color={ICON_COLOR} />,
+  'gmail.resolveContact':  <FindLogo size={ICON_SIZE} color={ICON_COLOR} />,
+  'gmail.replyToEmail':    <EmailLogo size={ICON_SIZE} color={ICON_COLOR} />,
+  'gmail.forwardEmail':    <EmailLogo size={ICON_SIZE} color={ICON_COLOR} />,
+  'gcal.createEvent':      <CalendarLogo size={ICON_SIZE} color={ICON_COLOR} />,
 };
+
+function ToolIcon({ toolName }: { toolName: string }) {
+  return TOOL_ICONS[toolName] ?? <EmailLogo size={ICON_SIZE} color={ICON_COLOR} />;
+}
 
 const TOOL_LABELS: Record<string, string> = {
   'gmail.summarizeEmails': 'Inbox',
   'gmail.readEmail': 'Inbox',
   'gmail.createDraft': 'Inbox',
-  'gmail.resolveContact': 'Contact',
+  'gmail.resolveContact': 'Contacts',
   'gmail.replyToEmail': 'Inbox',
   'gmail.forwardEmail': 'Inbox',
   'gcal.createEvent': 'Calendar',
@@ -100,9 +112,11 @@ const vizStyles = StyleSheet.create({
 });
 
 export default function ToolIndicator({ tool: toolProp }: Props) {
-  const tool = toolProp ?? DEV_MOCK_TOOL;
-  const displayName = TOOL_LABELS[tool.tool] ?? tool.tool;
+  const tool = toolProp;
+  const displayName = tool ? (TOOL_LABELS[tool.tool] ?? tool.tool) : null;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const contentFade = useRef(new Animated.Value(0)).current;
+  const prevToolKey = useRef<string | null>(null);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -111,6 +125,21 @@ export default function ToolIndicator({ tool: toolProp }: Props) {
       useNativeDriver: true,
     }).start();
   }, [fadeAnim]);
+
+  useEffect(() => {
+    const toolKey = tool
+      ? `${tool.tool}:${JSON.stringify(tool.toolParameters)}`
+      : null;
+    if (toolKey !== prevToolKey.current) {
+      contentFade.setValue(0);
+      Animated.timing(contentFade, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+      prevToolKey.current = toolKey;
+    }
+  }, [tool, contentFade]);
 
   return (
     <Animated.View style={[styles.wrapper, { opacity: fadeAnim }]}>
@@ -131,14 +160,20 @@ export default function ToolIndicator({ tool: toolProp }: Props) {
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
         >
-
-          <View style={styles.header}>
-            <Text style={styles.headerLabel}>{displayName}</Text>
-            <View style={styles.toolBadge}>
-              <Text style={styles.toolBadgeText}>{tool.tool}</Text>
-            </View>
-          </View>
-          <GenericToolViz tool={tool} />
+          {tool ? (
+            <Animated.View style={{ opacity: contentFade }}>
+              <View style={styles.header}>
+                <ToolIcon toolName={tool.tool} />
+                <Text style={styles.headerLabel}>{displayName}</Text>
+                {tool.tool ? (
+                  <View style={styles.toolBadge}>
+                    <Text style={styles.toolBadgeText}>{tool.tool}</Text>
+                  </View>
+                ) : null}
+              </View>
+              <GenericToolViz tool={tool} />
+            </Animated.View>
+          ) : null}
         </ScrollView>
       </LinearGradient>
     </Animated.View>
