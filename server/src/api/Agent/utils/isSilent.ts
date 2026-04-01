@@ -6,6 +6,7 @@ export const isSilent = (call: AgentTool) => {
     case "gmail.resolveContact":
     case "gmail.summarizeEmails":
     case "gmail.readEmail":
+    case "gcal.getEvents":
       return true;
     default:
       return false;

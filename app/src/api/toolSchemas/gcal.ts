@@ -9,3 +9,9 @@ export const gcalCreateEventSchema = z.object({
   description: z.string().nullable(),
   attendees: z.array(z.string()).nullable(),
 });
+
+export const gcalGetEventsSchema = z.object({
+  timeMin: z.string(),
+  timeMax: z.string(),
+  maxResults: z.number().nullable(),
+});
