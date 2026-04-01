@@ -26,6 +26,22 @@ const VAD_PATH = `${RNFS.MainBundlePath}/${VAD_FILENAME}`;
 const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 
 const DEV_TEXT_MODE = true;
+const DATE_CONTEXT_PREFIX = 'Current local time:';
+
+function buildDateContextMessage(): Message {
+  const now = new Date();
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  return {
+    role: 'system',
+    content: `${DATE_CONTEXT_PREFIX} ${now.toISOString()} (${timeZone}). Today is ${now.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })}.`,
+  };
+}
 
 export default function VoiceDashboard2() {
   const { height } = useWindowDimensions();
@@ -166,8 +182,12 @@ export default function VoiceDashboard2() {
   const handleTranscript = useCallback(async (text: string) => {
     if (!DEV_TEXT_MODE) setVoiceListenerState('disabled');
     try {
+      const dateContext = buildDateContextMessage();
       const userMessage: Message = { role: 'user', content: text.trim() };
-      let currentMessages = [...messages, userMessage];
+      const priorMessages = messages.filter((message) => (
+        !(message.role === 'system' && message.content.startsWith(DATE_CONTEXT_PREFIX))
+      ));
+      let currentMessages = [dateContext, ...priorMessages, userMessage];
       setMessages([...currentMessages]);
 
       const result = await sendAgentMessage(currentMessages, pendingTool);
