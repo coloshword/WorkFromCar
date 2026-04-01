@@ -1,624 +1,479 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WFC — Voice Dashboard</title>
-    <style>
-      :root{
-        --bg0:#0b0f17;
-        --line:rgba(255,255,255,.10);
-        --text:#e5e7eb;
-        --muted:#9aa4b2;
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>WFC — OLED Black Redesign</title>
+  <style>
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html,body{ height:100%; overflow:hidden; }
+    body{
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #181818;
+      color: #E5E7EB;
+      -webkit-font-smoothing: antialiased;
+    }
 
-        --shadow: 0 18px 48px rgba(0,0,0,.45);
-        --radius:18px;
+    .phone{
+      max-width: 430px;
+      height: 100svh;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
 
-        --user:#22c55e;
-        --agent:#60a5fa;
-        --loading:#f59e0b;
+    /* ─── Topbar ─── */
+    .topbar{
+      height: 96px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 20px 14px;
+      position: relative;
+      z-index: 10;
+    }
+    .topbar::after{
+      content: '';
+      position: absolute;
+      bottom: 0; left: 20px; right: 20px;
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+    }
+    .topbar-btn{
+      width: 36px; height: 36px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .topbar-btn:hover{ border-color: rgba(255,255,255,0.18); }
+    .topbar-btn svg{ opacity: 0.7; }
+    .topbar-right{ display:flex; gap:10px; align-items:center; }
+    .ready-dot{
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
 
-        --accent: var(--user);
-        --accentSoft: rgba(34,197,94,.18);
-      }
+    /* ─── Center area ─── */
+    .center{
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 40px;
+    }
 
-      *{ box-sizing:border-box; }
-      html,body{ height:100%; }
-      body{
-        margin:0;
-        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-        background:
-          radial-gradient(1200px 800px at 50% -20%, rgba(96,165,250,.14), transparent 60%),
-          radial-gradient(900px 700px at 10% 10%, rgba(34,197,94,.11), transparent 55%),
-          radial-gradient(800px 600px at 90% 20%, rgba(245,158,11,.09), transparent 55%),
-          var(--bg0);
-        color: var(--text);
-      }
+    /* ─── Waveform ─── */
+    canvas#waveform{
+      width: 260px;
+      height: 80px;
+      display: block;
+    }
 
-      .app{
-        max-width: 460px;
-        margin: 0 auto;
-        min-height: 100svh;
-        display:flex;
-        flex-direction:column;
-        padding-bottom: env(safe-area-inset-bottom);
-      }
+    .state-label{
+      margin-top: 16px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0.7;
+      transition: color 0.5s, opacity 0.5s;
+    }
 
-      /* Top bar (no state text) */
-      .topbar{
-        height:58px;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        padding: 0 16px;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background: rgba(15,23,42,.35);
-        border-bottom: 1px solid rgba(255,255,255,.08);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-      }
-      .title{
-        font-weight: 760;
-        letter-spacing: .2px;
-        display:flex;
-        gap:10px;
-        align-items:center;
-      }
-      .iconbtn{
-        width:40px; height:40px;
-        border-radius: 14px;
-        display:grid;
-        place-items:center;
-        background: rgba(255,255,255,.04);
-        border: 1px solid rgba(255,255,255,.10);
-        box-shadow: 0 10px 26px rgba(0,0,0,.35);
-      }
-      .iconbtn svg{ opacity:.92; }
+    /* ─── Tool Card ─── */
+    .tool-card{
+      width: calc(100% - 40px);
+      max-width: 390px;
+      margin: 28px auto 0;
+      border-radius: 16px;
+      border: 1px solid var(--accent-border);
+      background: rgba(255,255,255,0.02);
+      padding: 16px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.5s;
+    }
+    .tool-card.visible{
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .tool-header{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .tool-icon{
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: grid;
+      place-items: center;
+    }
+    .tool-icon svg{ width:14px; height:14px; }
+    .tool-name{
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.85);
+      flex: 1;
+    }
+    .tool-badge{
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.5px;
+    }
+    .tool-rows{ display:flex; flex-direction:column; gap:8px; }
+    .tool-row{
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 10px;
+      align-items: baseline;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .tool-key{
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .tool-val{
+      font-size: 12px;
+      color: #E5E7EB;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .tool-val.null{
+      color: rgba(255,255,255,0.2);
+      font-style: italic;
+    }
 
-      .main{
-        flex:1;
-        padding: 18px 16px 88px;
-        display:flex;
-        flex-direction:column;
-        gap: 14px;
-      }
+    /* ─── Dev input ─── */
+    .dev-input{
+      display: flex;
+      gap: 8px;
+      padding: 12px 20px 32px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .dev-input input{
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: #E5E7EB;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .dev-input input::placeholder{ color: rgba(255,255,255,0.2); }
+    .dev-input input:focus{ border-color: rgba(255,255,255,0.18); }
+    .dev-input button{
+      padding: 10px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--accent-border);
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .dev-input button:hover{ opacity: 0.8; }
 
-      .stateCard{
-        border-radius: 22px;
-        padding: 16px;
-        background:
-          radial-gradient(900px 250px at 50% 0%, rgba(255,255,255,.06), transparent 60%),
-          rgba(15,23,42,.40);
-        border: 1px solid rgba(255,255,255,.10);
-        box-shadow: var(--shadow);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-      }
+    /* ─── State indicator strip ─── */
+    .state-strip{
+      position: absolute;
+      bottom: 96px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 20;
+    }
+    .state-btn{
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.03);
+      color: rgba(255,255,255,0.5);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: all 0.3s;
+    }
+    .state-btn.active{
+      color: var(--accent);
+      border-color: var(--accent-border);
+      background: var(--accent-bg);
+    }
 
-      /* Centered hero (bigger) */
-      .hero{
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        text-align:center;
-        padding: 12px 8px 8px;
-      }
-
-      .bubbleWrap{
-        width: 180px;
-        height: 180px;
-        position: relative;
-        display:grid;
-        place-items:center;
-      }
-      .ring{
-        position:absolute;
-        inset:0;
-        border-radius: 999px;
-        background: var(--accentSoft);
-        opacity:.95;
-        transform: scale(1);
-        filter: blur(.2px);
-      }
-      .bubble{
-        width: 124px;
-        height: 124px;
-        border-radius: 999px;
-        display:grid;
-        place-items:center;
-        background:
-          radial-gradient(130px 90px at 30% 20%, rgba(255,255,255,.10), transparent 60%),
-          rgba(255,255,255,.04);
-        border: 1px solid rgba(255,255,255,.14);
-        box-shadow: 0 18px 40px rgba(0,0,0,.45);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-      }
-
-      /* No status text — keep only dot as a minimal hint */
-      .dot{
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        background: var(--accent);
-        box-shadow: 0 0 0 8px var(--accentSoft);
-        margin-top: 14px;
-      }
-
-      .wave{
-        height: 22px;
-        display:flex;
-        gap: 7px;
-        align-items:flex-end;
-        margin-top: 14px;
-        justify-content:center;
-      }
-      .bar{
-        width: 6px;
-        height: 7px;
-        border-radius: 999px;
-        background: var(--accent);
-        opacity:.35;
-        transform-origin: bottom;
-      }
-
-      /* Tool panel */
-      .toolPanel{
-        margin-top: 18px;
-        border-top: 1px solid rgba(255,255,255,.08);
-        padding-top: 14px;
-        display:flex;
-        flex-direction:column;
-        gap: 10px;
-      }
-
-      .toolHeader{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap: 12px;
-      }
-
-      .toolName{
-        font-weight: 760;
-        font-size: 13px;
-        letter-spacing:.2px;
-        display:flex;
-        align-items:center;
-        gap:10px;
-      }
-
-      .badge{
-        font-size: 11px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: rgba(255,255,255,.05);
-        border: 1px solid rgba(255,255,255,.11);
-        color: var(--muted);
-        white-space:nowrap;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-      }
-
-      .kv{
-        display:grid;
-        grid-template-columns: 72px 1fr;
-        gap: 10px;
-        align-items:center;
-        padding: 11px 12px;
-        border-radius: 16px;
-        background:
-          radial-gradient(500px 80px at 10% 0%, rgba(255,255,255,.06), transparent 60%),
-          rgba(255,255,255,.03);
-        border: 1px solid rgba(255,255,255,.10);
-        box-shadow: 0 10px 30px rgba(0,0,0,.35);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-      }
-      .k{ font-size: 12px; color: var(--muted); }
-      .v{
-        font-size: 12px;
-        color: var(--text);
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-      }
-      .v.null{ color: rgba(229,231,235,.45); font-style: italic; }
-
-      .rule{
-        font-size: 11px;
-        color: rgba(154,164,178,.92);
-        line-height: 1.35;
-        padding: 10px 12px;
-        border-radius: 16px;
-        border: 1px dashed rgba(255,255,255,.14);
-        background: rgba(255,255,255,.02);
-      }
-
-      /* No tool selected pop-out */
-      .toolUnsetCard{
-        display:none;
-        border-radius: 18px;
-        border: 1px solid rgba(255,255,255,.16);
-        background:
-          radial-gradient(700px 180px at 20% 10%, rgba(245,158,11,.20), transparent 60%),
-          radial-gradient(600px 220px at 80% 0%, rgba(96,165,250,.10), transparent 60%),
-          rgba(255,255,255,.035);
-        padding: 14px;
-        box-shadow: 0 18px 55px rgba(0,0,0,.55);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-      }
-
-      .tool-unset .toolUnsetCard{ display:block; }
-      .tool-unset .toolPanelInner{ display:none; }
-
-      .toolUnsetTop{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap: 12px;
-        margin-bottom: 8px;
-      }
-      .toolUnsetTitle{ font-weight: 840; font-size: 13px; }
-      .toolUnsetDesc{ font-size: 12px; color: var(--muted); line-height: 1.35; }
-
-      .ctaRow{ display:flex; gap: 10px; margin-top: 12px; }
-      .btn{
-        flex:1;
-        border-radius: 14px;
-        padding: 10px 12px;
-        border: 1px solid rgba(255,255,255,.12);
-        background: rgba(255,255,255,.04);
-        color: var(--text);
-        font-weight: 720;
-        font-size: 12px;
-        text-align:center;
-        box-shadow: 0 12px 28px rgba(0,0,0,.35);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-      }
-      .btn.primary{
-        border-color: rgba(245,158,11,.35);
-        background: rgba(245,158,11,.16);
-      }
-
-      /* Quick actions (glass) */
-      .grid{
-        display:grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-top: 2px;
-      }
-      .card{
-        border-radius: 18px;
-        padding: 14px;
-        display:flex;
-        align-items:center;
-        gap: 10px;
-        background:
-          radial-gradient(600px 130px at 20% 0%, rgba(255,255,255,.055), transparent 60%),
-          rgba(255,255,255,.03);
-        border: 1px solid rgba(255,255,255,.10);
-        box-shadow: 0 14px 36px rgba(0,0,0,.45);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-      }
-      .cicon{
-        width: 36px; height: 36px;
-        border-radius: 14px;
-        border: 1px solid rgba(255,255,255,.12);
-        display:grid;
-        place-items:center;
-        background: rgba(255,255,255,.04);
-      }
-      .clabel{ font-weight: 740; font-size: 13px; }
-      .csub{ font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-      /* Bottom nav */
-      .bottom{
-        position: sticky;
-        bottom: 0;
-        height: 78px;
-        border-top: 1px solid rgba(255,255,255,.08);
-        background: rgba(15,23,42,.35);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        display:flex;
-        justify-content:space-around;
-        align-items:center;
-      }
-      .tab{
-        width: 96px;
-        height: 44px;
-        border-radius: 16px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        color: var(--muted);
-        border: 1px solid transparent;
-      }
-      .tab.active{
-        color: var(--text);
-        background: rgba(255,255,255,.04);
-        border-color: rgba(255,255,255,.10);
-        box-shadow: 0 12px 26px rgba(0,0,0,.35);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-      }
-
-      /* Bubble icons */
-      .iconUser,.iconAgent{ width: 48px; height: 48px; display:none; }
-      .spinner{
-        width: 36px;
-        height: 36px;
-        display:none;
-        border-radius: 999px;
-        border: 2px solid rgba(255,255,255,.18);
-        border-top-color: rgba(255,255,255,.70);
-        animation: spin 800ms linear infinite;
-      }
-
-      /* States */
-      .state-user{ --accent: var(--user); --accentSoft: rgba(34,197,94,.18); }
-      .state-agent{ --accent: var(--agent); --accentSoft: rgba(96,165,250,.18); }
-      .state-loading{ --accent: var(--loading); --accentSoft: rgba(245,158,11,.18); }
-
-      .state-user .ring{ animation: pulse 1.7s ease-in-out infinite; }
-      .state-agent .ring{ animation: pulse 1.2s ease-in-out infinite; }
-      .state-loading .ring{ opacity:.55; }
-
-      .state-user .bar{ opacity:.70; animation: bounce 700ms ease-in-out infinite; }
-      .state-agent .bar{ opacity:.60; animation: talk 900ms ease-in-out infinite; }
-      .state-loading .bar{ opacity:.25; animation:none; transform:scaleY(.8); }
-
-      .state-user .bar:nth-child(1){ animation-delay: 0ms; }
-      .state-user .bar:nth-child(2){ animation-delay: 90ms; }
-      .state-user .bar:nth-child(3){ animation-delay: 170ms; }
-      .state-user .bar:nth-child(4){ animation-delay: 250ms; }
-      .state-user .bar:nth-child(5){ animation-delay: 340ms; }
-
-      .state-agent .bar:nth-child(1){ animation-delay: 0ms; }
-      .state-agent .bar:nth-child(2){ animation-delay: 120ms; }
-      .state-agent .bar:nth-child(3){ animation-delay: 240ms; }
-      .state-agent .bar:nth-child(4){ animation-delay: 360ms; }
-      .state-agent .bar:nth-child(5){ animation-delay: 480ms; }
-
-      .state-user .iconUser{ display:block; }
-      .state-agent .iconAgent{ display:block; }
-      .state-loading .spinner{ display:block; }
-
-      @keyframes pulse{
-        0%{ transform:scale(1); opacity:.95; }
-        50%{ transform:scale(1.18); opacity:.45; }
-        100%{ transform:scale(1); opacity:.95; }
-      }
-      @keyframes bounce{
-        0%,100%{ transform:scaleY(.55); }
-        50%{ transform:scaleY(1.75); }
-      }
-      @keyframes talk{
-        0%,100%{ transform:scaleY(.78); }
-        50%{ transform:scaleY(1.35); }
-      }
-      @keyframes spin{ to{ transform: rotate(360deg);} }
-
-      @media (max-width: 360px){
-        .app{ max-width: 100%; }
-        .kv{ grid-template-columns: 64px 1fr; }
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="app state-user" id="app">
-      <div class="topbar">
-        <div class="iconbtn" aria-label="Car">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M3 15V11.5c0-1 .6-1.9 1.5-2.2l2.3-.8 1.3-2.7c.4-.8 1.2-1.3 2.1-1.3h3.6c.9 0 1.7.5 2.1 1.3l1.3 2.7 2.3.8c.9.3 1.5 1.2 1.5 2.2V15" stroke="rgba(229,231,235,.9)" stroke-width="1.6" stroke-linecap="round"/>
-            <path d="M5.5 15.5h13" stroke="rgba(229,231,235,.9)" stroke-width="1.6" stroke-linecap="round"/>
-            <circle cx="7" cy="16.5" r="1.6" stroke="rgba(229,231,235,.9)" stroke-width="1.6"/>
-            <circle cx="17" cy="16.5" r="1.6" stroke="rgba(229,231,235,.9)" stroke-width="1.6"/>
-          </svg>
-        </div>
-
-        <div class="title">Voice</div>
-
-        <div class="iconbtn" aria-label="Settings">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="rgba(229,231,235,.9)" stroke-width="1.6"/>
-            <path d="M19.4 15a8.8 8.8 0 0 0 .1-1l2-1.2-2-3.4-2.3.7a8 8 0 0 0-1.7-1L15 6.4H9L8.5 9a8 8 0 0 0-1.7 1l-2.3-.7-2 3.4 2 1.2a8.8 8.8 0 0 0 .1 1 8.8 8.8 0 0 0-.1 1l-2 1.2 2 3.4 2.3-.7a8 8 0 0 0 1.7 1L9 21.6h6l.5-2.6a8 8 0 0 0 1.7-1l2.3.7 2-3.4-2-1.2a8.8 8.8 0 0 0 .1-1Z"
-              stroke="rgba(229,231,235,.72)" stroke-width="1.2" stroke-linejoin="round"/>
+    /* ─── CSS Vars by state ─── */
+    :root{
+      --accent: #83d2ce;
+      --accent-glow: rgba(131,210,206,0.4);
+      --accent-border: rgba(131,210,206,0.15);
+      --accent-bg: rgba(131,210,206,0.08);
+    }
+  </style>
+</head>
+<body>
+  <div class="phone" id="phone">
+    <div class="topbar">
+      <div class="topbar-btn" aria-label="Logout">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.8" stroke-linecap="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </div>
+      <div class="topbar-right">
+        <div class="ready-dot"></div>
+        <div class="topbar-btn" aria-label="Help">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
         </div>
       </div>
-
-      <main class="main">
-        <section class="stateCard">
-          <div class="hero">
-            <div class="bubbleWrap">
-              <div class="ring"></div>
-
-              <div class="bubble">
-                <svg class="iconUser" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" stroke="rgba(229,231,235,.92)" stroke-width="1.8"/>
-                  <path d="M4.5 20a7.5 7.5 0 0 1 15 0" stroke="rgba(229,231,235,.92)" stroke-width="1.8" stroke-linecap="round"/>
-                </svg>
-
-                <svg class="iconAgent" viewBox="0 0 24 24" fill="none">
-                  <path d="M7 10.5V9a5 5 0 0 1 10 0v1.5" stroke="rgba(229,231,235,.92)" stroke-width="1.8" stroke-linecap="round"/>
-                  <rect x="6" y="10.5" width="12" height="9" rx="3" stroke="rgba(229,231,235,.92)" stroke-width="1.8"/>
-                  <path d="M9.2 14.5h.01M14.8 14.5h.01" stroke="rgba(229,231,235,.92)" stroke-width="3" stroke-linecap="round"/>
-                  <path d="M12 5.2v1.6" stroke="rgba(229,231,235,.92)" stroke-width="1.8" stroke-linecap="round"/>
-                </svg>
-
-                <div class="spinner"></div>
-              </div>
-            </div>
-
-            <div class="wave" aria-hidden="true">
-              <div class="bar"></div>
-              <div class="bar"></div>
-              <div class="bar"></div>
-              <div class="bar"></div>
-              <div class="bar"></div>
-            </div>
-          </div>
-
-          <div class="toolPanel">
-            <div class="toolUnsetCard" id="toolUnsetCard">
-              <div class="toolUnsetTop">
-                <div class="toolUnsetTitle">No tool selected</div>
-                <span class="badge">Needs intent</span>
-              </div>
-              <div class="toolUnsetDesc">
-                The agent hasn’t picked an action yet. Once it chooses a tool, you’ll see the parameters here.
-              </div>
-              <div class="ctaRow">
-                <div class="btn primary">Suggest: Draft email</div>
-                <div class="btn">Open tool list</div>
-              </div>
-            </div>
-
-            <div class="toolPanelInner" id="toolPanelInner">
-              <div class="toolHeader">
-                <div class="toolName">
-                  <span style="opacity:.9">Current tool</span>
-                  <span class="badge" id="toolName">gmail.createDraft</span>
-                </div>
-                <span class="badge" id="toolState">Selected</span>
-              </div>
-
-              <div class="kv">
-                <div class="k">to</div>
-                <div class="v null" id="toolTo">null</div>
-              </div>
-              <div class="kv">
-                <div class="k">subject</div>
-                <div class="v null" id="toolSubject">null</div>
-              </div>
-              <div class="kv">
-                <div class="k">body</div>
-                <div class="v null" id="toolBody">null</div>
-              </div>
-
-              <div class="rule">
-                <strong style="color:rgba(229,231,235,.92)">Rule:</strong>
-                “to” must be an email address. Normalize potential emails from transcripts:
-                spelled-out letters, hyphens/spaces, “at/dot” words; remove dashes from spelling.
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div class="grid">
-          <div class="card">
-            <div class="cicon">✉️</div>
-            <div>
-              <div class="clabel">Email</div>
-              <div class="csub">Draft + send</div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="cicon">🧾</div>
-            <div>
-              <div class="clabel">Tool log</div>
-              <div class="csub">View last calls</div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="cicon">✅</div>
-            <div>
-              <div class="clabel">To-dos</div>
-              <div class="csub">Add & review</div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="cicon">🗓️</div>
-            <div>
-              <div class="clabel">Calendar</div>
-              <div class="csub">Quick schedule</div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <nav class="bottom" aria-label="Bottom navigation">
-        <div class="tab">Home</div>
-        <div class="tab active">Voice</div>
-        <div class="tab">Log</div>
-      </nav>
     </div>
 
-    <script>
-      const app = document.getElementById('app');
+    <div class="center">
+      <canvas id="waveform" width="520" height="160"></canvas>
+      <div class="state-label" id="stateLabel">Listening</div>
 
-      const toolState = document.getElementById('toolState');
-      const toolTo = document.getElementById('toolTo');
-      const toolSubject = document.getElementById('toolSubject');
-      const toolBody = document.getElementById('toolBody');
+      <div class="tool-card" id="toolCard">
+        <div class="tool-header">
+          <div class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color:var(--accent)">
+              <rect x="2" y="4" width="20" height="16" rx="3"/>
+              <polyline points="2 4 12 13 22 4"/>
+            </svg>
+          </div>
+          <div class="tool-name" id="toolName">gmail.createDraft</div>
+          <div class="tool-badge" id="toolBadge">Selected</div>
+        </div>
+        <div class="tool-rows" id="toolRows"></div>
+      </div>
+    </div>
 
-      const toolUnsetCard = document.getElementById('toolUnsetCard');
-      const toolPanelInner = document.getElementById('toolPanelInner');
+    <div class="state-strip" id="stateStrip">
+      <div class="state-btn active" data-state="listening">Listening</div>
+      <div class="state-btn" data-state="processing">Processing</div>
+      <div class="state-btn" data-state="speaking">Speaking</div>
+    </div>
 
-      // Rotate through: user -> loading -> agent
-      // Also rotate tool states, including unset
-      const toolPayloads = [
-        { unset: true,  to: null, subject: null, body: null },
-        { unset: false, to: null, subject: null, body: null },
-        { unset: false, to: "acero.liangli@gmail.com", subject: "Quick question", body: "Hey — can we chat today?" },
-      ];
+    <div class="dev-input">
+      <input type="text" placeholder="Type a message..." />
+      <button>Send</button>
+    </div>
+  </div>
 
-      const states = [
-        { cls: 'state-user', toolBadge: 'Listening' },
-        { cls: 'state-loading', toolBadge: 'Planning' },
-        { cls: 'state-agent', toolBadge: 'Responding' }
-      ];
+  <script>
+    const canvas = document.getElementById('waveform');
+    const ctx = canvas.getContext('2d');
+    const stateLabel = document.getElementById('stateLabel');
+    const toolCard = document.getElementById('toolCard');
+    const toolName = document.getElementById('toolName');
+    const toolBadge = document.getElementById('toolBadge');
+    const toolRows = document.getElementById('toolRows');
+    const phone = document.getElementById('phone');
+    const stateStrip = document.getElementById('stateStrip');
 
-      let i = 0;
+    const COLORS = {
+      listening:  { accent: '#83d2ce', glow: 'rgba(131,210,206,0.4)',  border: 'rgba(131,210,206,0.15)', bg: 'rgba(131,210,206,0.08)' },
+      processing: { accent: '#ecc98d', glow: 'rgba(236,201,141,0.4)',  border: 'rgba(236,201,141,0.15)', bg: 'rgba(236,201,141,0.08)' },
+      speaking:   { accent: '#e194da', glow: 'rgba(225,148,218,0.4)',  border: 'rgba(225,148,218,0.15)', bg: 'rgba(225,148,218,0.08)' },
+    };
 
-      function setKV(el, val) {
-        if (val === null || val === undefined || val === '') {
-          el.textContent = 'null';
-          el.classList.add('null');
-        } else {
-          el.textContent = val;
-          el.classList.remove('null');
+    const TOOL_STATES = {
+      listening:  { params: null },
+      processing: { params: { to: null, subject: null, body: null } },
+      speaking:   { params: { to: 'acero.liangli@gmail.com', subject: 'Quick question', body: 'Hey — can we chat today?' } },
+    };
+
+    const BAR_COUNT = 36;
+    const BAR_WIDTH = 3;
+    const BAR_GAP = 2;
+    const MIN_H = 3;
+
+    let currentState = 'listening';
+    let t = 0;
+    let targetHeights = new Float32Array(BAR_COUNT).fill(MIN_H);
+    let currentHeights = new Float32Array(BAR_COUNT).fill(MIN_H);
+
+    function setCSSVars(state) {
+      const c = COLORS[state];
+      const root = document.documentElement;
+      root.style.setProperty('--accent', c.accent);
+      root.style.setProperty('--accent-glow', c.glow);
+      root.style.setProperty('--accent-border', c.border);
+      root.style.setProperty('--accent-bg', c.bg);
+    }
+
+    function setToolCard(state) {
+      const ts = TOOL_STATES[state];
+      if (!ts.params) {
+        toolCard.classList.remove('visible');
+        return;
+      }
+      toolCard.classList.add('visible');
+      toolName.textContent = 'gmail.createDraft';
+      toolBadge.textContent = state === 'processing' ? 'Planning...' : 'Ready';
+      toolRows.innerHTML = '';
+      for (const [k, v] of Object.entries(ts.params)) {
+        const row = document.createElement('div');
+        row.className = 'tool-row';
+        row.innerHTML = `
+          <div class="tool-key">${k}</div>
+          <div class="tool-val ${v === null ? 'null' : ''}">${v === null ? 'null' : v}</div>
+        `;
+        toolRows.appendChild(row);
+      }
+    }
+
+    function setState(state) {
+      currentState = state;
+      setCSSVars(state);
+      stateLabel.textContent =
+        state === 'listening' ? 'Listening' :
+        state === 'processing' ? 'Processing' : 'Speaking';
+      setToolCard(state);
+
+      stateStrip.querySelectorAll('.state-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.state === state);
+      });
+    }
+
+    stateStrip.addEventListener('click', e => {
+      const btn = e.target.closest('.state-btn');
+      if (btn) setState(btn.dataset.state);
+    });
+
+    function computeTargets() {
+      const center = BAR_COUNT / 2;
+      for (let i = 0; i < BAR_COUNT; i++) {
+        const distFromCenter = Math.abs(i - center) / center;
+
+        if (currentState === 'listening') {
+          const wave1 = Math.sin(t * 1.8 + i * 0.35) * 0.5 + 0.5;
+          const wave2 = Math.sin(t * 1.2 + i * 0.55 + 1.5) * 0.5 + 0.5;
+          const envelope = 1 - distFromCenter * 0.6;
+          const h = MIN_H + (wave1 * 0.4 + wave2 * 0.6) * 28 * envelope;
+          targetHeights[i] = h;
+
+        } else if (currentState === 'processing') {
+          const pulse = Math.sin(t * 2.5) * 0.5 + 0.5;
+          const h = MIN_H + pulse * 6 * (1 - distFromCenter * 0.4);
+          targetHeights[i] = h;
+
+        } else if (currentState === 'speaking') {
+          const wave1 = Math.sin(t * 2.2 + i * 0.3) * 0.5 + 0.5;
+          const wave2 = Math.sin(t * 3.1 + i * 0.5 + 2) * 0.5 + 0.5;
+          const wave3 = Math.sin(t * 1.5 + i * 0.15 + 4) * 0.5 + 0.5;
+          const envelope = 1 - distFromCenter * 0.35;
+          const h = MIN_H + (wave1 * 0.35 + wave2 * 0.35 + wave3 * 0.3) * 50 * envelope;
+          targetHeights[i] = h;
         }
       }
+    }
 
-      function setTool(payload) {
-        if (payload.unset) {
-          app.classList.add('tool-unset');
-          toolUnsetCard.style.display = 'block';
-          toolPanelInner.style.display = 'none';
-        } else {
-          app.classList.remove('tool-unset');
-          toolUnsetCard.style.display = 'none';
-          toolPanelInner.style.display = 'block';
-          setKV(toolTo, payload.to);
-          setKV(toolSubject, payload.subject);
-          setKV(toolBody, payload.body);
+    function draw() {
+      const dpr = window.devicePixelRatio || 1;
+      const cw = canvas.width;
+      const ch = canvas.height;
+      ctx.clearRect(0, 0, cw, ch);
+
+      const totalWidth = BAR_COUNT * BAR_WIDTH + (BAR_COUNT - 1) * BAR_GAP;
+      const startX = (cw - totalWidth * dpr) / 2;
+      const midY = ch / 2;
+
+      const c = COLORS[currentState];
+
+      for (let i = 0; i < BAR_COUNT; i++) {
+        const smoothing = currentState === 'processing' ? 0.06 : 0.12;
+        currentHeights[i] += (targetHeights[i] - currentHeights[i]) * smoothing;
+        const h = currentHeights[i] * dpr;
+        const w = BAR_WIDTH * dpr;
+        const x = startX + i * (BAR_WIDTH + BAR_GAP) * dpr;
+        const y = midY - h / 2;
+
+        const distFromCenter = Math.abs(i - BAR_COUNT / 2) / (BAR_COUNT / 2);
+        const alpha = 0.4 + (1 - distFromCenter) * 0.6;
+
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, w / 2);
+        ctx.fillStyle = c.accent;
+        ctx.globalAlpha = alpha;
+        ctx.fill();
+
+        if (currentHeights[i] > 12) {
+          ctx.shadowColor = c.glow;
+          ctx.shadowBlur = 8 * dpr;
+          ctx.beginPath();
+          ctx.roundRect(x, y, w, h, w / 2);
+          ctx.globalAlpha = alpha * 0.3;
+          ctx.fill();
+          ctx.shadowBlur = 0;
         }
+
+        ctx.globalAlpha = 1;
       }
+    }
 
-      function setState(idx) {
-        const s = states[idx];
-        app.classList.remove('state-user', 'state-loading', 'state-agent');
-        app.classList.add(s.cls);
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+    }
 
-        toolState.textContent = s.toolBadge; // you can remove this too if you want *zero* text
-        const p = toolPayloads[idx % toolPayloads.length];
-        setTool(p);
-      }
+    function loop() {
+      t += 0.025;
+      computeTargets();
+      draw();
+      requestAnimationFrame(loop);
+    }
 
-      setState(i);
-      setInterval(() => {
-        i = (i + 1) % states.length;
-        setState(i);
-      }, 5000);
-    </script>
-  </body>
+    // Auto-cycle states
+    let autoCycleTimer = null;
+    function startAutoCycle() {
+      const order = ['listening', 'processing', 'speaking'];
+      let idx = 0;
+      autoCycleTimer = setInterval(() => {
+        idx = (idx + 1) % order.length;
+        setState(order[idx]);
+      }, 4000);
+    }
+
+    stateStrip.addEventListener('click', () => {
+      if (autoCycleTimer) { clearInterval(autoCycleTimer); autoCycleTimer = null; }
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    setState('listening');
+    startAutoCycle();
+    loop();
+  </script>
+</body>
 </html>
