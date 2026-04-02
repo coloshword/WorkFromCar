@@ -25,7 +25,7 @@ const MODEL_PATH = `${RNFS.MainBundlePath}/${MODEL_FILENAME}`;
 const VAD_PATH = `${RNFS.MainBundlePath}/${VAD_FILENAME}`;
 const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 
-const DEV_TEXT_MODE = true;
+const DEV_TEXT_MODE = false;
 const DATE_CONTEXT_PREFIX = 'Current local time:';
 
 function buildDateContextMessage(): Message {
@@ -273,9 +273,6 @@ export default function VoiceDashboard2() {
           <Text style={styles.logoutBtnText}>Logout</Text>
         </Pressable>
         <View style={styles.topbarRight}>
-          <Pressable style={styles.helpBtn} onPress={() => setShowOnboarding(true)}>
-            <Text style={styles.helpBtnText}>?</Text>
-          </Pressable>
           {modelStatus !== 'ready' && (
             <Pressable
               style={[styles.loadBtn, modelStatus === 'loading' && styles.loadBtnDisabled]}
@@ -286,11 +283,6 @@ export default function VoiceDashboard2() {
                 : <Text style={styles.loadBtnText}>Load Model</Text>
               }
             </Pressable>
-          )}
-          {modelStatus === 'ready' && (
-            <View style={styles.readyBadge}>
-              <Text style={styles.readyBadgeText}>Ready</Text>
-            </View>
           )}
         </View>
       </View>
@@ -383,20 +375,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     marginTop: 30,
-  },
-  helpBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(232,255,246,0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  helpBtnText: {
-    color: 'rgba(232,255,246,0.7)',
-    fontSize: 14,
-    fontWeight: '700',
   },
   topbarTitle: {
     color: '#e5e7eb',

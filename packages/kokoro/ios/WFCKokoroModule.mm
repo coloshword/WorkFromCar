@@ -231,7 +231,7 @@ static int32_t KokoroStreamCallbackWithArg(const float *samples, int32_t n, void
     double generateStartMs = KokoroNowMs();
     const SherpaOnnxGeneratedAudio *audio =
       SherpaOnnxOfflineTtsGenerateWithCallbackWithArg(
-        self->_tts, text.UTF8String, 0, (float)speed, KokoroStreamCallbackWithArg, &ctx);
+        self->_tts, text.UTF8String, 1, (float)speed, KokoroStreamCallbackWithArg, &ctx);
     double generateMs = KokoroNowMs() - generateStartMs;
 
     if (!audio || audio->n == 0 || ctx.chunkCount == 0) {
