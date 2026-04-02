@@ -8,6 +8,7 @@ import { SUMMARY_INSTRUCTION, SUMMARY_JSON_SCHEMA_SCHEMA } from "../utils/Summar
 import { emailReplyParametersSchema } from "../tools/gmail/EmailReply";
 import { emailForwardParametersSchema } from "../tools/gmail/EmailForward";
 import { gcalCreateEventParametersSchema } from "../tools/gcal/GcalCreateEvent";
+import { gcalRespondToEventExecutableParametersSchema } from "../tools/gcal/GcalRespondToEvent";
 
 export async function validateToolCall(tool: AgentTool): Promise<void>{
   switch (tool.tool) {
@@ -22,6 +23,9 @@ export async function validateToolCall(tool: AgentTool): Promise<void>{
       return;
     case 'gcal.createEvent':
       gcalCreateEventParametersSchema.parse(tool.toolParameters);
+      return;
+    case 'gcal.respondToEvent':
+      gcalRespondToEventExecutableParametersSchema.parse(tool.toolParameters);
       return;
     default:
       throw new Error(`Unsupported tool: ${tool.tool}`);

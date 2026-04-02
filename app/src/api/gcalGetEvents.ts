@@ -1,11 +1,13 @@
 export const GCAL_EVENTS_BASE = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
 
 export interface CalendarEventSummary {
+  id: string;
   summary: string;
   start: string | null;
   end: string | null;
   location: string | null;
   attendees: string[];
+  selfResponseStatus: string | null;
 }
 
 export async function getEvents({
@@ -50,10 +52,12 @@ export async function getEvents({
   const events = data.items ?? [];
 
   return events.map((event: any) => ({
+    id: event.id,
     summary: event.summary ?? 'Untitled event',
     start: event.start?.dateTime ?? event.start?.date ?? null,
     end: event.end?.dateTime ?? event.end?.date ?? null,
     location: event.location ?? null,
     attendees: (event.attendees ?? []).map((attendee: any) => attendee.email).filter(Boolean),
+    selfResponseStatus: event.attendees?.find((attendee: any) => attendee?.self)?.responseStatus ?? null,
   }));
 }

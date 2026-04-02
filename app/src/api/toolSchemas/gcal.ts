@@ -15,3 +15,10 @@ export const gcalGetEventsSchema = z.object({
   timeMax: z.string(),
   maxResults: z.number().nullable(),
 });
+
+export const gcalRespondToEventSchema = z.object({
+  eventId: z.string(),
+  responseStatus: z.enum(['accepted', 'tentative', 'declined']),
+  summary: z.string().nullable(),
+  start: z.string().nullable(),
+});

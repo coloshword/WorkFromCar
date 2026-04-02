@@ -18,6 +18,7 @@ const TOOL_ICONS: Record<string, React.ReactElement> = {
   'gmail.forwardEmail':    <EmailLogo size={ICON_SIZE} color={ICON_COLOR} />,
   'gcal.createEvent':      <CalendarLogo size={ICON_SIZE} color={ICON_COLOR} />,
   'gcal.getEvents':        <CalendarLogo size={ICON_SIZE} color={ICON_COLOR} />,
+  'gcal.respondToEvent':   <CalendarLogo size={ICON_SIZE} color={ICON_COLOR} />,
 };
 
 function ToolIcon({ toolName }: { toolName: string }) {
@@ -33,6 +34,7 @@ const TOOL_LABELS: Record<string, string> = {
   'gmail.forwardEmail': 'Inbox',
   'gcal.createEvent': 'Calendar',
   'gcal.getEvents': 'Calendar',
+  'gcal.respondToEvent': 'Calendar',
 };
 
 interface Props {

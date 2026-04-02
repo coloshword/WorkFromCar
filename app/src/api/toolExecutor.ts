@@ -6,9 +6,10 @@ import { replyEmail } from "./replyEmail";
 import { forwardEmail } from "./forwardEmail";
 import { summarizeEmails } from "./summarizeEmails";
 import { emailCreateDraftSchema, resolveContactParametersSchema, emailSummarizeParametersSchema, readEmailParametersSchema, emailReplyParametersSchema, emailForwardParametersSchema } from "./toolSchemas/email";
-import { gcalCreateEventSchema, gcalGetEventsSchema } from "./toolSchemas/gcal";
+import { gcalCreateEventSchema, gcalGetEventsSchema, gcalRespondToEventSchema } from "./toolSchemas/gcal";
 import { createEvent } from "./gcalCreateEvent";
 import { getEvents } from "./gcalGetEvents";
+import { respondToEvent } from "./gcalRespondToEvent";
 
 export async function executeTool(tool: AgentTool, accessToken: string): Promise<ToolExecutionLog> {
   switch (tool.tool) {
@@ -87,6 +88,23 @@ export async function executeTool(tool: AgentTool, accessToken: string): Promise
         return { tool: tool.tool, status: 'success', result };
       } catch (e: any) {
         console.error('[executeTool] gcal.getEvents failed', {
+          toolParameters: tool.toolParameters,
+          message: e?.message,
+        });
+        return { tool: tool.tool, status: 'error', result: { message: e.message } };
+      }
+    }
+    case 'gcal.respondToEvent': {
+      try {
+        const params = gcalRespondToEventSchema.parse(tool.toolParameters);
+        const result = await respondToEvent({
+          accessToken,
+          eventId: params.eventId,
+          responseStatus: params.responseStatus,
+        });
+        return { tool: tool.tool, status: 'success', result };
+      } catch (e: any) {
+        console.error('[executeTool] gcal.respondToEvent failed', {
           toolParameters: tool.toolParameters,
           message: e?.message,
         });

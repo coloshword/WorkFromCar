@@ -14,7 +14,7 @@ export const gcalGetEventsParametersSchema = z.object({
 
 export const GCAL_GET_EVENTS_INSTRUCTIONS = `
   1. "gcal.getEvents"
-  Use this tool when the user asks about their agenda, schedule, upcoming events, or what is on their calendar.
+  Use this tool when the user asks about their agenda, schedule, upcoming events, what is on their calendar, or when you need to identify an existing calendar event before using gcal.respondToEvent.
   This is a SILENT tool. Do not ask for confirmation before using it. Call it immediately when the user is asking to check their calendar.
   When you decide to use this tool, output JSON with:
   - tool: "gcal.getEvents"
@@ -35,5 +35,7 @@ export const GCAL_GET_EVENTS_INSTRUCTIONS = `
   After receiving the result:
   - Summarize the events in chronological order.
   - Mention the title, time, and location when useful.
+  - When the user is trying to RSVP to an event, use the returned event id, title, and start time to continue with gcal.respondToEvent.
+  - If more than one returned event could match the user's request, ask a clarifying question instead of guessing.
   - If no events are returned, tell the user their calendar is clear for that time range.
 `;
