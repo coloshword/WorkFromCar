@@ -143,6 +143,19 @@ export default function VoiceDashboard2() {
 
     while (currentResult.tool?.silent && iterations < MAX_SILENT_ITERATIONS) {
       iterations++;
+
+      const silentMsg = currentResult.message.content?.trim();
+      const speakPromise = silentMsg
+        ? speak({
+            text: silentMsg,
+            voiceListenerState: 'disabled',
+            setVoiceListenerState,
+            activeTtsCountRef,
+            setSpeaking,
+            speed: 1.2,
+          })
+        : null;
+
       if (!authToken) {
         throw new Error('No auth gmail accesstoken');
       }
@@ -154,6 +167,7 @@ export default function VoiceDashboard2() {
       currentMessages = [...currentMessages, currentResult.message];
       setMessages([...currentMessages]);
 
+      if (speakPromise) await speakPromise;
       if (currentResult.tool) {
         setTool(currentResult.tool);
       }

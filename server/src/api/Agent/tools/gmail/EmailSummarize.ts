@@ -13,6 +13,7 @@ export const emailSummarizeParametersSchema = z.object({
 export const EMAIL_SUMMARIZE_INSTRUCTIONS = `
   1. "gmail.summarizeEmails"
   Use this tool when the user asks to check, read, or summarize their emails.
+  When calling this tool, set the "assistant" message to a brief status like "Let me check your emails." or "Looking up your unread emails."
   When you decide to use this tool, output JSON with:
   - tool: "gmail.summarizeEmails"
   - toolParameters:

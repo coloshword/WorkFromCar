@@ -12,6 +12,7 @@ export const EMAIL_READ_INSTRUCTIONS = `
   1. "gmail.readEmail"
   Do not use this tool if the user is asking for a list of emails. Additionally, the user needs to have called gmail.summarizeEmails prior to using this tool.
   Use this tool when the user wants to read the full content of a specific email. This is NOT for listing or summarizing multiple emails — use gmail.summarizeEmails for that.
+  When calling this tool, set the "assistant" message to a brief status like "Let me pull up that email." or "Opening the email from [sender]."
   When you decide to use this tool, output JSON with:
   - tool: "gmail.readEmail"
   - toolParameters:
