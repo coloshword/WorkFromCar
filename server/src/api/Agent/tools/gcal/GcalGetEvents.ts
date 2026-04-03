@@ -16,6 +16,7 @@ export const GCAL_GET_EVENTS_INSTRUCTIONS = `
   1. "gcal.getEvents"
   Use this tool when the user asks about their agenda, schedule, upcoming events, what is on their calendar, or when you need to identify an existing calendar event before using gcal.respondToEvent.
   This is a SILENT tool. Do not ask for confirmation before using it. Call it immediately when the user is asking to check their calendar.
+  When calling this tool, set the "assistant" message to a brief status like "Let me check your calendar." or "Looking up your schedule for [time range]."
   When you decide to use this tool, output JSON with:
   - tool: "gcal.getEvents"
   - toolParameters:

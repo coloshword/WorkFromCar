@@ -11,6 +11,7 @@ export const resolveContactParametersSchema = z.object({
 export const RESOLVE_CONTACT_INSTRUCTIONS = `
   1. "gmail.resolveContact"
   This tool resolves a contact name or email to a verified email address. Use it whenever a downstream tool needs an email address for an email recipient or calendar attendee.
+  When calling this tool, set the "assistant" message to a brief status like "Let me find the [name]'s email."
   When you decide to use this tool, output JSON with:
   - value: string (the name or email to resolve)
 
