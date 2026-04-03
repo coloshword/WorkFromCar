@@ -9,6 +9,7 @@ interface TtsUtilsProps {
   setVoiceListenerState: (state: VoiceListenerState) => void;
   activeTtsCountRef: React.RefObject<number>;
   setSpeaking: (speaking: boolean) => void;
+  speed?: number;
 }
 
 export const speak = async ({
@@ -17,6 +18,7 @@ export const speak = async ({
   setVoiceListenerState,
   activeTtsCountRef,
   setSpeaking,
+  speed = 1.0,
 }: TtsUtilsProps) => {
   const shouldRestoreListener = voiceListenerState !== 'disabled';
   activeTtsCountRef.current += 1;
@@ -28,7 +30,7 @@ export const speak = async ({
     }
     await NativeKokoro.stop();
     setSpeaking(true);
-    await NativeKokoro.speak(text, 1.0);
+    await NativeKokoro.speak(text, speed);
   } catch (e: any) {
     console.log('[Kokoro] speak error:', e.message);
   } finally {

@@ -25,7 +25,7 @@ const MODEL_PATH = `${RNFS.MainBundlePath}/${MODEL_FILENAME}`;
 const VAD_PATH = `${RNFS.MainBundlePath}/${VAD_FILENAME}`;
 const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 
-const DEV_TEXT_MODE = true;
+const DEV_TEXT_MODE = false;
 const DATE_CONTEXT_PREFIX = 'Current local time:';
 
 function buildDateContextMessage(): Message {
@@ -145,15 +145,16 @@ export default function VoiceDashboard2() {
       iterations++;
 
       const silentMsg = currentResult.message.content?.trim();
-      if (silentMsg) {
-        await speak({
-          text: silentMsg,
-          voiceListenerState: 'disabled',
-          setVoiceListenerState,
-          activeTtsCountRef,
-          setSpeaking,
-        });
-      }
+      const speakPromise = silentMsg
+        ? speak({
+            text: silentMsg,
+            voiceListenerState: 'disabled',
+            setVoiceListenerState,
+            activeTtsCountRef,
+            setSpeaking,
+            speed: 1.2,
+          })
+        : null;
 
       if (!authToken) {
         throw new Error('No auth gmail accesstoken');
@@ -166,6 +167,7 @@ export default function VoiceDashboard2() {
       currentMessages = [...currentMessages, currentResult.message];
       setMessages([...currentMessages]);
 
+      if (speakPromise) await speakPromise;
       if (currentResult.tool) {
         setTool(currentResult.tool);
       }
