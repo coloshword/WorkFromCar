@@ -12,6 +12,7 @@ import { onLogin } from '../api/auth';
 import { useAccessToken } from '../context/AccessTokenContext';
 import * as Keychain from 'react-native-keychain';
 import GoogleLogo from '../components/icons/GoogleLogo';
+import WheelLogo from '../components/icons/wheelLogo';
 
 const LoginScreen = () => {
   const { setAuthToken } = useAccessToken();
@@ -38,8 +39,8 @@ const LoginScreen = () => {
       <StatusBar barStyle="light-content" backgroundColor="#0f271f" />
 
       <View style={styles.content}>
-        <View style={styles.logoCircle}>
-          <Text style={styles.logoText}>W</Text>
+        <View style={styles.logoWrapper}>
+          <WheelLogo size={72} />
         </View>
 
         <Text style={styles.title}>Welcome back</Text>
@@ -83,21 +84,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
-  logoCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(34,197,94,0.18)',
-    borderWidth: 1,
-    borderColor: 'rgba(34,197,94,0.35)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  logoWrapper: {
     marginBottom: 32,
-  },
-  logoText: {
-    color: '#22c55e',
-    fontSize: 30,
-    fontWeight: '700',
   },
   title: {
     color: '#e8fff6',
