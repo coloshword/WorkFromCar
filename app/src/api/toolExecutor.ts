@@ -6,10 +6,11 @@ import { replyEmail } from "./replyEmail";
 import { forwardEmail } from "./forwardEmail";
 import { summarizeEmails } from "./summarizeEmails";
 import { emailCreateDraftSchema, resolveContactParametersSchema, emailSummarizeParametersSchema, readEmailParametersSchema, emailReplyParametersSchema, emailForwardParametersSchema } from "./toolSchemas/email";
-import { gcalCreateEventSchema, gcalGetEventsSchema, gcalRespondToEventSchema } from "./toolSchemas/gcal";
+import { gcalCreateEventSchema, gcalGetEventsSchema, gcalRespondToEventSchema, gcalUpdateEventSchema } from "./toolSchemas/gcal";
 import { createEvent } from "./gcalCreateEvent";
 import { getEvents } from "./gcalGetEvents";
 import { respondToEvent } from "./gcalRespondToEvent";
+import { updateEvent } from "./gcalUpdateEvent";
 
 export async function executeTool(tool: AgentTool, accessToken: string): Promise<ToolExecutionLog> {
   switch (tool.tool) {
@@ -105,6 +106,29 @@ export async function executeTool(tool: AgentTool, accessToken: string): Promise
         return { tool: tool.tool, status: 'success', result };
       } catch (e: any) {
         console.error('[executeTool] gcal.respondToEvent failed', {
+          toolParameters: tool.toolParameters,
+          message: e?.message,
+        });
+        return { tool: tool.tool, status: 'error', result: { message: e.message } };
+      }
+    }
+    case 'gcal.updateEvent': {
+      try {
+        const params = gcalUpdateEventSchema.parse(tool.toolParameters);
+        const result = await updateEvent({
+          accessToken,
+          eventId: params.eventId,
+          newSummary: params.newSummary,
+          startIso: params.startIso,
+          endIso: params.endIso,
+          timeZone: params.timeZone,
+          newLocation: params.newLocation,
+          newDescription: params.newDescription,
+          attendees: params.attendees,
+        });
+        return { tool: tool.tool, status: 'success', result };
+      } catch (e: any) {
+        console.error('[executeTool] gcal.updateEvent failed', {
           toolParameters: tool.toolParameters,
           message: e?.message,
         });
