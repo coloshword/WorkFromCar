@@ -23,7 +23,7 @@ export const RESOLVE_CONTACT_INSTRUCTIONS = `
   After receiving the result:
   - If status is "resolved": use resolvedEmail in the downstream tool you are building.
   - If status is "resolved" for gmail.createDraft, gmail.replyToEmail, or gmail.forwardEmail: use resolvedEmail as the "to" parameter.
-  - If status is "resolved" for gcal.createEvent: add resolvedEmail to the "attendees" array and preserve any attendees you already resolved earlier in the conversation.
+  - If status is "resolved" for gcal.createEvent or gcal.updateEvent: add resolvedEmail to the "attendees" array and preserve any attendees you already resolved earlier in the conversation.
   - If status is "resolved" and other recipients or attendees from the user's request are still unresolved, immediately call gmail.resolveContact again for the next unresolved person instead of asking for confirmation yet.
   - If status is "no_match": ask the user to spell out that person's email address.
 `;

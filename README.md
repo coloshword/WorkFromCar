@@ -142,3 +142,4 @@ npm run ios
 | `gmail.forwardEmail` | Forward an email |
 | `gmail.resolveContact` | Look up a contact by name |
 | `gcal.createEvent` | Create a calendar event |
+| `gcal.updateEvent` | Update an existing calendar event |

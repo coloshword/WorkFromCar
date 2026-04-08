@@ -19,6 +19,7 @@ const TOOL_ICONS: Record<string, React.ReactElement> = {
   'gcal.createEvent':      <CalendarLogo size={ICON_SIZE} color={ICON_COLOR} />,
   'gcal.getEvents':        <CalendarLogo size={ICON_SIZE} color={ICON_COLOR} />,
   'gcal.respondToEvent':   <CalendarLogo size={ICON_SIZE} color={ICON_COLOR} />,
+  'gcal.updateEvent':      <CalendarLogo size={ICON_SIZE} color={ICON_COLOR} />,
 };
 
 function ToolIcon({ toolName }: { toolName: string }) {
@@ -35,6 +36,7 @@ const TOOL_LABELS: Record<string, string> = {
   'gcal.createEvent': 'Calendar',
   'gcal.getEvents': 'Calendar',
   'gcal.respondToEvent': 'Calendar',
+  'gcal.updateEvent': 'Calendar',
 };
 
 interface Props {

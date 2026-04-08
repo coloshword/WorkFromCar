@@ -21,6 +21,10 @@ describe('isSilent()', () => {
     expect(isSilent({ tool: "gcal.respondToEvent", toolParameters: null })).toBe(false);
   });
 
+  it("returns false for gcal.updateEvent", () => {
+    expect(isSilent({ tool: "gcal.updateEvent", toolParameters: null })).toBe(false);
+  });
+
   it("returns false for an unknown tool", () => {
     expect(isSilent({ tool: "unknown.tool", toolParameters: null })).toBe(false);
   });
