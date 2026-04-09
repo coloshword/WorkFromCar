@@ -23,6 +23,12 @@ export const gcalRespondToEventSchema = z.object({
   start: z.string().nullable(),
 });
 
+export const gcalDeleteEventSchema = z.object({
+  eventId: z.string(),
+  summary: z.string().nullable(),
+  start: z.string().nullable(),
+});
+
 const gcalUpdateTimeRefine = (data: {
   startIso: string | null;
   endIso: string | null;

@@ -14,6 +14,7 @@ import { gcalCreateEventParametersSchema } from "../tools/gcal/GcalCreateEvent";
 import { gcalGetEventsParametersSchema } from "../tools/gcal/GcalGetEvents";
 import { gcalRespondToEventParametersSchema } from "../tools/gcal/GcalRespondToEvent";
 import { gcalUpdateEventParametersSchema } from "../tools/gcal/GcalUpdateEvent";
+import { gcalDeleteEventParametersSchema } from "../tools/gcal/GcalDeleteEvent";
 
 function formatZodError(err: any): string {
   if (err?.issues && Array.isArray(err.issues)) {
@@ -112,6 +113,9 @@ export const verifyLLMToolCall = (plan: LLMPlanResponse) => {
       return;
     case "gcal.updateEvent":
       plan.toolParameters = gcalUpdateEventParametersSchema.parse(plan.toolParameters);
+      return;
+    case "gcal.deleteEvent":
+      plan.toolParameters = gcalDeleteEventParametersSchema.parse(plan.toolParameters);
       return;
   }
 };
