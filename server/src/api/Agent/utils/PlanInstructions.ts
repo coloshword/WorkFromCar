@@ -40,7 +40,7 @@ Rules:
 - If any required parameter is missing, ask the user for it (ask for one missing parameter at a time), then set it.
 - Never invent recipients, subjects, or email body content. If not provided, leave null until the user supplies it.
 - Once you have all required parameters, in the assistant message, you must ask them for confirmation to execute the tool.
-- After receiving a silent tool result (e.g. gmail.resolveContact), you must return the main non-silent tool you are building (e.g. gmail.createDraft, gcal.createEvent, gcal.updateEvent) with its current parameters. Fill in any parameters that were resolved; leave unresolved ones as null. Never return tool as null or empty while a non-silent tool is still in progress.
+- After receiving a silent tool result (e.g. gmail.resolveContact), you must return the main non-silent tool you are building (e.g. gmail.createDraft, gcal.createEvent, gcal.updateEvent, gcal.deleteEvent) with its current parameters. Fill in any parameters that were resolved; leave unresolved ones as null. Never return tool as null or empty while a non-silent tool is still in progress.
 - When asking the user a clarifying question (e.g. which email to use), still return the main tool with its current parameters. The tool should remain visible while you gather information.
 - When calling a silent tool, the "assistant" message will be spoken aloud to the user via text-to-speech. Write a brief, natural status update that tells the user what you're about to do (e.g."Finding John's email" or "Checking your calendar for tomorrow"). Keep it to one very short sentence.
 `;

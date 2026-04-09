@@ -6,8 +6,9 @@ import { replyEmail } from "./replyEmail";
 import { forwardEmail } from "./forwardEmail";
 import { summarizeEmails } from "./summarizeEmails";
 import { emailCreateDraftSchema, resolveContactParametersSchema, emailSummarizeParametersSchema, readEmailParametersSchema, emailReplyParametersSchema, emailForwardParametersSchema } from "./toolSchemas/email";
-import { gcalCreateEventSchema, gcalGetEventsSchema, gcalRespondToEventSchema, gcalUpdateEventSchema } from "./toolSchemas/gcal";
+import { gcalCreateEventSchema, gcalDeleteEventSchema, gcalGetEventsSchema, gcalRespondToEventSchema, gcalUpdateEventSchema } from "./toolSchemas/gcal";
 import { createEvent } from "./gcalCreateEvent";
+import { deleteEvent } from "./gcalDeleteEvent";
 import { getEvents } from "./gcalGetEvents";
 import { respondToEvent } from "./gcalRespondToEvent";
 import { updateEvent } from "./gcalUpdateEvent";
@@ -129,6 +130,22 @@ export async function executeTool(tool: AgentTool, accessToken: string): Promise
         return { tool: tool.tool, status: 'success', result };
       } catch (e: any) {
         console.error('[executeTool] gcal.updateEvent failed', {
+          toolParameters: tool.toolParameters,
+          message: e?.message,
+        });
+        return { tool: tool.tool, status: 'error', result: { message: e.message } };
+      }
+    }
+    case 'gcal.deleteEvent': {
+      try {
+        const params = gcalDeleteEventSchema.parse(tool.toolParameters);
+        const result = await deleteEvent({
+          accessToken,
+          eventId: params.eventId,
+        });
+        return { tool: tool.tool, status: 'success', result };
+      } catch (e: any) {
+        console.error('[executeTool] gcal.deleteEvent failed', {
           toolParameters: tool.toolParameters,
           message: e?.message,
         });

@@ -4,7 +4,7 @@ import {
   emailForwardParametersSchema,
   emailReplyParametersSchema,
 } from '../api/toolSchemas/email';
-import { gcalCreateEventSchema, gcalRespondToEventSchema, gcalUpdateEventSchema } from '../api/toolSchemas/gcal';
+import { gcalCreateEventSchema, gcalDeleteEventSchema, gcalRespondToEventSchema, gcalUpdateEventSchema } from '../api/toolSchemas/gcal';
 import * as z from 'zod';
 
 const EXECUTABLE_TOOL_SCHEMAS: Record<string, z.ZodTypeAny> = {
@@ -14,6 +14,7 @@ const EXECUTABLE_TOOL_SCHEMAS: Record<string, z.ZodTypeAny> = {
   'gcal.createEvent': gcalCreateEventSchema,
   'gcal.respondToEvent': gcalRespondToEventSchema,
   'gcal.updateEvent': gcalUpdateEventSchema,
+  'gcal.deleteEvent': gcalDeleteEventSchema,
 };
 
 export function isToolReadyForExecution(tool: AgentTool | null | undefined): boolean {
