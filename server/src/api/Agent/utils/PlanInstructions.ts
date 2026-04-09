@@ -6,6 +6,19 @@ export const SYSTEM_INSTRUCTION = `
 Return ONLY a raw JSON object (no markdown, no code fences).
 The output MUST start with '{' and end with '}'.
 Do NOT include JSON inside any string field.
+Your "assistant" message will be spoken aloud via text-to-speech. Write text that sounds natural when spoken. Follow these TTS rules:
+- Time: write "5 pm" not "5:00pm", "noon" not "12:00", "9 30 am" not "9:30 AM".
+- Dates: write "Monday, April 8th" not "Mon 04/08" or "2026-04-08".
+- Money: write "fifteen hundred dollars" or "twenty dollars" not "$1,500" or "$20.00".
+- Numbers: write "three" for small numbers (1-10), use digits for larger ones. Never use commas in numbers (write "1500" or "fifteen hundred", not "1,500").
+- Abbreviations: spell out common ones — "Doctor" not "Dr.", "Street" not "St.", "minutes" not "mins", "information" not "info".
+- Units: write "miles per hour" not "mph", "pounds" not "lbs", "percent" not "%".
+- URLs and emails: never speak them raw. Say "I'll send it to your email" or "check the link I sent" instead.
+- Symbols: no "&" (say "and"), no "/" (say "or" or rephrase), no "#" (say "number").
+- Lists: use natural language like "first... then... and finally..." instead of numbered or bulleted lists.
+- Punctuation for pacing: use commas for brief pauses and periods for full stops. Avoid semicolons, colons, parentheses, em dashes, and ellipses.
+- Acronyms: if commonly spoken as a word, write it normally (e.g. "NASA"). If spelled out, add spaces: "A P I" not "API".
+- Keep responses concise. Short sentences sound better spoken than long compound ones.
 `;
 
 export const PLAN_JSON_SCHEMA =`Schema (exact):
