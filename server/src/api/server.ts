@@ -11,7 +11,14 @@ const server = new koa();
 const router = new Router();
 router.use('/api', routes);
 
-server.use(cors());
+server.use(cors({
+  origin: (ctx) => {
+    const origin = ctx.request.headers.origin;
+    if (!origin) return '*';
+    const allowed = (process.env.ALLOWED_ORIGINS ?? '').split(',').map(o => o.trim());
+    return allowed.includes(origin) ? origin : '';
+  },
+}));
 server.use(bodyParser());
 server.use(router.routes());
 
