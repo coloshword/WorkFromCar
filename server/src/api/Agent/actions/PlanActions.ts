@@ -4,7 +4,7 @@ import { emailCreateDraftParametersSchema } from "../tools/gmail/EmailCreateDraf
 import { emailSummarizeParametersSchema } from "../tools/gmail/EmailSummarize";
 import { PLAN_INSTRUCTION, RETRY_COUNT } from "../utils/PlanInstructions";
 import { Message } from "Types/Agent";
-import { generateLLMMessage, generateOpenAIMessage } from "../utils/LMProviders";
+import { generateOpenAIMessage, OPENAI_AGENT_MODEL } from "../utils/LMProviders";
 import { normalizeNullStrings } from "../utils/AgentUtils";
 import { jsonrepair } from "jsonrepair";
 import { emailReadParametersSchema } from "../tools/gmail/EmailRead";
@@ -123,9 +123,9 @@ export const verifyLLMToolCall = (plan: LLMPlanResponse) => {
 export const generateLLMPlan = async (messages: Message[]): Promise<LLMPlanResponse> => {
   const plan = await generateJsonWithRetry(
     messages,
-    "gemini-3.1-flash-lite-preview",
+    OPENAI_AGENT_MODEL,
     PLAN_INSTRUCTION,
-    generateLLMMessage,
+    generateOpenAIMessage,
     (json) => {
       const plan = PLAN_JSON_SCHEMA_SCHEMA.parse(json);
       verifyLLMToolCall(plan);

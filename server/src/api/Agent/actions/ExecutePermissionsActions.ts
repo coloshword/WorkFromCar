@@ -2,7 +2,7 @@ import { AgentTool, ToolExecutionLog } from "Types/Agent";
 import { emailCreateDraftParametersSchema } from "../tools/gmail/EmailCreateDraft";
 import { Message, ExecutePermissionResponse } from "Types/Agent";
 import { generateJsonWithRetry } from "./PlanActions";
-import { generateLLMMessage, generateOpenRouterMessage } from "../utils/LMProviders";
+import { generateOpenAIMessage, OPENAI_AGENT_MODEL } from "../utils/LMProviders";
 import { EXECUTE_PERMISSION_INSTRUCTION, EXECUTE_PERMISSION_JSON_SCHEMA_SCHEMA } from "../utils/ExecutePermissionsInstructions";
 import { SUMMARY_INSTRUCTION, SUMMARY_JSON_SCHEMA_SCHEMA } from "../utils/SummaryInstructions";
 import { emailReplyParametersSchema } from "../tools/gmail/EmailReply";
@@ -46,9 +46,9 @@ export async function validateToolCall(tool: AgentTool): Promise<void>{
 export async function checkUserIntent(Messages: Message[]): Promise<ExecutePermissionResponse> {
   const response = await generateJsonWithRetry(
     Messages,
-    "openai/gpt-oss-120b",
+    OPENAI_AGENT_MODEL,
     EXECUTE_PERMISSION_INSTRUCTION,
-    generateOpenRouterMessage,
+    generateOpenAIMessage,
     (json) => {
       return EXECUTE_PERMISSION_JSON_SCHEMA_SCHEMA.parse(json);
     }
@@ -69,9 +69,9 @@ export async function summarizeToolResult(
   ];
   return generateJsonWithRetry(
     augmented,
-    "gemini-3.1-flash-lite-preview",
+    OPENAI_AGENT_MODEL,
     SUMMARY_INSTRUCTION,
-    generateLLMMessage,
+    generateOpenAIMessage,
     (json) => SUMMARY_JSON_SCHEMA_SCHEMA.parse(json)
   );
 }

@@ -13,6 +13,9 @@ const openai = new OpenAI({
   apiKey: OPENAI_API_KEY,
 });
 
+/** OpenAI model id for agent planning, execute-permission checks, and summarization. */
+export const OPENAI_AGENT_MODEL = "gpt-5.4";
+
 if (!OPEN_ROUTER_API_KEY) throw new Error("OPEN_ROUTER_API_KEY is not defined");
 const openrouter = new OpenAI({
   apiKey: OPEN_ROUTER_API_KEY,
