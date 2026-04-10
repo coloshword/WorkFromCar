@@ -24,7 +24,7 @@ const TOOL_ICONS: Record<string, React.ReactElement> = {
 };
 
 function ToolIcon({ toolName }: { toolName: string }) {
-  return TOOL_ICONS[toolName] ?? <EmailLogo size={ICON_SIZE} color={ICON_COLOR} />;
+  return TOOL_ICONS[toolName] ?? null;
 }
 
 const TOOL_LABELS: Record<string, string> = {
