@@ -183,7 +183,7 @@ export default function VoiceDashboard2() {
 
     setMessages([...currentMessages]);
 
-    if (currentResult.tool) {
+    if (currentResult.tool?.tool) {
       setTool(currentResult.tool);
     }
 
@@ -214,7 +214,7 @@ export default function VoiceDashboard2() {
       setMessages([...currentMessages]);
 
       if (speakPromise) await speakPromise;
-      if (currentResult.tool) {
+      if (currentResult.tool?.tool) {
         setTool(currentResult.tool);
       }
     }
@@ -249,6 +249,9 @@ export default function VoiceDashboard2() {
       ));
       let currentMessages = [dateContext, ...priorMessages, userMessage];
       setMessages([...currentMessages]);
+      if (!pendingTool) {
+        setTool(null);
+      }
 
       const result = await sendAgentMessage(currentMessages, pendingTool);
 
@@ -262,7 +265,7 @@ export default function VoiceDashboard2() {
           currentMessages = [...currentMessages, result.message];
           setMessages([...currentMessages]);
 
-          if (result.tool) {
+          if (result.tool?.tool) {
             setTool(result.tool);
           }
 
@@ -284,7 +287,7 @@ export default function VoiceDashboard2() {
           currentMessages = [...currentMessages, result.message];
           setMessages([...currentMessages]);
 
-          if (result.tool) {
+          if (result.tool?.tool) {
             setTool(result.tool);
           }
 
