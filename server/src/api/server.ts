@@ -6,11 +6,13 @@ import Router from '@koa/router';
 import routes from "./Routes";
 import bodyParser from 'koa-bodyparser';
 import cors from '@koa/cors';
+import { errorHandler } from './middleware';
 
 const server = new koa();
 const router = new Router();
 router.use('/api', routes);
 
+server.use(errorHandler);
 server.use(cors({
   origin: (ctx) => {
     const origin = ctx.request.headers.origin;

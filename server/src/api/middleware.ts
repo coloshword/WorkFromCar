@@ -2,6 +2,24 @@ import { Context, Next } from 'koa';
 import * as z from "zod";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "./Utils";
+import { HttpError } from 'http-errors';
+
+export async function errorHandler(ctx: Context, next: Next) {
+  try {
+    await next();
+  } catch (err) {
+    const isHttpError = err instanceof HttpError;
+    const status = isHttpError ? err.status : 500;
+    const expose = isHttpError && status < 500;
+
+    if (!expose) {
+      console.error(`[${status}]`, err);
+    }
+
+    ctx.status = status;
+    ctx.body = { error: expose ? err.message : 'Internal server error' };
+  }
+}
 
 const BearerAuthSchema = z.object({
   authorization: z.string(),
