@@ -183,9 +183,7 @@ export default function VoiceDashboard2() {
 
     setMessages([...currentMessages]);
 
-    if (currentResult.tool?.tool) {
-      setTool(currentResult.tool);
-    }
+    setTool(currentResult.tool?.tool ? currentResult.tool : null);
 
     while (currentResult.tool?.silent && iterations < MAX_SILENT_ITERATIONS) {
       iterations++;
@@ -214,9 +212,7 @@ export default function VoiceDashboard2() {
       setMessages([...currentMessages]);
 
       if (speakPromise) await speakPromise;
-      if (currentResult.tool?.tool) {
-        setTool(currentResult.tool);
-      }
+      setTool(currentResult.tool?.tool ? currentResult.tool : null);
     }
 
     const hitLoopLimit = iterations >= MAX_SILENT_ITERATIONS && currentResult.tool?.silent;
@@ -265,9 +261,7 @@ export default function VoiceDashboard2() {
           currentMessages = [...currentMessages, result.message];
           setMessages([...currentMessages]);
 
-          if (result.tool?.tool) {
-            setTool(result.tool);
-          }
+          setTool(result.tool?.tool ? result.tool : null);
 
           if (!authToken) {
             throw new Error('No auth gmail accesstoken');
@@ -287,9 +281,7 @@ export default function VoiceDashboard2() {
           currentMessages = [...currentMessages, result.message];
           setMessages([...currentMessages]);
 
-          if (result.tool?.tool) {
-            setTool(result.tool);
-          }
+          setTool(result.tool?.tool ? result.tool : null);
 
           await speak({
             text: result.message.content,
