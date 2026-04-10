@@ -24,7 +24,7 @@ const TOOL_ICONS: Record<string, React.ReactElement> = {
 };
 
 function ToolIcon({ toolName }: { toolName: string }) {
-  return TOOL_ICONS[toolName] ?? <EmailLogo size={ICON_SIZE} color={ICON_COLOR} />;
+  return TOOL_ICONS[toolName] ?? null;
 }
 
 const TOOL_LABELS: Record<string, string> = {
@@ -134,8 +134,9 @@ export default function ToolIndicator({ tool: toolProp }: Props) {
   }, [fadeAnim]);
 
   useEffect(() => {
-    const toolKey = tool?.tool
-      ? `${tool.tool}:${JSON.stringify(tool.toolParameters)}`
+    const trimmed = (tool?.tool ?? '').trim();
+    const toolKey = trimmed
+      ? `${trimmed}:${JSON.stringify(tool?.toolParameters)}`
       : null;
     if (toolKey !== prevToolKey.current) {
       contentFade.setValue(0);
@@ -148,11 +149,15 @@ export default function ToolIndicator({ tool: toolProp }: Props) {
     }
   }, [tool, contentFade]);
 
-  if (!tool?.tool) {
+  if (!tool) {
+    return null;
+  }
+  const toolName = (tool.tool ?? '').trim();
+  if (!toolName) {
     return null;
   }
 
-  const displayName = TOOL_LABELS[tool.tool] ?? tool.tool;
+  const displayName = TOOL_LABELS[toolName] ?? toolName;
 
   return (
     <Animated.View style={[styles.wrapper, { opacity: fadeAnim }]}>
@@ -175,10 +180,10 @@ export default function ToolIndicator({ tool: toolProp }: Props) {
         >
           <Animated.View style={{ opacity: contentFade }}>
             <View style={styles.header}>
-              <ToolIcon toolName={tool.tool} />
+              <ToolIcon toolName={toolName} />
               <Text style={styles.headerLabel}>{displayName}</Text>
               <View style={styles.toolBadge}>
-                <Text style={styles.toolBadgeText}>{tool.tool}</Text>
+                <Text style={styles.toolBadgeText}>{toolName}</Text>
               </View>
             </View>
             <GenericToolViz tool={tool} />
