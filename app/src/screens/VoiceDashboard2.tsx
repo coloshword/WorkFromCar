@@ -28,18 +28,64 @@ const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 const DEV_TEXT_MODE = true;
 const DATE_CONTEXT_PREFIX = 'Current local time:';
 
+function localHourInTimeZone(d: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour: 'numeric',
+    hour12: false,
+  }).formatToParts(d);
+  const hourStr = parts.find((p) => p.type === 'hour')?.value;
+  return hourStr != null ? parseInt(hourStr, 10) : d.getHours();
+}
+
+function formatLocalDate(
+  d: Date,
+  timeZone: string,
+  options: Intl.DateTimeFormatOptions,
+): string {
+  return d.toLocaleDateString('en-US', { timeZone, ...options });
+}
+
 function buildDateContextMessage(): Message {
   const now = new Date();
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const localHour = localHourInTimeZone(now, timeZone);
+
+  const dateLine = {
+    weekday: 'long' as const,
+    year: 'numeric' as const,
+    month: 'long' as const,
+    day: 'numeric' as const,
+  };
+
+  const todayLong = formatLocalDate(now, timeZone, dateLine);
+  const tomorrowDate = new Date(now);
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrowLong = formatLocalDate(tomorrowDate, timeZone, dateLine);
+
+  const localTimeVerbose = now.toLocaleString('en-US', {
+    timeZone,
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  });
+
+  let content = `${DATE_CONTEXT_PREFIX} ${now.toISOString()} (${timeZone}). Local time: ${localTimeVerbose}. Calendar today: ${todayLong}. Calendar tomorrow: ${tomorrowLong}.`;
+
+  const isEarlyMorning = localHour >= 0 && localHour < 4;
+  if (isEarlyMorning) {
+    content +=
+      ` Early-morning disambiguation: In the first hours after local midnight, when the user says "tomorrow" without a specific date, they often mean today's calendar day (still thinking in terms of the evening before), not the next calendar day. For gcal.getEvents, still call the tool immediately: use today's full-day range as the primary interpretation. In your final spoken reply after summarizing results, briefly acknowledge the ambiguity and offer the other reading (for example ask if they meant ${tomorrowLong} instead, and offer to check that day if they say yes).`;
+  }
 
   return {
     role: 'system',
-    content: `${DATE_CONTEXT_PREFIX} ${now.toISOString()} (${timeZone}). Today is ${now.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })}.`,
+    content,
   };
 }
 
