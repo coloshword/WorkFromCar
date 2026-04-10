@@ -19,6 +19,7 @@ export async function sendAgentMessage(
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.log(errorText);
     throw new Error(`HTTP ${response.status}: ${errorText}`);
   }
 
