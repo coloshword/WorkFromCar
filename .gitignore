@@ -9,4 +9,8 @@ ggml-base.en.bin
 whisper.xcframework
 .DS_Store
 
+infra/terraform.tfvars
+infra/.terraform/
+infra/.terraform.lock.hcl
+
 models/
