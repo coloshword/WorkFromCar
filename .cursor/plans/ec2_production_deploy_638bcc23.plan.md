@@ -4,22 +4,22 @@ overview: "Set up a full production deployment pipeline: Terraform to provision 
 todos:
   - id: terraform-infra
     content: "Create infra/ Terraform files: main.tf, ecr.tf, rds.tf, ec2.tf, iam.tf (OIDC), sg.tf, variables.tf, outputs.tf"
-    status: pending
+    status: completed
   - id: server-dockerfile
     content: Replace server/Dockerfile (currently MySQL) with multi-stage Node.js build
-    status: pending
+    status: completed
   - id: server-package-json
     content: Add build, start, and migrate scripts to server/package.json
-    status: pending
+    status: completed
   - id: server-db-ssl
-    content: Enable SSL in server/src/api/Db.ts for RDS compatibility
-    status: pending
+    content: POSTGRES_SSL env + ssl in Db.ts and migrate.ts (true for RDS, false local)
+    status: completed
   - id: migrations-dir
     content: Create server/migrations/ directory and move init.sql to 001_init_accounts.sql
-    status: pending
+    status: completed
   - id: migrate-script
-    content: Create server/src/scripts/migrate.ts - simple SQL migration runner with schema_migrations tracking table
-    status: pending
+    content: Create server/src/setupScripts/migrate.ts - simple SQL migration runner with schema_migrations tracking table
+    status: completed
   - id: gha-workflow
     content: Create .github/workflows/deploy.yml - build Docker image, push to ECR, SSH deploy to EC2 with migration step
     status: pending
@@ -104,12 +104,12 @@ Currently missing `build` and `start`:
 ```json
 "build": "tsc",
 "start": "node build/api/server.js",
-"migrate": "node build/scripts/migrate.js"
+"migrate": "node build/setupScripts/migrate.js"
 ```
 
-### 2c. Enable SSL for RDS in `server/src/api/Db.ts`
+### 2c. SSL for Postgres (`server/src/api/Db.ts`, migrate runner)
 
-Change `ssl: false` → `ssl: { rejectUnauthorized: false }` (RDS requires SSL by default).
+Use `POSTGRES_SSL=true` for RDS; omit or `false` for local. When true, `ssl: { rejectUnauthorized: false }`; when false, `ssl: false`.
 
 ### 2d. Create `server/migrations/` directory
 
@@ -119,7 +119,7 @@ Move `initdb/init.sql` content into:
 
 Future migrations follow: `002_...sql`, `003_...sql`.
 
-### 2e. Create `server/src/scripts/migrate.ts`
+### 2e. Create `server/src/setupScripts/migrate.ts`
 
 Simple migration runner script:
 
@@ -154,7 +154,7 @@ jobs:
     steps:
       - SSH into EC2 (via appleboy/ssh-action or direct ssh)
       - Run migrations:
-          docker run --rm --env-file /etc/server.env $IMAGE node build/scripts/migrate.js
+          docker run --rm --env-file /etc/server.env $IMAGE node build/setupScripts/migrate.js
       - Replace running container:
           docker stop server || true
           docker rm server || true
@@ -188,9 +188,9 @@ On first provision, user-data script on the EC2 instance will:
 | `infra/main.tf`, `ecr.tf`, `rds.tf`, `ec2.tf`, `iam.tf`, `sg.tf`, `variables.tf`, `outputs.tf` | Create                                  |
 | `server/Dockerfile`                                                                            | Replace (MySQL → Node.js)               |
 | `server/package.json`                                                                          | Add `build`, `start`, `migrate` scripts |
-| `server/src/api/Db.ts`                                                                         | Enable SSL for RDS                      |
+| `server/src/api/Db.ts`                                                                         | `POSTGRES_SSL` + pg `ssl` option        |
 | `server/migrations/001_init_accounts.sql`                                                      | Create (from initdb/init.sql)           |
-| `server/src/scripts/migrate.ts`                                                                | Create                                  |
+| `server/src/setupScripts/migrate.ts`                                                           | Create                                  |
 | `.github/workflows/deploy.yml`                                                                 | Create                                  |
 
 
