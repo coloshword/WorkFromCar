@@ -5,14 +5,16 @@ export type Constructor<T> = {
   [P in keyof T]: new (...args: any[]) => T[P];
 };
 
+const useSsl = process.env.POSTGRES_SSL === "true";
+
 const pgConfig = {
   host: process.env.POSTGRES_HOST,
   port: Number(process.env.POSTGRES_PORT),
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DB,
-  ssl: false, 
-}
+  ssl: useSsl ? { rejectUnauthorized: false } : false,
+};
 
 export default abstract class Db<T = InfraConfig> {
   private connection: Pool<T>;

@@ -1,0 +1,61 @@
+name: "// Work From Car Server Deployment"
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: wfc-server-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: work-from-car-server
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: build
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          IMAGE_URI="${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA}"
+          docker build -f server/Dockerfile -t "${IMAGE_URI}" -t "${REGISTRY}/${ECR_REPOSITORY}:latest" .
+          docker push "${IMAGE_URI}"
+          docker push "${REGISTRY}/${ECR_REPOSITORY}:latest"
+          echo "image=${IMAGE_URI}" >> "${GITHUB_OUTPUT}"
+
+      - name: Deploy on EC2 (migrate + restart)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -eux
+            IMAGE="${{ steps.build.outputs.image }}"
+            aws ecr get-login-password --region "${{ env.AWS_REGION }}" | docker login --username AWS --password-stdin "${{ steps.login-ecr.outputs.registry }}"
+            docker pull "${IMAGE}"
+            docker stop wfc-server 2>/dev/null || true
+            docker rm wfc-server 2>/dev/null || true
+            docker run --rm --env-file /etc/server.env "${IMAGE}" node build/setupScripts/migrate.js
+            docker run -d --name wfc-server --restart unless-stopped --env-file /etc/server.env -p 3000:3000 "${IMAGE}"

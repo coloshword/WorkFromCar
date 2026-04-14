@@ -1,0 +1,9 @@
+.git
+.github
+.cursor
+app
+infra
+server/node_modules
+server/build
+**/.env
+*.md

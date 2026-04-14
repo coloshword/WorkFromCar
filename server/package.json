@@ -8,7 +8,10 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --config src/jest.config.js",
-    "dev": "tsc --watch & nodemon build/api/server.js"
+    "dev": "tsc --watch & nodemon build/api/server.js",
+    "build": "tsc",
+    "start": "node build/api/server.js",
+    "migrate": "node build/setupScripts/migrate.js"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
