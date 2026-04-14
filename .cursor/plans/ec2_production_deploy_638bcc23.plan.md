@@ -22,7 +22,7 @@ todos:
     status: completed
   - id: gha-workflow
     content: Create .github/workflows/deploy.yml - build Docker image, push to ECR, SSH deploy to EC2 with migration step
-    status: pending
+    status: completed
 isProject: false
 ---
 
