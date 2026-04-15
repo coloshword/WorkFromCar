@@ -5,7 +5,7 @@ resource "aws_db_instance" "postgres" {
   instance_class = "db.t3.micro"
   allocated_storage = 20
 
-  db_name = "workfromcar"
+  db_name = "work_from_car"
   username = "postgres"
   password = var.db_password
 

@@ -20,6 +20,11 @@ resource "aws_instance" "server" {
   vpc_security_group_ids = [aws_security_group.ec2.id]
   iam_instance_profile = aws_iam_instance_profile.ec2.name
 
+  root_block_device {
+    volume_size = 20
+    volume_type = "gp3"
+  }
+
   user_data = <<-EOF
     #!/bin/bash
     yum update -y
