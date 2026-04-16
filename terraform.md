@@ -18,7 +18,7 @@ ecr.tf:
 
 | Resource | Value |
 |----------|-------|
-| EC2 Public IP | `54.160.221.254` |
+| EC2 Public IP | `34.229.138.59` |
 | ECR Repository URL | `123185598678.dkr.ecr.us-east-1.amazonaws.com/work-from-car-server` |
 | GHA Role ARN | `arn:aws:iam::123185598678:role/work-from-car-github-actions` |
 | RDS Endpoint | `work-from-car-db.coviyuyi2ik6.us-east-1.rds.amazonaws.com:5432` |
