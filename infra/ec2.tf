@@ -27,11 +27,74 @@ resource "aws_instance" "server" {
 
   user_data = <<-EOF
     #!/bin/bash
-    yum update -y
-    yum install -y docker
-    systemctl start docker
-    systemctl enable docker
+    set -euxo pipefail
+
+    dnf update -y
+    dnf install -y docker tar gzip libcap
+    systemctl enable --now docker
     usermod -aG docker ec2-user
+
+    CADDY_VERSION="2.11.2"
+    ARCH="$(uname -m)"
+
+    if [ "$ARCH" = "x86_64" ]; then
+      CADDY_ARCH="amd64"
+    elif [ "$ARCH" = "aarch64" ]; then
+      CADDY_ARCH="arm64"
+    else
+      echo "Unsupported architecture: $ARCH"
+      exit 1
+    fi
+
+    curl -fL -o /tmp/caddy.tar.gz "https://github.com/caddyserver/caddy/releases/download/v$${CADDY_VERSION}/caddy_$${CADDY_VERSION}_linux_$${CADDY_ARCH}.tar.gz"
+    tar -xzf /tmp/caddy.tar.gz -C /tmp
+    install -m 755 /tmp/caddy /usr/local/bin/caddy
+    /usr/sbin/setcap cap_net_bind_service=+ep /usr/local/bin/caddy
+
+    groupadd --system caddy || true
+    useradd --system \
+      --gid caddy \
+      --create-home \
+      --home-dir /var/lib/caddy \
+      --shell /usr/sbin/nologin \
+      --comment "Caddy web server" \
+      caddy || true
+
+    mkdir -p /etc/caddy /var/lib/caddy /var/log/caddy
+    chown -R caddy:caddy /etc/caddy /var/lib/caddy /var/log/caddy
+
+    cat >/etc/caddy/Caddyfile <<CADDYFILE
+    ${var.api_domain} {
+      encode gzip zstd
+      reverse_proxy 127.0.0.1:3000
+    }
+    CADDYFILE
+
+    cat >/etc/systemd/system/caddy.service <<'SERVICE'
+    [Unit]
+    Description=Caddy
+    Documentation=https://caddyserver.com/docs/
+    After=network-online.target
+    Wants=network-online.target
+
+    [Service]
+    User=caddy
+    Group=caddy
+    ExecStart=/usr/local/bin/caddy run --environ --config /etc/caddy/Caddyfile
+    ExecReload=/usr/local/bin/caddy reload --config /etc/caddy/Caddyfile --force
+    TimeoutStopSec=5s
+    LimitNOFILE=1048576
+    LimitNPROC=512
+    PrivateTmp=true
+    ProtectSystem=full
+    AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+    [Install]
+    WantedBy=multi-user.target
+    SERVICE
+
+    systemctl daemon-reload
+    systemctl enable --now caddy
   EOF
 
   tags = {
