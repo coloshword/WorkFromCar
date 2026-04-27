@@ -4,6 +4,10 @@ import agent from './Agent/routes/AgentRouter';
 
 const router = new Router();
 
+router.get("/health", (ctx) => {
+  ctx.body = { status: "ok" };
+});
+
 router.use("/auth", auth.routes(), auth.allowedMethods());
 router.use("/agent", agent.routes(), agent.allowedMethods());
 
