@@ -7,12 +7,16 @@ import {
   ActivityIndicator,
   Alert,
   StatusBar,
+  Linking,
 } from 'react-native';
 import { onLogin } from '../api/auth';
 import { useAccessToken } from '../context/AccessTokenContext';
 import * as Keychain from 'react-native-keychain';
 import GoogleLogo from '../components/icons/GoogleLogo';
 import WheelLogo from '../components/icons/wheelLogo';
+
+const PRIVACY_URL = 'https://workfromcar.xyz/privacy.html';
+const TERMS_URL = 'https://workfromcar.xyz/terms.html';
 
 const LoginScreen = () => {
   const { setAuthToken } = useAccessToken();
@@ -67,7 +71,23 @@ const LoginScreen = () => {
       </View>
 
       <Text style={styles.footer}>
-        By signing in, you agree to our Terms of Service
+        By signing in, you agree to our{' '}
+        <Text
+          style={styles.footerLink}
+          onPress={() => Linking.openURL(TERMS_URL)}
+          accessibilityRole="link"
+        >
+          Terms of Service
+        </Text>
+        {' '}and{' '}
+        <Text
+          style={styles.footerLink}
+          onPress={() => Linking.openURL(PRIVACY_URL)}
+          accessibilityRole="link"
+        >
+          Privacy Policy
+        </Text>
+        .
       </Text>
     </View>
   );
@@ -129,6 +149,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     paddingBottom: 24,
     paddingHorizontal: 32,
+  },
+  footerLink: {
+    color: 'rgba(232,255,246,0.55)',
+    textDecorationLine: 'underline',
+    fontWeight: '600',
   },
 });
 
