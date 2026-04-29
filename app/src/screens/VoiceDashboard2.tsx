@@ -25,7 +25,7 @@ const MODEL_PATH = `${RNFS.MainBundlePath}/${MODEL_FILENAME}`;
 const VAD_PATH = `${RNFS.MainBundlePath}/${VAD_FILENAME}`;
 const KOKORO_MODEL_DIR = `${RNFS.MainBundlePath}/sherpa-onnx-kokoro-en-v0_19`;
 
-const DEV_TEXT_MODE = true;
+const DEV_TEXT_MODE = false;
 const DATE_CONTEXT_PREFIX = 'Current local time:';
 
 function localHourInTimeZone(d: Date, timeZone: string): number {
