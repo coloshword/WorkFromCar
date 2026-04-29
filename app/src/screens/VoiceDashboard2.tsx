@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput, Alert } from 'react-native';
+import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput, Alert, StatusBar } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import RNFS from 'react-native-fs';
@@ -87,6 +87,22 @@ function buildDateContextMessage(): Message {
     role: 'system',
     content,
   };
+}
+
+function voiceModeLabel(state: VoiceListenerState, ttsSpeaking: boolean): string {
+  if (state === 'disabled') {
+    return ttsSpeaking ? 'Speaking...' : 'Processing...';
+  }
+  switch (state) {
+    case 'listening':
+      return 'Listening';
+    case 'transcribing':
+      return 'Transcribing...';
+    case 'speaking':
+      return 'Recording...';
+    default:
+      return state;
+  }
 }
 
 export default function VoiceDashboard2() {
@@ -328,8 +344,15 @@ export default function VoiceDashboard2() {
 
   return (
     <View style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor="#0f271f" />
       <View style={styles.topbar}>
-        <Pressable style={styles.logoutBtn} onPress={handleLogout}>
+        <Pressable
+          style={styles.logoutBtn}
+          onPress={handleLogout}
+          accessibilityRole="button"
+          accessibilityLabel="Log out"
+          accessibilityHint="Sign out and return to the login screen"
+        >
           <Text style={styles.logoutBtnText}>Logout</Text>
         </Pressable>
         <View style={styles.topbarRight}>
@@ -352,10 +375,8 @@ export default function VoiceDashboard2() {
           ? <ActivityIndicator size="large" color="#e8fff6" style={{ height: 150 }} />
           : <AudioVisualizer mode={voiceListenerState} />
         }
-        <Text style={styles.modeLabel}>
-          {voiceListenerState === 'disabled'
-            ? speaking ? 'Speaking...' : 'Processing...'
-            : voiceListenerState}
+        <Text style={styles.modeLabel} accessibilityLiveRegion="polite">
+          {voiceModeLabel(voiceListenerState, speaking)}
         </Text>
 
         <ToolIndicator tool={tool} />
