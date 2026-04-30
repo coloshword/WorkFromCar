@@ -35,8 +35,6 @@
 	</dict>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>WorkFromCar needs microphone access to listen for voice commands while you drive.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
