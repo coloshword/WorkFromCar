@@ -4,6 +4,7 @@ import { StyleSheet } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RNFS from 'react-native-fs';
 import NativeWhisper from 'whisper/src/NativeWhisper';
 import NativeKokoro from 'kokoro/src/NativeKokoro';
@@ -21,6 +22,8 @@ import OnboardingOverlay from '../components/OnboardingOverlay';
 import { isToolReadyForExecution } from '../utils/isToolReadyForExecution';
 import ToolIndicator from '../components/ToolIndicator';
 import type { RootStackParamList } from '../navigation/RootNavigator';
+
+const HEADER_HEIGHT = 48;
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
 const VAD_FILENAME = 'ggml-silero-v6.2.0.bin';
@@ -94,6 +97,7 @@ function buildDateContextMessage(): Message {
 
 export default function VoiceDashboard2() {
   const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { authToken, setAuthToken } = useAccessToken();
   const [voiceListenerState, setVoiceListenerState] = useState<VoiceListenerState>('disabled');
@@ -314,7 +318,7 @@ export default function VoiceDashboard2() {
 
   return (
     <View style={styles.root}>
-      <View style={styles.topbar}>
+      <View style={[styles.topbar, { paddingTop: insets.top, height: insets.top + HEADER_HEIGHT }]}>
         <Pressable style={styles.gearBtn} onPress={() => navigation.navigate('Settings')} hitSlop={10}>
           <GearIcon size={26} />
         </Pressable>
@@ -394,7 +398,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f271f',
   },
   topbar: {
-    height: 100,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -404,14 +407,12 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   gearBtn: {
-    marginTop: 30,
     padding: 6,
   },
   topbarRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginTop: 30,
   },
   topbarTitle: {
     color: '#e5e7eb',
