@@ -2,6 +2,7 @@ import LoginScreen from './src/screens/Login';
 import RootNavigator from './src/navigation/RootNavigator';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import Config from "react-native-config";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AccessTokenProvider } from './src/context/AccessTokenContext';
 
 const webClientId = Config.GOOGLE_WEB_CLIENT_ID;
@@ -18,9 +19,11 @@ GoogleSignin.configure({
 });
 
 const App = () => (
-  <AccessTokenProvider accessToken={null}>
-    <RootNavigator />
-  </AccessTokenProvider>
+  <SafeAreaProvider>
+    <AccessTokenProvider accessToken={null}>
+      <RootNavigator />
+    </AccessTokenProvider>
+  </SafeAreaProvider>
 );
 
 export default App;

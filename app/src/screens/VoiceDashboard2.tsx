@@ -1,7 +1,10 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput, Alert } from 'react-native';
+import { Pressable, Text, View, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { useWindowDimensions } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RNFS from 'react-native-fs';
 import NativeWhisper from 'whisper/src/NativeWhisper';
 import NativeKokoro from 'kokoro/src/NativeKokoro';
@@ -9,15 +12,18 @@ import { VoiceProcessor } from '@picovoice/react-native-voice-processor';
 import { FRAME_LENGTH, FREQUENCY_HZ } from '../services/audio/voiceProcessor';
 import AudioVisualizer from '../components/AudioVisualizer';
 import VoiceListener, { VoiceListenerState } from '../components/VoiceListener';
+import GearIcon from '../components/icons/GearIcon';
 import { sendAgentMessage, callSummarize } from '../utils/useSendMessage';
 import { Message, AgentTool, AgentPlanResponse } from '../../../types/Agent';
 import { speak } from '../utils/ttsUtils';
 import { executeTool } from '../api/toolExecutor';
 import { useAccessToken } from '../context/AccessTokenContext';
-import * as Keychain from 'react-native-keychain';
 import OnboardingOverlay from '../components/OnboardingOverlay';
 import { isToolReadyForExecution } from '../utils/isToolReadyForExecution';
 import ToolIndicator from '../components/ToolIndicator';
+import type { RootStackParamList } from '../navigation/RootNavigator';
+
+const HEADER_HEIGHT = 48;
 
 const MODEL_FILENAME = 'ggml-tiny.en-q5_1.bin';
 const VAD_FILENAME = 'ggml-silero-v6.2.0.bin';
@@ -91,6 +97,8 @@ function buildDateContextMessage(): Message {
 
 export default function VoiceDashboard2() {
   const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { authToken, setAuthToken } = useAccessToken();
   const [voiceListenerState, setVoiceListenerState] = useState<VoiceListenerState>('disabled');
   const [modelStatus, setModelStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
@@ -106,24 +114,6 @@ export default function VoiceDashboard2() {
   useEffect(() => {
     console.log('[tool]', tool);
   }, [tool]);
-
-  const handleLogout = useCallback(() => {
-    Alert.alert(
-      'Log out?',
-      'You will need to sign in again to use Gmail from the car.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Log out',
-          style: 'destructive',
-          onPress: async () => {
-            await Keychain.resetGenericPassword();
-            setAuthToken(null);
-          },
-        },
-      ],
-    );
-  }, [setAuthToken]);
 
   useEffect(() => {
     if (DEV_TEXT_MODE) return;
@@ -328,9 +318,9 @@ export default function VoiceDashboard2() {
 
   return (
     <View style={styles.root}>
-      <View style={styles.topbar}>
-        <Pressable style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutBtnText}>Logout</Text>
+      <View style={[styles.topbar, { paddingTop: insets.top, height: insets.top + HEADER_HEIGHT }]}>
+        <Pressable style={styles.gearBtn} onPress={() => navigation.navigate('Settings')} hitSlop={10}>
+          <GearIcon size={26} />
         </Pressable>
         <View style={styles.topbarRight}>
           {modelStatus !== 'ready' && (
@@ -408,7 +398,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f271f',
   },
   topbar: {
-    height: 100,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -417,24 +406,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.08)',
   },
-  logoutBtn: {
-    marginTop: 30,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(232,255,246,0.25)',
-  },
-  logoutBtnText: {
-    color: 'rgba(232,255,246,0.7)',
-    fontSize: 13,
-    fontWeight: '600',
+  gearBtn: {
+    padding: 6,
   },
   topbarRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginTop: 30,
   },
   topbarTitle: {
     color: '#e5e7eb',

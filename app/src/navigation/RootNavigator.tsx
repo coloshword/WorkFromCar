@@ -6,14 +6,16 @@ import * as Keychain from "react-native-keychain";
 import LoginScreen from '../screens/Login';
 import VoiceDashboardScreen from '../screens/VoiceDashboard2';
 import VoiceDashboardScreen2 from '../screens/VoiceDashboard2';
+import SettingsScreen from '../screens/Settings';
 import { useAccessToken } from '../context/AccessTokenContext';
 import { silentLogin } from '../api/auth';
 import DemoScreen from '../screens/Demo';
 
 
-type RootStackParamList = {
+export type RootStackParamList = {
   Login: undefined;
   VoiceDashboard: undefined;
+  Settings: undefined;
   Demo: undefined;
 }
 
@@ -45,13 +47,25 @@ export const RootNavigator = () => {
     <NavigationContainer>
       <Stack.Navigator>
         {isAuthed ? (
-          <Stack.Screen 
-            name="VoiceDashboard"
-            component={VoiceDashboardScreen2}
-            options={{ headerShown: false }}
-          />
+          <>
+            <Stack.Screen
+              name="VoiceDashboard"
+              component={VoiceDashboardScreen2}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Settings"
+              component={SettingsScreen}
+              options={{
+                title: 'Settings',
+                headerStyle: { backgroundColor: '#08110e' },
+                headerTintColor: '#e8fff6',
+                headerTitleStyle: { color: '#e8fff6' },
+              }}
+            />
+          </>
         ) : (
-          <Stack.Screen 
+          <Stack.Screen
             name="Login"
             component={LoginScreen}
             options={{ headerShown: false }}
