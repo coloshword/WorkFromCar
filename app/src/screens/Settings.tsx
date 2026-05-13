@@ -1,9 +1,31 @@
 import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import * as Keychain from 'react-native-keychain';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { useAccessToken } from '../context/AccessTokenContext';
 
 export default function Settings() {
+  const { setAuthToken } = useAccessToken();
+
+  const performLogout = async () => {
+    try {
+      await Keychain.resetGenericPassword();
+    } catch (e) {
+      console.warn('Failed to clear keychain', e);
+    }
+    try {
+      await GoogleSignin.signOut();
+    } catch (e) {
+      console.warn('Google sign out failed', e);
+    }
+    setAuthToken(null);
+  };
+
   const handleLogout = () => {
-    Alert.alert('Logout', 'Coming soon');
+    Alert.alert('Logout', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log out', style: 'destructive', onPress: performLogout },
+    ]);
   };
 
   const handleDeleteAccount = () => {
