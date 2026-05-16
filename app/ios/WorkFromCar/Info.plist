@@ -35,6 +35,12 @@
 	</dict>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>WorkFromCar needs microphone access to listen for voice commands while you drive.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>WorkFromCar reads your calendar so you can check and create events by voice while driving.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>WorkFromCar reads your calendar so you can check and create events by voice while driving.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>WorkFromCar looks up contacts so you can send email and create calendar invites by saying a person's name.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
