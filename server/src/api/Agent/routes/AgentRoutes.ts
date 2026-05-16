@@ -4,6 +4,7 @@ import { AgentPlanResponse, PlanState, Message, SummarizeRouteRequestBody, ToolE
 import { generateLLMPlan } from '../actions/PlanActions';
 import { checkUserIntent, validateToolCall, summarizeToolResult } from '../actions/ExecutePermissionsActions';
 import { isSilent } from '../utils/isSilent';
+import infra from '../..';
 
 const planRouteSchema = z.object({
   messages: z.array(
@@ -47,6 +48,11 @@ export const planRoute = async (ctx: Context) => {
     response.tool.silent = true;
   }
   // append silent if the tool is supplementary
+  void infra.db.events.logEvent("plan_call", ctx.state.auth?.accountId ?? null, {
+    tool: response.tool.tool,
+    silent: response.tool.silent ?? false,
+    messageCount: messages.length,
+  });
   ctx.body = response;
   ctx.status = 200;
 };
@@ -73,6 +79,11 @@ export const executePermissionRoute = async (ctx: Context) => {
   console.log("START OF PERMISSION ROUTE", messages);
   await validateToolCall(tool);
   const userIntent = await checkUserIntent(messages);
+  void infra.db.events.logEvent("execute_permission", ctx.state.auth?.accountId ?? null, {
+    tool: tool.tool,
+    decision: userIntent.decision,
+    granted: userIntent.decision === 'execute',
+  });
   ctx.body = {
     ...userIntent,
     executePermissionGranted: userIntent.decision === 'execute',
@@ -98,6 +109,10 @@ const summarizeRouteSchema = z.object({
 export const summarizeRoute = async (ctx: Context) => {
   const { messages, toolLog } = summarizeRouteSchema.parse(ctx.request.body);
   const summary = await summarizeToolResult(messages, toolLog as ToolExecutionLog);
+  void infra.db.events.logEvent("summarize", ctx.state.auth?.accountId ?? null, {
+    tool: toolLog.tool,
+    status: toolLog.status,
+  });
   ctx.body = summary;
   ctx.status = 200;
 }

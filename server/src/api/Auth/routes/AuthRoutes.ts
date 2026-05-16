@@ -28,6 +28,7 @@ export const googleAuthLogin = async (ctx: Context): Promise<void> => {
   console.log("account", account);
   if (!account) ctx.throw(500, "Failed to create account");
   const jwt = getJWTToken(account);
+  void infra.db.events.logEvent("login", account.accountId, { email: account.email });
   ctx.status = 200;
   ctx.body = {
     token: jwt,

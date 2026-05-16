@@ -3,6 +3,7 @@ import * as z from "zod";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "./Utils";
 import { HttpError } from 'http-errors';
+import infra from './index';
 
 export async function errorHandler(ctx: Context, next: Next) {
   try {
@@ -14,6 +15,12 @@ export async function errorHandler(ctx: Context, next: Next) {
 
     if (!expose) {
       console.error(`[${status}]`, err);
+      void infra.db.events.logEvent("error", ctx.state.auth?.accountId ?? null, {
+        status,
+        path: ctx.path,
+        method: ctx.method,
+        message: err instanceof Error ? err.message : String(err),
+      });
     }
 
     ctx.status = status;
