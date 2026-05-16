@@ -105,7 +105,7 @@ export default function VoiceListener({ state, onStateChange, onTranscript }: Pr
         vadBusy = true;
         NativeWhisper.vadProcessBuffer(frame)
           .then(({ prob: p }) => {
-            lastVadIsSpeech = p > 0.7;
+            lastVadIsSpeech = p > 0.4;
             if (isMounted) setProb(` ${p.toFixed(2)}`);
             vadBusy = false;
           })
