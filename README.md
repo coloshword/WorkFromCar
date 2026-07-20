@@ -4,8 +4,6 @@
 
 Voice-first iOS assistant for hands-free Gmail and Google Calendar — built for use while driving.
 
-https://github.com/user-attachments/assets/61caa19b-6a51-48e8-90d0-047088d74bc4
-
 
 ## How it works
 
