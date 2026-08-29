@@ -121,7 +121,6 @@ const vizStyles = StyleSheet.create({
 
 export default function ToolIndicator({ tool: toolProp }: Props) {
   const tool = toolProp;
-  const displayName = tool ? (TOOL_LABELS[tool.tool] ?? tool.tool) : null;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const contentFade = useRef(new Animated.Value(0)).current;
   const prevToolKey = useRef<string | null>(null);
@@ -135,8 +134,9 @@ export default function ToolIndicator({ tool: toolProp }: Props) {
   }, [fadeAnim]);
 
   useEffect(() => {
-    const toolKey = tool
-      ? `${tool.tool}:${JSON.stringify(tool.toolParameters)}`
+    const trimmed = (tool?.tool ?? '').trim();
+    const toolKey = trimmed
+      ? `${trimmed}:${JSON.stringify(tool?.toolParameters)}`
       : null;
     if (toolKey !== prevToolKey.current) {
       contentFade.setValue(0);
@@ -148,6 +148,16 @@ export default function ToolIndicator({ tool: toolProp }: Props) {
       prevToolKey.current = toolKey;
     }
   }, [tool, contentFade]);
+
+  if (!tool) {
+    return null;
+  }
+  const toolName = (tool.tool ?? '').trim();
+  if (!toolName) {
+    return null;
+  }
+
+  const displayName = TOOL_LABELS[toolName] ?? toolName;
 
   return (
     <Animated.View style={[styles.wrapper, { opacity: fadeAnim }]}>
@@ -168,20 +178,16 @@ export default function ToolIndicator({ tool: toolProp }: Props) {
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
         >
-          {tool ? (
-            <Animated.View style={{ opacity: contentFade }}>
-              <View style={styles.header}>
-                <ToolIcon toolName={tool.tool} />
-                <Text style={styles.headerLabel}>{displayName}</Text>
-                {tool.tool ? (
-                  <View style={styles.toolBadge}>
-                    <Text style={styles.toolBadgeText}>{tool.tool}</Text>
-                  </View>
-                ) : null}
+          <Animated.View style={{ opacity: contentFade }}>
+            <View style={styles.header}>
+              <ToolIcon toolName={toolName} />
+              <Text style={styles.headerLabel}>{displayName}</Text>
+              <View style={styles.toolBadge}>
+                <Text style={styles.toolBadgeText}>{toolName}</Text>
               </View>
-              <GenericToolViz tool={tool} />
-            </Animated.View>
-          ) : null}
+            </View>
+            <GenericToolViz tool={tool} />
+          </Animated.View>
         </ScrollView>
       </LinearGradient>
     </Animated.View>
