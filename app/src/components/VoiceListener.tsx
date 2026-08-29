@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Text, StyleSheet, View } from "react-native";
+import { Text, StyleSheet, View, AppState, type AppStateStatus } from "react-native";
 import { startVadStreaming, stopVadStreaming } from "../services/audio/voiceProcessor";
 import NativeWhisper from 'whisper/src/NativeWhisper';
 
@@ -21,6 +21,18 @@ export default function VoiceListener({ state, onStateChange, onTranscript }: Pr
   const [prob, setProb] = useState<string>('');
 
   const isActive = state !== 'disabled';
+  const [foregroundEpoch, setForegroundEpoch] = useState(0);
+
+  useEffect(() => {
+    if (!isActive) return;
+    const onAppStateChange = (next: AppStateStatus) => {
+      if (next === "active") {
+        setForegroundEpoch((n) => n + 1);
+      }
+    };
+    const sub = AppState.addEventListener("change", onAppStateChange);
+    return () => sub.remove();
+  }, [isActive]);
 
   useEffect(() => { stateRef.current = state; }, [state]);
   useEffect(() => { onStateChangeRef.current = onStateChange; }, [onStateChange]);
@@ -119,7 +131,7 @@ export default function VoiceListener({ state, onStateChange, onTranscript }: Pr
       isMounted = false;
       stopVadStreaming();
     };
-  }, [isActive]);
+  }, [isActive, foregroundEpoch]);
   return (
     <View style={styles.content}>
       <Text style={styles.text}>
